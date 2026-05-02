@@ -1326,33 +1326,77 @@ async function doRegister() {
   const btn   = document.getElementById('reg-btn');
   const err   = document.getElementById('reg-error');
 
-  if (!nome)              { err.textContent='Informe seu nome'; return; }
+  if (!nome)               { err.textContent='Informe seu nome'; return; }
   if (!email.includes('@')){ err.textContent='E-mail inválido'; return; }
-  if (pass.length < 6)    { err.textContent='Senha deve ter pelo menos 6 caracteres'; return; }
-  if (pass !== pass2)     { err.textContent='As senhas não coincidem'; return; }
+  if (pass.length < 6)     { err.textContent='Senha deve ter pelo menos 6 caracteres'; return; }
+  if (pass !== pass2)      { err.textContent='As senhas não coincidem'; return; }
 
   err.textContent = '';
   btn.disabled = true;
   btn.textContent = 'Criando conta...';
 
-  const res = await sbSignUp(email, pass, nome);
+  try {
+    const res = await sbSignUp(email, pass, nome);
+    console.log('Signup response:', res.status, JSON.stringify(res.data).substring(0,200));
 
-  if (res.ok && res.data.access_token) {
-    btn.textContent = '✓ Conta criada!';
-    setTimeout(async () => {
+    // Success with token — auto login
+    if (res.data && res.data.access_token) {
+      btn.textContent = '✓ Entrando...';
       const profile = await getProfile();
-      if (profile) showDashboard(profile, getDaysLeft(profile.trial_expira));
-      else { document.getElementById('auth-overlay').style.display='none'; location.reload(); }
+      if (profile) {
+        showDashboard(profile, getDaysLeft(profile.trial_expira));
+      } else {
+        // Profile may take a moment — try once more
+        await new Promise(r => setTimeout(r, 1500));
+        const profile2 = await getProfile();
+        showDashboard(profile2 || {nome, email, plano:'trial', trial_expira: new Date(Date.now()+7*86400000).toISOString(), assinante:false}, 7);
+      }
+      document.getElementById('auth-overlay').style.display = 'none';
       await loadDadosFromDB();
-    }, 800);
-  } else {
-    const msg = res.data?.msg || res.data?.message || res.data?.error_description || 'Erro ao criar conta.';
-    if (msg.includes('already registered')) {
-      err.textContent = 'E-mail já cadastrado. Faça login.';
-      switchTab('login');
-    } else {
-      err.textContent = msg;
+      return;
     }
+
+    // Supabase returned user but no token = email confirmation required
+    if (res.data && res.data.user && !res.data.session) {
+      err.style.color = 'var(--green)';
+      err.textContent = '✓ Conta criada! Verifique seu e-mail para confirmar e depois faça login.';
+      btn.textContent = 'Ir para Login';
+      btn.disabled = false;
+      btn.onclick = () => switchTab('login');
+      return;
+    }
+
+    // Error cases
+    const errData = res.data || {};
+    const msg = errData.error_description || errData.msg || errData.message || errData.error || '';
+    if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
+      err.style.color = '#EF4444';
+      err.textContent = 'E-mail já cadastrado. Faça login abaixo.';
+      btn.disabled = false;
+      btn.textContent = 'Criar Conta e Começar →';
+      setTimeout(() => switchTab('login'), 1500);
+    } else if (res.status === 403 || msg.includes('not allowed') || msg.includes('allowlist')) {
+      err.style.color = '#EF4444';
+      err.textContent = 'Domínio não autorizado no Supabase. Configure em Authentication → URL Configuration.';
+      btn.disabled = false;
+      btn.textContent = 'Criar Conta e Começar →';
+    } else if (msg) {
+      err.style.color = '#EF4444';
+      err.textContent = msg;
+      btn.disabled = false;
+      btn.textContent = 'Criar Conta e Começar →';
+    } else {
+      // Unknown error — show status for debugging
+      err.style.color = '#EF4444';
+      err.textContent = 'Erro ' + res.status + '. Tente novamente.';
+      btn.disabled = false;
+      btn.textContent = 'Criar Conta e Começar →';
+      console.error('Unknown signup error:', res);
+    }
+  } catch(e) {
+    console.error('Register exception:', e);
+    err.style.color = '#EF4444';
+    err.textContent = 'Erro de conexão: ' + e.message;
     btn.disabled = false;
     btn.textContent = 'Criar Conta e Começar →';
   }
@@ -1371,19 +1415,38 @@ async function doLogin() {
   btn.disabled = true;
   btn.textContent = 'Entrando...';
 
-  const res = await sbSignIn(email, pass);
+  try {
+    const res = await sbSignIn(email, pass);
+    console.log('Login response:', res.status, JSON.stringify(res.data).substring(0,200));
 
-  if (res.ok && res.data.access_token) {
-    btn.textContent = '✓ Bem-vindo!';
-    setTimeout(async () => {
+    if (res.data && res.data.access_token) {
+      btn.textContent = '✓ Bem-vindo!';
       const profile = await getProfile();
-      if (profile) showDashboard(profile, getDaysLeft(profile.trial_expira));
-      else { document.getElementById('auth-overlay').style.display='none'; }
+      if (profile) {
+        showDashboard(profile, getDaysLeft(profile.trial_expira));
+      } else {
+        // Profile trigger may not have run — create minimal profile display
+        showDashboard({nome: email.split('@')[0], email, plano:'trial', trial_expira: new Date(Date.now()+7*86400000).toISOString(), assinante:false}, 7);
+      }
+      document.getElementById('auth-overlay').style.display = 'none';
       await loadDadosFromDB();
-    }, 600);
-  } else {
-    const msg = res.data?.error_description || res.data?.msg || 'E-mail ou senha incorretos.';
-    err.textContent = msg;
+    } else {
+      const errData = res.data || {};
+      const msg = errData.error_description || errData.msg || errData.message || errData.error || '';
+      if (msg.toLowerCase().includes('email not confirmed')) {
+        err.style.color = '#F7931A';
+        err.textContent = 'Confirme seu e-mail antes de fazer login. Verifique sua caixa de entrada.';
+      } else if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('credentials')) {
+        err.textContent = 'E-mail ou senha incorretos.';
+      } else {
+        err.textContent = msg || 'Erro ao fazer login. Tente novamente.';
+      }
+      btn.disabled = false;
+      btn.textContent = 'Entrar →';
+    }
+  } catch(e) {
+    console.error('Login exception:', e);
+    err.textContent = 'Erro de conexão: ' + e.message;
     btn.disabled = false;
     btn.textContent = 'Entrar →';
   }
