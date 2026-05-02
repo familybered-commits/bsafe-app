@@ -12,6 +12,7 @@ const T = {
   'nav.planos':   { pt:'Planos',        en:'Plans',        it:'Piani' },
   'nav.assinar':  { pt:'Assinar Pro',   en:'Subscribe Pro',it:'Abbonati Pro' },
   'nav.comecar':  { pt:'Começar Agora', en:'Get Started',  it:'Inizia Ora' },
+  'nav.dashboard':{ pt:'Dashboard',    en:'Dashboard',    it:'Dashboard' },
   'footer.disc':  { pt:'⚠ Conteúdo educacional. Não é recomendação de investimento. BSafe Invest não é corretora nem consultora de valores mobiliários.', en:'⚠ Educational content only. Not investment advice. BSafe Invest is not a broker or investment advisor.', it:'⚠ Solo contenuto educativo. Non è una consulenza finanziaria. BSafe Invest non è un broker né un consulente di investimenti.' },
 
   // ─── HOMEPAGE ────────────────────────────────────────────────────

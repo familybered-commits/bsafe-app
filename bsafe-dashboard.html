@@ -234,6 +234,50 @@ canvas{width:100%!important;height:100%!important}
   .content{padding:16px}
   .topbar{padding:14px 16px}
 }
+
+/* ── TRIAL SYSTEM ─────────────────────────────────────────── */
+.trial-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
+.trial-box{background:var(--bg2);border:1px solid var(--border);border-radius:4px;width:100%;max-width:520px;overflow:hidden;position:relative}
+.trial-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--orange),#ff6b35)}
+.trial-header{padding:32px 36px 24px;text-align:center}
+.trial-logo{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--orange);text-transform:uppercase;margin-bottom:20px}
+.trial-icon{font-size:52px;margin-bottom:16px;display:block}
+.trial-title{font-size:26px;font-weight:900;color:var(--white);letter-spacing:-1px;margin-bottom:10px;line-height:1.1}
+.trial-title em{font-style:normal;color:var(--orange)}
+.trial-sub{font-size:15px;color:var(--muted);line-height:1.7}
+.trial-body{padding:0 36px 28px}
+.trial-form{display:flex;flex-direction:column;gap:14px;margin-bottom:20px}
+.trial-input{background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:13px 16px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:14px;outline:none;transition:border-color .2s;width:100%}
+.trial-input:focus{border-color:var(--orange)}
+.trial-input::placeholder{color:var(--muted2)}
+.trial-btn{width:100%;padding:16px;background:var(--orange);color:#fff;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:2px;cursor:pointer;transition:opacity .2s}
+.trial-btn:hover{opacity:.85}
+.trial-btn:disabled{opacity:.5;cursor:not-allowed}
+.trial-terms{font-size:11px;color:var(--muted);text-align:center;line-height:1.6}
+.trial-terms a{color:var(--orange);text-decoration:none}
+.trial-divider{height:1px;background:var(--border-dim);margin:20px 0;position:relative;text-align:center}
+.trial-divider span{background:var(--bg2);padding:0 12px;font-size:11px;color:var(--muted);position:relative;top:-6px;font-family:'DM Mono',monospace;letter-spacing:1px}
+.trial-pro-btn{width:100%;padding:14px;background:transparent;color:var(--orange);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:all .2s}
+.trial-pro-btn:hover{background:var(--orange-dim)}
+
+/* TRIAL BANNER (active trial) */
+.trial-banner{background:linear-gradient(90deg,rgba(232,71,10,0.12),rgba(232,71,10,0.06));border-bottom:1px solid var(--border);padding:10px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.trial-banner-text{font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px}
+.trial-banner-text strong{color:var(--orange)}
+.trial-days{font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:var(--orange);background:var(--orange-dim);border:1px solid var(--border);padding:4px 14px;border-radius:2px}
+.trial-upgrade-btn{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:8px 18px;background:var(--orange);color:#fff;border:none;border-radius:2px;cursor:pointer;transition:opacity .2s;white-space:nowrap}
+.trial-upgrade-btn:hover{opacity:.85}
+
+/* EXPIRED OVERLAY */
+.expired-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
+.expired-overlay.show{display:flex}
+.expired-box{background:var(--bg2);border:1px solid var(--border);border-radius:4px;max-width:480px;width:100%;text-align:center;padding:48px 36px;position:relative;overflow:hidden}
+.expired-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--orange),#ff6b35)}
+.expired-icon{font-size:56px;margin-bottom:20px;display:block}
+.expired-title{font-size:26px;font-weight:900;color:var(--white);margin-bottom:12px;letter-spacing:-1px}
+.expired-sub{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:32px}
+.expired-sub strong{color:var(--text)}
+
 </style>
 <script src="bsafe-i18n.js"></script>
 </head>
@@ -1057,6 +1101,7 @@ function refreshAll() {
 
 // ── INIT ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  checkTrialStatus();
   buildChart();
   renderPortfolio();
   renderHistorico();
@@ -1070,6 +1115,124 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchPrices();
   setInterval(fetchPrices, 30000);
 });
+
+
+// ── TRIAL SYSTEM ─────────────────────────────────────────────
+const TRIAL_KEY   = 'bsafe_trial';
+const TRIAL_DAYS  = 7;
+
+function getTrialData() {
+  try { return JSON.parse(localStorage.getItem(TRIAL_KEY)) || null; }
+  catch(e) { return null; }
+}
+
+function saveTrialData(data) {
+  localStorage.setItem(TRIAL_KEY, JSON.stringify(data));
+}
+
+function getDaysLeft(startDate) {
+  const start = new Date(startDate);
+  const now   = new Date();
+  const diff  = Math.ceil((start.getTime() + TRIAL_DAYS * 86400000 - now.getTime()) / 86400000);
+  return Math.max(0, diff);
+}
+
+function checkTrialStatus() {
+  const trial = getTrialData();
+
+  // No trial started → show gate
+  if (!trial) {
+    document.getElementById('trial-overlay').style.display = 'flex';
+    return;
+  }
+
+  const daysLeft = getDaysLeft(trial.startDate);
+
+  // Trial expired → show expired overlay
+  if (daysLeft === 0) {
+    document.getElementById('expired-overlay').classList.add('show');
+    return;
+  }
+
+  // Trial active → show banner
+  showTrialBanner(trial.name, daysLeft);
+}
+
+function showTrialBanner(name, daysLeft) {
+  const banner = document.getElementById('trial-banner');
+  banner.style.display = 'flex';
+
+  // Insert banner right after <main>
+  const main = document.querySelector('.main');
+  const topbar = document.querySelector('.topbar');
+  if (main && topbar) {
+    main.insertBefore(banner, topbar);
+  }
+
+  document.getElementById('trial-user-name').textContent = name || 'você';
+  document.getElementById('trial-days-left').textContent = daysLeft;
+
+  // Color urgency
+  if (daysLeft <= 2) {
+    document.getElementById('trial-days-left').style.color = '#EF4444';
+    document.getElementById('trial-days-left').style.borderColor = 'rgba(239,68,68,0.3)';
+  }
+}
+
+function startTrial() {
+  const name  = document.getElementById('trial-name').value.trim();
+  const email = document.getElementById('trial-email').value.trim();
+
+  if (!name) {
+    document.getElementById('trial-name').focus();
+    document.getElementById('trial-name').style.borderColor = 'var(--orange)';
+    return;
+  }
+  if (!email || !email.includes('@')) {
+    document.getElementById('trial-email').focus();
+    document.getElementById('trial-email').style.borderColor = 'var(--orange)';
+    return;
+  }
+
+  const btn = document.getElementById('trial-start-btn');
+  btn.disabled = true;
+  btn.textContent = 'Iniciando...';
+
+  const trialData = {
+    name,
+    email,
+    startDate: new Date().toISOString(),
+    plan: 'trial'
+  };
+
+  saveTrialData(trialData);
+
+  setTimeout(() => {
+    document.getElementById('trial-overlay').style.display = 'none';
+    showTrialBanner(name, TRIAL_DAYS);
+    showToast('🎉 Trial iniciado! Bom uso, ' + name + '!');
+  }, 600);
+}
+
+function loginTrial() {
+  const email = prompt('Digite o e-mail que você usou para iniciar o trial:');
+  if (!email) return;
+
+  const trial = getTrialData();
+  if (trial && trial.email.toLowerCase() === email.toLowerCase().trim()) {
+    const daysLeft = getDaysLeft(trial.startDate);
+    if (daysLeft > 0) {
+      document.getElementById('trial-overlay').style.display = 'none';
+      showTrialBanner(trial.name, daysLeft);
+      showToast('✓ Bem-vindo de volta, ' + trial.name + '!');
+    } else {
+      document.getElementById('trial-overlay').style.display = 'none';
+      document.getElementById('expired-overlay').classList.add('show');
+    }
+  } else {
+    alert('E-mail não encontrado. Verifique ou inicie um novo trial.');
+  }
+}
 
 // Close modal on backdrop click
 document.getElementById('report-modal').addEventListener('click', function(e) {
@@ -1166,5 +1329,66 @@ document.getElementById('report-modal').addEventListener('click', function(e) {
 
 <!-- TOAST -->
 <div class="toast-msg" id="toast-msg"></div>
+
+<!-- ── TRIAL GATE ────────────────────────────────────────── -->
+<div class="trial-overlay" id="trial-overlay">
+  <div class="trial-box">
+    <div class="trial-header">
+      <div class="trial-logo">BSafe Invest · Dashboard Pro</div>
+      <span class="trial-icon">📊</span>
+      <div class="trial-title">Acesse grátis por<br><em>7 dias</em></div>
+      <div class="trial-sub">Experimente o dashboard completo sem compromisso. Sem cartão de crédito.</div>
+    </div>
+    <div class="trial-body">
+      <div class="trial-form">
+        <input type="text" class="trial-input" id="trial-name" placeholder="Seu nome" autocomplete="name">
+        <input type="email" class="trial-input" id="trial-email" placeholder="Seu melhor e-mail" autocomplete="email">
+      </div>
+      <button class="trial-btn" id="trial-start-btn" onclick="startTrial()">
+        Começar Trial Gratuito de 7 Dias →
+      </button>
+      <div class="trial-terms" style="margin-top:12px">
+        Ao continuar você concorda com os <a href="bsafe-termos.html">Termos de Uso</a>.
+        Conteúdo educacional — não é recomendação de investimento.
+      </div>
+      <div class="trial-divider"><span>JÁ TEM CONTA?</span></div>
+      <button class="trial-pro-btn" onclick="loginTrial()">Entrar com meu e-mail</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TRIAL BANNER (shown when trial active) ─────────────── -->
+<div class="trial-banner" id="trial-banner" style="display:none">
+  <div class="trial-banner-text">
+    🎯 Trial ativo — <strong id="trial-user-name">você</strong> está testando o Dashboard Pro
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="font-size:12px;color:var(--muted)">Restam</div>
+    <div class="trial-days" id="trial-days-left">7</div>
+    <div style="font-size:12px;color:var(--muted)">dias</div>
+    <button class="trial-upgrade-btn" onclick="window.location.href='bsafe-planos.html'">
+      Assinar Pro →
+    </button>
+  </div>
+</div>
+
+<!-- ── EXPIRED OVERLAY ───────────────────────────────────── -->
+<div class="expired-overlay" id="expired-overlay">
+  <div class="expired-box">
+    <span class="expired-icon">⏰</span>
+    <div class="expired-title">Seu trial encerrou</div>
+    <div class="expired-sub">
+      Os <strong>7 dias gratuitos</strong> do Dashboard Pro chegaram ao fim.<br>
+      Assine o plano Pro para continuar acompanhando seu patrimônio internacional.
+    </div>
+    <button class="trial-btn" onclick="window.location.href='bsafe-planos.html'" style="margin-bottom:12px">
+      Ver Planos e Assinar →
+    </button>
+    <div style="font-size:12px;color:var(--muted)">
+      Dúvidas? <a href="https://wa.me/5551999853576" style="color:var(--orange);text-decoration:none">Fale com Rafael</a>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
