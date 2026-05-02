@@ -311,13 +311,13 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
   <div class="hero-grid"></div>
   <div class="hero-inner">
     <div>
-      <div class="hero-tag">Guia Completo · Wise</div>
-      <h1 class="hero-title">Câmbio sem<br>taxas <em>abusivas</em></h1>
+      <div class="hero-tag" data-i18n="wise.tag">Guia Completo · Wise</div>
+      <h1 class="hero-title" data-i18n="wise.title1">Câmbio sem<br><em data-i18n="wise.title2">taxas abusivas</em></h1>
       <p class="hero-sub">A Wise cobra a taxa de câmbio real do mercado, sem IOF escondido em spread. Converta seus reais em dólares e envie direto para sua conta na IBKR com o menor custo possível.</p>
       <div class="hero-badge-row">
-        <div class="badge wise">✓ Taxa de câmbio real (mid-market)</div>
-        <div class="badge wise">✓ Sem spread escondido</div>
-        <div class="badge orange">💱 Até 8x mais barato que bancos</div>
+        <div class="badge wise" data-i18n="wise.badge1">✓ Taxa de câmbio real (mid-market)</div>
+        <div class="badge wise" data-i18n="wise.badge2">✓ Sem spread escondido</div>
+        <div class="badge orange" data-i18n="wise.badge3">💱 Até 8x mais barato que bancos</div>
       </div>
       <div>
         <a href="#steps" class="btn-primary">Começar o Guia →</a>
@@ -348,8 +348,8 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
         </div>
       </div>
       <div class="sim-box">
-        <div class="sim-title">💱 Simulador de Câmbio</div>
-        <div class="sim-label">Quanto você quer enviar (R$)</div>
+        <div class="sim-title" data-i18n="wise.sim_title">💱 Simulador de Câmbio</div>
+        <div class="sim-label" data-i18n="wise.sim_label">Quanto você quer enviar (R$)</div>
         <input type="number" class="sim-input" id="sim-valor" value="5000" oninput="simular()">
         <div class="sim-result">
           <div class="sim-result-val" id="sim-usd">US$ —</div>
@@ -373,8 +373,8 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
 <!-- STEPS -->
 <section class="steps-section fade-in" id="steps">
   <div class="steps-inner">
-    <div class="section-tag">Passo a Passo</div>
-    <h2 class="section-title">Do real ao dólar na IBKR</h2>
+    <div class="section-tag" data-i18n="wise.steps_tag">Passo a Passo</div>
+    <h2 class="section-title" data-i18n="wise.steps_title">Do real ao dólar na IBKR</h2>
     <p class="section-sub">5 etapas para converter seus reais e depositar na corretora com o menor custo do mercado.</p>
     <div class="step-list">
 
@@ -382,7 +382,7 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
         <div class="step-num-col"><div class="step-num" id="sn1">01</div></div>
         <div class="step-body">
           <div class="step-header">
-            <div class="step-title">Criar sua conta na Wise</div>
+            <div class="step-title" data-i18n="wise.s1_title">Criar sua conta na Wise</div>
             <div class="step-meta"><span class="step-time">⏱ 10 min</span><div class="step-toggle" id="st1">+</div></div>
           </div>
           <div class="step-preview">Acesse wise.com e crie sua conta com e-mail ou Google. É gratuito e sem mensalidade.</div>
@@ -406,7 +406,7 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
         <div class="step-num-col"><div class="step-num" id="sn2">02</div></div>
         <div class="step-body">
           <div class="step-header">
-            <div class="step-title">Verificar sua identidade (KYC)</div>
+            <div class="step-title" data-i18n="wise.s2_title">Verificar sua identidade (KYC)</div>
             <div class="step-meta"><span class="step-time">⏱ 10–15 min</span><div class="step-toggle" id="st2">+</div></div>
           </div>
           <div class="step-preview">Envie RG ou CNH e um selfie para liberar transferências internacionais.</div>
@@ -429,7 +429,7 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
         <div class="step-num-col"><div class="step-num" id="sn3">03</div></div>
         <div class="step-body">
           <div class="step-header">
-            <div class="step-title">Adicionar reais à sua conta Wise</div>
+            <div class="step-title" data-i18n="wise.s3_title">Adicionar reais à sua conta Wise</div>
             <div class="step-meta"><span class="step-time">⏱ 5 min</span><div class="step-toggle" id="st3">+</div></div>
           </div>
           <div class="step-preview">Deposite reais via Pix ou TED diretamente na sua conta Wise em BRL.</div>
@@ -452,7 +452,7 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
         <div class="step-num-col"><div class="step-num" id="sn4">04</div></div>
         <div class="step-body">
           <div class="step-header">
-            <div class="step-title">Converter BRL para USD</div>
+            <div class="step-title" data-i18n="wise.s4_title">Converter BRL para USD</div>
             <div class="step-meta"><span class="step-time">⏱ 2 min</span><div class="step-toggle" id="st4">+</div></div>
           </div>
           <div class="step-preview">Converta seus reais para dólares com a taxa real de câmbio, sem spread escondido.</div>
@@ -475,7 +475,7 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
         <div class="step-num-col"><div class="step-num" id="sn5">05</div></div>
         <div class="step-body">
           <div class="step-header">
-            <div class="step-title">Enviar dólares para a IBKR</div>
+            <div class="step-title" data-i18n="wise.s5_title">Enviar dólares para a IBKR</div>
             <div class="step-meta"><span class="step-time">⏱ 5 min</span><div class="step-toggle" id="st5">+</div></div>
           </div>
           <div class="step-preview">Faça uma Wire Transfer dos seus dólares na Wise para a sua conta bancária americana na IBKR.</div>
@@ -509,14 +509,14 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
 <!-- LUCAS -->
 <section class="lucas-section fade-in">
   <div class="lucas-inner">
-    <div class="section-tag">Assistente BSafe</div>
+    <div class="section-tag" data-i18n="wise.lucas_tag">Assistente BSafe</div>
     <h2 class="section-title" style="margin-bottom:24px">Dúvidas? Fale com o <span style="color:var(--wise)">Lucas</span></h2>
     <div class="lucas-wrap">
       <div class="lucas-header">
         <div class="lucas-avatar">💱</div>
         <div>
           <div class="lucas-name">Lucas</div>
-          <div class="lucas-role">Especialista em Câmbio e Wise · BSafe Invest</div>
+          <div class="lucas-role" data-i18n="wise.lucas_role">Especialista em Câmbio e Wise · BSafe Invest</div>
         </div>
         <div class="lucas-status"><span class="status-dot"></span>Online agora</div>
       </div>
@@ -530,11 +530,11 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
         </div>
       </div>
       <div class="chat-quick">
-        <button class="quick-btn" onclick="sendQuick('Qual a taxa da Wise para converter BRL para USD?')">💸 Qual a taxa?</button>
-        <button class="quick-btn" onclick="sendQuick('Quanto de IOF eu pago na Wise?')">📋 IOF na Wise?</button>
-        <button class="quick-btn" onclick="sendQuick('Quanto tempo leva para o dinheiro chegar na IBKR?')">⏱ Quanto tempo?</button>
-        <button class="quick-btn" onclick="sendQuick('Qual o valor mínimo para transferir pela Wise?')">💵 Valor mínimo?</button>
-        <button class="quick-btn" onclick="sendQuick('A Wise é segura para brasileiros?')">🔒 É segura?</button>
+        <button class="quick-btn" onclick="sendQuick('Qual a taxa da Wise para converter BRL para USD?')" data-i18n="wise.q1">💸 Qual a taxa?</button>
+        <button class="quick-btn" onclick="sendQuick('Quanto de IOF eu pago na Wise?')" data-i18n="wise.q2">📋 IOF na Wise?</button>
+        <button class="quick-btn" onclick="sendQuick('Quanto tempo leva para o dinheiro chegar na IBKR?')" data-i18n="wise.q3">⏱ Quanto tempo?</button>
+        <button class="quick-btn" onclick="sendQuick('Qual o valor mínimo para transferir pela Wise?')" data-i18n="wise.q4">💵 Valor mínimo?</button>
+        <button class="quick-btn" onclick="sendQuick('A Wise é segura para brasileiros?')" data-i18n="wise.q5">🔒 É segura?</button>
       </div>
       <div class="chat-input-area">
         <input type="text" class="chat-input" id="chat-input" placeholder="Digite sua dúvida sobre câmbio ou Wise..." onkeypress="if(event.key==='Enter')sendMsg()">
@@ -547,8 +547,8 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
 <!-- COMPARATIVO -->
 <section class="compare-section fade-in">
   <div class="compare-inner">
-    <div class="section-tag">Comparativo</div>
-    <h2 class="section-title">Wise vs Banco Tradicional</h2>
+    <div class="section-tag" data-i18n="wise.cmp_tag">Comparativo</div>
+    <h2 class="section-title" data-i18n="wise.cmp_title">Wise vs Banco Tradicional</h2>
     <div class="compare-grid">
       <div class="compare-item">
         <div class="compare-icon">🏦</div>
@@ -611,8 +611,8 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
 <!-- FAQ -->
 <section class="faq-section fade-in">
   <div class="faq-inner">
-    <div class="section-tag">Perguntas Frequentes</div>
-    <h2 class="section-title">Dúvidas comuns</h2>
+    <div class="section-tag" data-i18n="wise.faq_tag">Perguntas Frequentes</div>
+    <h2 class="section-title" data-i18n="wise.faq_title">Dúvidas comuns</h2>
     <div class="faq-list">
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)">A Wise é legal no Brasil? <span class="faq-icon">+</span></div>

@@ -691,10 +691,10 @@
 <section class="hero">
   <div class="hero-bg"></div>
   <div class="hero-grid"></div>
-  <div class="hero-tag">⚠ Seu dinheiro está encolhendo</div>
+  <div class="hero-tag" data-i18n="inf.alert">⚠ Seu dinheiro está encolhendo</div>
   <h1 class="hero-title">
     A Inflação Real<br>
-    do Seu <em>Real</em>
+    do Seu <em data-i18n="inf.title3">Real</em>
   </h1>
   <p class="hero-sub">
     Enquanto você lê isso, o poder de compra do seu dinheiro está diminuindo. 
@@ -739,24 +739,24 @@
 
 <!-- WHY SECTION -->
 <section class="section fade-in" id="entenda">
-  <div class="section-tag">Entenda o problema</div>
-  <h2 class="section-title">Por que seu dinheiro<br>perde valor todo ano?</h2>
-  <p class="section-sub">Não é azar. É estrutural.</p>
+  <div class="section-tag" data-i18n="inf.why_tag">Entenda o problema</div>
+  <h2 class="section-title" data-i18n="inf.why_title">Por que seu dinheiro<br>perde valor todo ano?</h2>
+  <p class="section-sub" data-i18n="inf.why_sub">Não é azar. É estrutural.</p>
 
   <div class="why-grid">
     <div class="why-item">
       <div class="why-icon">🏦</div>
-      <div class="why-title">Emissão de Moeda</div>
+      <div class="why-title" data-i18n="inf.c1_title">Emissão de Moeda</div>
       <div class="why-text">O governo imprime reais para pagar dívidas. Mais dinheiro em circulação = cada real vale menos. É matemática, não política.</div>
     </div>
     <div class="why-item">
       <div class="why-icon">📉</div>
-      <div class="why-title">IPCA Subestimado</div>
+      <div class="why-title" data-i18n="inf.c2_title">IPCA Subestimado</div>
       <div class="why-text">A inflação oficial não captura a realidade do brasileiro médio. Aluguel, saúde e educação sobem muito mais que o índice oficial.</div>
     </div>
     <div class="why-item">
       <div class="why-icon">💸</div>
-      <div class="why-title">Câmbio Crônico</div>
+      <div class="why-title" data-i18n="inf.c3_title">Câmbio Crônico</div>
       <div class="why-text">Em 10 anos, o real perdeu mais de 60% do valor contra o dólar. Quem guardou em BRL perdeu. Quem dolarizou, protegeu.</div>
     </div>
   </div>
@@ -782,21 +782,21 @@
 
 <!-- CALCULATOR -->
 <section class="section fade-in" id="calculadora">
-  <div class="section-tag">Calculadora BSafe</div>
-  <h2 class="section-title">Quanto você perdeu?</h2>
+  <div class="section-tag" data-i18n="inf.calc_tag">Calculadora BSafe</div>
+  <h2 class="section-title" data-i18n="inf.calc_title">Quanto você perdeu?</h2>
   <p class="section-sub">Insira o valor e o período para ver o impacto real da inflação no seu patrimônio.</p>
 
   <div class="calc-card">
     <div class="calc-grid">
       <div class="input-group">
-        <label class="input-label">Valor em Reais (R$)</label>
+        <label class="input-label" data-i18n="inf.lbl_valor">Valor em Reais (R$)</label>
         <div class="input-wrap">
           <span class="input-prefix">R$</span>
           <input type="number" class="calc-input" id="valor" value="10000" min="1">
         </div>
       </div>
       <div class="input-group">
-        <label class="input-label">Ano de referência</label>
+        <label class="input-label" data-i18n="inf.lbl_ano">Ano de referência</label>
         <div class="input-wrap">
           <input type="number" class="calc-input no-prefix" id="ano" value="2019" min="2000" max="2024">
         </div>
@@ -810,17 +810,17 @@
 
       <div class="result-grid">
         <div class="result-item">
-          <div class="result-item-label">Valor Original (BRL)</div>
+          <div class="result-item-label" data-i18n="inf.r1">Valor Original (BRL)</div>
           <div class="result-item-value" id="r-original">—</div>
           <div class="result-item-sub" id="r-ano-orig">—</div>
         </div>
         <div class="result-item">
-          <div class="result-item-label">Valor Corrigido Hoje</div>
+          <div class="result-item-label" data-i18n="inf.r2">Valor Corrigido Hoje</div>
           <div class="result-item-value loss" id="r-corrigido">—</div>
           <div class="result-item-sub">necessário para equivalência</div>
         </div>
         <div class="result-item highlight">
-          <div class="result-item-label">Perda Real de Poder</div>
+          <div class="result-item-label" data-i18n="inf.r3">Perda Real de Poder</div>
           <div class="result-item-value orange" id="r-perda">—</div>
           <div class="result-item-sub" id="r-perda-pct">—</div>
         </div>
@@ -828,24 +828,24 @@
 
       <div class="result-grid">
         <div class="result-item">
-          <div class="result-item-label">Em USD (época)</div>
+          <div class="result-item-label" data-i18n="inf.r4">Em USD (época)</div>
           <div class="result-item-value" id="r-usd-orig">—</div>
           <div class="result-item-sub" id="r-usd-orig-rate">—</div>
         </div>
         <div class="result-item">
-          <div class="result-item-label">Equivalente hoje (USD)</div>
+          <div class="result-item-label" data-i18n="inf.r5">Equivalente hoje (USD)</div>
           <div class="result-item-value gain" id="r-usd-hoje">—</div>
           <div class="result-item-sub">se tivesse dolarizado</div>
         </div>
         <div class="result-item">
-          <div class="result-item-label">Ganho Dolarizando</div>
+          <div class="result-item-label" data-i18n="inf.r6">Ganho Dolarizando</div>
           <div class="result-item-value gain" id="r-ganho-usd">—</div>
           <div class="result-item-sub" id="r-ganho-pct">vs guardar em BRL</div>
         </div>
       </div>
 
       <div class="chart-wrap">
-        <div class="chart-title">Evolução do Poder de Compra — BRL vs Dólar</div>
+        <div class="chart-title" data-i18n="inf.chart_title">Evolução do Poder de Compra — BRL vs Dólar</div>
         <canvas id="myChart"></canvas>
       </div>
 

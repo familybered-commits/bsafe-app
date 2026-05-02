@@ -281,7 +281,7 @@ canvas{width:100%!important;height:100%!important}
   <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-left">
-      <div class="topbar-title">Visão Geral do Patrimônio</div>
+      <div class="topbar-title" data-i18n="dash.title">Visão Geral do Patrimônio</div>
       <div class="topbar-sub">ATUALIZADO AGORA · <span id="last-update">—</span></div>
     </div>
     <div class="topbar-right">
@@ -298,25 +298,25 @@ canvas{width:100%!important;height:100%!important}
     <div class="kpi-grid fade-in">
       <div class="kpi-card kpi-orange">
         <div class="kpi-icon">💼</div>
-        <div class="kpi-label">Patrimônio Total (BRL)</div>
+        <div class="kpi-label" data-i18n="dash.kpi1">Patrimônio Total (BRL)</div>
         <div class="kpi-value" id="kpi-total-brl">R$ —</div>
         <div class="kpi-sub"><span class="kpi-change up" id="kpi-total-change">—</span> vs mês anterior</div>
       </div>
       <div class="kpi-card kpi-green">
         <div class="kpi-icon">🌍</div>
-        <div class="kpi-label">Carteira IBKR (USD)</div>
+        <div class="kpi-label" data-i18n="dash.kpi2">Carteira IBKR (USD)</div>
         <div class="kpi-value" id="kpi-ibkr-usd">US$ —</div>
         <div class="kpi-sub"><span class="kpi-change up" id="kpi-ibkr-change">—</span> este mês</div>
       </div>
       <div class="kpi-card kpi-btc">
         <div class="kpi-icon">₿</div>
-        <div class="kpi-label">Bitcoin (BTC)</div>
+        <div class="kpi-label" data-i18n="dash.kpi3">Bitcoin (BTC)</div>
         <div class="kpi-value" id="kpi-btc">₿ —</div>
         <div class="kpi-sub">≈ <span id="kpi-btc-brl">—</span></div>
       </div>
       <div class="kpi-card kpi-blue">
         <div class="kpi-icon">🛡️</div>
-        <div class="kpi-label">% Protegido do Real</div>
+        <div class="kpi-label" data-i18n="dash.kpi4">% Protegido do Real</div>
         <div class="kpi-value" id="kpi-protected">—%</div>
         <div class="kpi-sub">patrimônio dolarizado + BTC</div>
       </div>
@@ -326,7 +326,7 @@ canvas{width:100%!important;height:100%!important}
     <div class="dash-grid">
       <div class="card fade-in">
         <div class="card-header">
-          <span class="card-title">Evolução do Patrimônio — 12 meses</span>
+          <span class="card-title" data-i18n="dash.chart_title">Evolução do Patrimônio — 12 meses</span>
           <span class="card-tag tag-live">LIVE</span>
         </div>
         <div class="card-body">
@@ -338,7 +338,7 @@ canvas{width:100%!important;height:100%!important}
 
       <div class="card fade-in">
         <div class="card-header">
-          <span class="card-title">Alocação de Ativos</span>
+          <span class="card-title" data-i18n="dash.alloc">Alocação de Ativos</span>
           <span class="card-tag tag-pro">PRO</span>
         </div>
         <div class="card-body">
@@ -391,7 +391,7 @@ canvas{width:100%!important;height:100%!important}
     <div class="dash-grid-3">
       <div class="card fade-in">
         <div class="card-header">
-          <span class="card-title">Carteira IBKR — Posições</span>
+          <span class="card-title" data-i18n="dash.ibkr_pos">Carteira IBKR — Posições</span>
           <span class="card-tag tag-live">READ-ONLY</span>
         </div>
         <div class="card-body" style="padding:0">
@@ -415,12 +415,12 @@ canvas{width:100%!important;height:100%!important}
 
       <div class="card fade-in">
         <div class="card-header">
-          <span class="card-title">Monitor Bitcoin</span>
+          <span class="card-title" data-i18n="dash.btc_mon">Monitor Bitcoin</span>
           <span class="card-tag" style="background:var(--btc-dim);color:var(--btc);border:1px solid rgba(247,147,26,.2)">MEMPOOL</span>
         </div>
         <div class="btc-monitor">
           <div class="btc-address-row">
-            <input class="btc-address-input" id="btc-xpub" placeholder="Cole seu xpub ou endereço Bitcoin..." type="text">
+            <input class="btc-address-input" id="btc-xpub" placeholder="Cole seu xpub ou endereço Bitcoin..." data-i18n="dash.btc_ph" type="text">
             <button class="btc-check-btn" onclick="fetchBTC()">Consultar</button>
           </div>
           <div class="btc-stats">
@@ -488,7 +488,7 @@ canvas{width:100%!important;height:100%!important}
 
       <div class="card fade-in">
         <div class="card-header">
-          <span class="card-title">Macro — Indicadores</span>
+          <span class="card-title" data-i18n="dash.macro">Macro — Indicadores</span>
           <span class="card-tag tag-live">LIVE</span>
         </div>
         <div class="card-body">
