@@ -1020,7 +1020,7 @@ function renderHistorico() {
       <td><div class="h-val">R$ ${l.cambio.toFixed(2)}</div></td>
       <td><div class="h-val ${rentabClass}">${rentab}</div></td>
       <td>${l.notas ? '<span style="font-size:11px;color:var(--muted)" title="'+l.notas+'">📝</span>' : ''}</td>
-      <td><button class="h-del" onclick="deletarLancamento(${l.id})" title="Remover">✕</button></td>
+      <td><button class="h-del" onclick="deletarLancamentoComDB(${l.id})" title="Remover">✕</button></td>
     </tr>`;
   }).join('');
 
@@ -1463,35 +1463,36 @@ async function doForgotPassword() {
   else alert('Erro ao enviar e-mail. Tente novamente.');
 }
 
-// ── OVERRIDE salvarLancamento to use DB ───────────────────────
-const _origSalvar = salvarLancamento;
-salvarLancamento = async function() {
-  const mes = document.getElementById('f-mes').value;
-  const cambio = parseFloat(document.getElementById('f-cambio').value);
-  const ibkrUsd = parseFloat(document.getElementById('f-ibkr-usd').value);
+// ── SALVAR LANÇAMENTO COM SUPABASE ────────────────────────────
+async function salvarLancamentoComDB() {
+  const mes       = document.getElementById('f-mes').value;
+  const cambio    = parseFloat(document.getElementById('f-cambio').value);
+  const ibkrUsd   = parseFloat(document.getElementById('f-ibkr-usd').value);
   const aporteMes = parseFloat(document.getElementById('f-ibkr-aporte').value)||0;
-  const btcQtd = parseFloat(document.getElementById('f-btc').value)||0;
+  const btcQtd    = parseFloat(document.getElementById('f-btc').value)||0;
   const btcPriceMes = parseFloat(document.getElementById('f-btc-price').value)||btcPrice;
   const btcAporte = parseFloat(document.getElementById('f-btc-aporte').value)||0;
-  const notas = document.getElementById('f-notas').value.trim();
+  const notas     = document.getElementById('f-notas').value.trim();
 
-  if (!mes) { showToast('Informe o mês', true); return; }
-  if (!cambio||cambio<=0) { showToast('Informe o câmbio', true); return; }
-  if (!ibkrUsd||ibkrUsd<=0) { showToast('Informe o saldo IBKR', true); return; }
+  if (!mes)              { showToast('Informe o mês', true); return; }
+  if (!cambio||cambio<=0){ showToast('Informe o câmbio', true); return; }
+  if (!ibkrUsd||ibkrUsd<=0){ showToast('Informe o saldo IBKR', true); return; }
 
-  const ibkrBrl = ibkrUsd * cambio;
-  const btcBrl  = btcQtd * btcPriceMes * cambio;
-  const totalBrl = ibkrBrl + btcBrl;
+  const ibkrBrl    = ibkrUsd * cambio;
+  const btcBrl     = btcQtd * btcPriceMes * cambio;
+  const totalBrl   = ibkrBrl + btcBrl;
   const totalAporte = aporteMes * cambio + btcAporte;
 
   const lancamento = {
-    mes, cambio, ibkr_usd:ibkrUsd, ibkr_brl:ibkrBrl,
-    aporte_mes:aporteMes, btc_qtd:btcQtd, btc_price_mes:btcPriceMes,
-    btc_brl:btcBrl, btc_aporte:btcAporte, total_brl:totalBrl,
-    total_aporte:totalAporte,
-    vt: parseFloat(document.getElementById('f-vt').value)||0,
-    voo:parseFloat(document.getElementById('f-voo').value)||0,
-    cash:parseFloat(document.getElementById('f-cash').value)||0,
+    mes, cambio,
+    ibkr_usd: ibkrUsd, ibkr_brl: ibkrBrl,
+    aporte_mes: aporteMes,
+    btc_qtd: btcQtd, btc_price_mes: btcPriceMes,
+    btc_brl: btcBrl, btc_aporte: btcAporte,
+    total_brl: totalBrl, total_aporte: totalAporte,
+    vt:    parseFloat(document.getElementById('f-vt').value)||0,
+    voo:   parseFloat(document.getElementById('f-voo').value)||0,
+    cash:  parseFloat(document.getElementById('f-cash').value)||0,
     outros:parseFloat(document.getElementById('f-outros').value)||0,
     notas
   };
@@ -1510,23 +1511,21 @@ salvarLancamento = async function() {
   } else {
     showToast('Erro ao salvar. Tente novamente.', true);
   }
-};
+}
 
-// ── OVERRIDE deletarLancamento to use DB ──────────────────────
-const _origDeletar = deletarLancamento;
-deletarLancamento = async function(id) {
+// ── DELETAR LANÇAMENTO COM SUPABASE ───────────────────────────
+async function deletarLancamentoComDB(id) {
   if (!confirm('Remover este lançamento?')) return;
   const lista = getLancamentos();
-  const item = lista.find(l => l.id === id);
+  const item  = lista.find(l => l.id === id);
   if (!item) return;
   if (SB_SESSION) await deletarLancamentoDB(item.mes);
-  const nova = lista.filter(l => l.id !== id);
-  saveLancamentos(nova);
+  saveLancamentos(lista.filter(l => l.id !== id));
   renderHistorico();
   updateChartFromLancamentos();
   updateKPIsFromLancamentos();
   showToast('Lançamento removido');
-};
+}
 
 // Close modal on backdrop click
 document.getElementById('report-modal').addEventListener('click', function(e) {
@@ -1617,7 +1616,7 @@ document.getElementById('report-modal').addEventListener('click', function(e) {
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-save" onclick="salvarLancamento()">💾 Salvar Lançamento</button>
+      <button class="btn-save" onclick="salvarLancamentoComDB()">💾 Salvar Lançamento</button>
     </div>
   </div>
 </div>
