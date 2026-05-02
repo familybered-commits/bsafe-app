@@ -1159,59 +1159,90 @@ function checkTrialStatus() {
 }
 
 function showTrialBanner(name, daysLeft) {
-  const banner = document.getElementById('trial-banner');
-  banner.style.display = 'flex';
-
-  // Insert banner right after <main>
-  const main = document.querySelector('.main');
-  const topbar = document.querySelector('.topbar');
-  if (main && topbar) {
-    main.insertBefore(banner, topbar);
-  }
-
-  document.getElementById('trial-user-name').textContent = name || 'você';
-  document.getElementById('trial-days-left').textContent = daysLeft;
-
-  // Color urgency
-  if (daysLeft <= 2) {
-    document.getElementById('trial-days-left').style.color = '#EF4444';
-    document.getElementById('trial-days-left').style.borderColor = 'rgba(239,68,68,0.3)';
-  }
+  try {
+    const banner = document.getElementById('trial-banner');
+    if (!banner) return;
+    banner.style.display = 'flex';
+    // Move banner to top of main content area
+    const topbar = document.querySelector('.topbar');
+    if (topbar && topbar.parentNode) {
+      topbar.parentNode.insertBefore(banner, topbar);
+    }
+    const nameEl = document.getElementById('trial-user-name');
+    const daysEl = document.getElementById('trial-days-left');
+    if (nameEl) nameEl.textContent = name || 'você';
+    if (daysEl) {
+      daysEl.textContent = daysLeft;
+      if (daysLeft <= 2) {
+        daysEl.style.color = '#EF4444';
+        daysEl.style.borderColor = 'rgba(239,68,68,0.3)';
+      }
+    }
+  } catch(e) { console.log('Banner error:', e); }
 }
 
 function startTrial() {
-  const name  = document.getElementById('trial-name').value.trim();
-  const email = document.getElementById('trial-email').value.trim();
+  try {
+    const nameInput  = document.getElementById('trial-name');
+    const emailInput = document.getElementById('trial-email');
+    const name  = nameInput ? nameInput.value.trim() : '';
+    const email = emailInput ? emailInput.value.trim() : '';
 
-  if (!name) {
-    document.getElementById('trial-name').focus();
-    document.getElementById('trial-name').style.borderColor = 'var(--orange)';
-    return;
+    // Validate name
+    if (!name) {
+      if (nameInput) {
+        nameInput.focus();
+        nameInput.style.borderColor = '#E8470A';
+      }
+      return;
+    }
+
+    // Validate email
+    if (!email || !email.includes('@')) {
+      if (emailInput) {
+        emailInput.focus();
+        emailInput.style.borderColor = '#E8470A';
+      }
+      return;
+    }
+
+    // Save trial data
+    const trialData = {
+      name,
+      email,
+      startDate: new Date().toISOString(),
+      plan: 'trial'
+    };
+    saveTrialData(trialData);
+
+    // Update button
+    const btn = document.getElementById('trial-start-btn');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Abrindo dashboard...';
+    }
+
+    // Hide overlay and show dashboard after short delay
+    setTimeout(() => {
+      const overlay = document.getElementById('trial-overlay');
+      if (overlay) overlay.style.display = 'none';
+      showTrialBanner(name, TRIAL_DAYS);
+      // Show simple welcome message
+      const t = document.getElementById('toast-msg');
+      if (t) {
+        t.textContent = '🎉 Bem-vindo ao Dashboard Pro, ' + name + '!';
+        t.className = 'toast-msg';
+        t.style.display = 'block';
+        setTimeout(() => { t.style.display = 'none'; }, 4000);
+      }
+    }, 500);
+
+  } catch(e) {
+    console.error('startTrial error:', e);
+    // Fallback: just hide overlay
+    const overlay = document.getElementById('trial-overlay');
+    if (overlay) overlay.style.display = 'none';
   }
-  if (!email || !email.includes('@')) {
-    document.getElementById('trial-email').focus();
-    document.getElementById('trial-email').style.borderColor = 'var(--orange)';
-    return;
-  }
-
-  const btn = document.getElementById('trial-start-btn');
-  btn.disabled = true;
-  btn.textContent = 'Iniciando...';
-
-  const trialData = {
-    name,
-    email,
-    startDate: new Date().toISOString(),
-    plan: 'trial'
-  };
-
-  saveTrialData(trialData);
-
-  setTimeout(() => {
-    document.getElementById('trial-overlay').style.display = 'none';
-    showTrialBanner(name, TRIAL_DAYS);
-    showToast('🎉 Trial iniciado! Bom uso, ' + name + '!');
-  }, 600);
 }
 
 function loginTrial() {
@@ -1221,13 +1252,13 @@ function loginTrial() {
   const trial = getTrialData();
   if (trial && trial.email.toLowerCase() === email.toLowerCase().trim()) {
     const daysLeft = getDaysLeft(trial.startDate);
+    const overlay = document.getElementById('trial-overlay');
+    if (overlay) overlay.style.display = 'none';
     if (daysLeft > 0) {
-      document.getElementById('trial-overlay').style.display = 'none';
       showTrialBanner(trial.name, daysLeft);
-      showToast('✓ Bem-vindo de volta, ' + trial.name + '!');
     } else {
-      document.getElementById('trial-overlay').style.display = 'none';
-      document.getElementById('expired-overlay').classList.add('show');
+      const exp = document.getElementById('expired-overlay');
+      if (exp) exp.classList.add('show');
     }
   } else {
     alert('E-mail não encontrado. Verifique ou inicie um novo trial.');
