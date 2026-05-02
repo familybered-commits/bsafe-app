@@ -1100,21 +1100,6 @@ function refreshAll() {
 }
 
 // ── INIT ─────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
-  buildChart();
-  renderPortfolio();
-  renderHistorico();
-  const hasDados = getLancamentos().length > 0;
-  if (!hasDados) {
-    updateKPIs();
-  } else {
-    updateKPIsFromLancamentos();
-    updateChartFromLancamentos();
-  }
-  fetchPrices();
-  setInterval(fetchPrices, 30000);
-});
 
 
 // ── SUPABASE CONFIG ───────────────────────────────────────────
@@ -1526,6 +1511,23 @@ async function deletarLancamentoComDB(id) {
   updateKPIsFromLancamentos();
   showToast('Lançamento removido');
 }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuth();
+  buildChart();
+  renderPortfolio();
+  renderHistorico();
+  const hasDados = getLancamentos().length > 0;
+  if (!hasDados) {
+    updateKPIs();
+  } else {
+    updateKPIsFromLancamentos();
+    updateChartFromLancamentos();
+  }
+  fetchPrices();
+  setInterval(fetchPrices, 30000);
+});
 
 // Close modal on backdrop click
 document.getElementById('report-modal').addEventListener('click', function(e) {
