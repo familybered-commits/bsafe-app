@@ -278,6 +278,24 @@ canvas{width:100%!important;height:100%!important}
 .expired-sub{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:32px}
 .expired-sub strong{color:var(--text)}
 
+
+/* ── HAMBURGER MENU ─────────────────────────────────────── */
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:6px;border:none;background:transparent;z-index:301}
+.hamburger span{display:block;width:24px;height:2px;background:var(--text);border-radius:2px;transition:all .3s}
+.hamburger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+.mobile-menu{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,10,10,0.98);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:8px;backdrop-filter:blur(20px)}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:22px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:14px 32px;transition:color .2s;text-align:center}
+.mobile-menu a:hover,.mobile-menu a.active{color:var(--orange)}
+.mobile-menu .mob-dashboard{color:var(--orange)!important;border:1px solid var(--border);border-radius:2px;margin-top:8px}
+.mobile-menu .mob-cta{background:var(--orange);color:#fff!important;border-radius:2px;padding:14px 40px;margin-top:16px}
+.mob-close{position:absolute;top:20px;right:24px;font-size:28px;cursor:pointer;color:var(--muted);background:none;border:none;line-height:1}
+@media(max-width:860px){
+  .hamburger{display:flex}
+  .lang-selector{margin-left:4px;padding-left:4px}
+}
 </style>
 <script src="bsafe-i18n.js"></script>
 </head>
@@ -310,11 +328,23 @@ canvas{width:100%!important;height:100%!important}
     <a class="nav-item"><span class="nav-icon">📉</span>Inflação Real</a>
     <a class="nav-item"><span class="nav-icon">🧮</span>Simulador de Câmbio</a>
     <a class="nav-item"><span class="nav-icon">💬</span>Comunidade</a>
-  </nav>
+  
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
   <div class="sidebar-footer">
     <div class="pro-badge">
-      <div class="pro-badge-title">✦ BSafe Pro</div>
-      <div class="pro-badge-sub">Acesso completo ativo</div>
+      <div class="pro-badge-title" id="plan-badge-title">✦ BSafe Pro</div>
+      <div class="pro-badge-sub" id="plan-badge-sub">Acesso completo ativo</div>
+    </div>
+    <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
+      <button onclick="abrirResetModal()" style="width:100%;padding:10px;background:transparent;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)';this.style.color='var(--muted)'">
+        ✏️ Editar / Resetar Dados
+      </button>
+      <button onclick="confirmarLogout()" style="width:100%;padding:10px;background:transparent;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.borderColor='#EF4444';this.style.color='#EF4444'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)';this.style.color='var(--muted)'">
+        ↩ Sair da Conta
+      </button>
     </div>
   </div>
 </aside>
@@ -1698,24 +1728,171 @@ document.getElementById('report-modal').addEventListener('click', function(e) {
 <!-- TOAST -->
 <div class="toast-msg" id="toast-msg"></div>
 
-<!-- LOGOUT BTN (sidebar footer) -->
+
+
+
+
+
+<!-- RESET / EDIT MODAL -->
+<div id="reset-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:2000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;max-width:480px;width:100%;overflow:hidden">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border-dim);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:15px;font-weight:800;color:var(--white)">✏️ Gerenciar Dados</div>
+      <button onclick="fecharResetModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="padding:24px;display:flex;flex-direction:column;gap:14px">
+      <div style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:14px">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--orange);margin-bottom:8px;text-transform:uppercase">Dados salvos</div>
+        <div style="font-size:13px;color:var(--muted)" id="reset-summary">Calculando...</div>
+      </div>
+      <button onclick="exportarDados()" style="width:100%;padding:13px;background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:10px" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
+        📥 Exportar dados como JSON (backup)
+      </button>
+      <button onclick="editarUltimoLancamento()" style="width:100%;padding:13px;background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:10px" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
+        ✏️ Editar último lançamento
+      </button>
+      <button onclick="document.getElementById('import-file').click()" style="width:100%;padding:13px;background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:10px" onmouseover="this.style.borderColor='#3B82F6'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
+        📤 Importar backup JSON
+      </button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarDados(event)">
+      <div style="height:1px;background:var(--border-dim)"></div>
+      <button onclick="resetarTudo()" style="width:100%;padding:13px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:2px;color:#EF4444;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px" onmouseover="this.style.background='rgba(239,68,68,0.15)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'">
+        🗑️ Apagar TODOS os lançamentos e começar do zero
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
-// Add logout to sidebar
+function confirmarLogout() {
+  if (confirm('Deseja sair da sua conta BSafe?')) sbSignOut();
+}
+
+function abrirResetModal() {
+  document.getElementById('reset-modal').style.display = 'flex';
+  const lista = getLancamentos();
+  const summary = document.getElementById('reset-summary');
+  if (lista.length === 0) {
+    summary.textContent = 'Nenhum lançamento cadastrado ainda.';
+  } else {
+    const ultimo = lista[lista.length - 1];
+    summary.innerHTML = '<strong style="color:var(--white)">' + lista.length + ' lançamento' + (lista.length > 1 ? 's' : '') + '</strong> cadastrado' + (lista.length > 1 ? 's' : '') + ' · Último: <strong style="color:var(--orange)">' + formatMes(ultimo.mes) + '</strong>';
+  }
+}
+
+function fecharResetModal() {
+  document.getElementById('reset-modal').style.display = 'none';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  const footer = document.querySelector('.sidebar-footer');
-  if (footer) {
-    const logoutDiv = document.createElement('div');
-    logoutDiv.id = 'logout-btn';
-    logoutDiv.style.cssText = 'display:none;align-items:center;gap:8px;padding:12px 20px;border-top:1px solid rgba(255,255,255,0.06);cursor:pointer;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.5px;transition:color .2s';
-    logoutDiv.innerHTML = '↩ Sair da conta';
-    logoutDiv.onmouseenter = () => logoutDiv.style.color = 'var(--orange)';
-    logoutDiv.onmouseleave = () => logoutDiv.style.color = 'var(--muted)';
-    logoutDiv.onclick = () => { if(confirm('Sair da conta?')) sbSignOut(); };
-    footer.parentNode.insertBefore(logoutDiv, footer.nextSibling);
+  const rm = document.getElementById('reset-modal');
+  if (rm) rm.addEventListener('click', function(e) { if(e.target===this) fecharResetModal(); });
+});
+
+function exportarDados() {
+  const lista = getLancamentos();
+  if (lista.length === 0) { showToast('Nenhum dado para exportar', true); return; }
+  const json = JSON.stringify({ bsafe_backup:true, exportado_em:new Date().toISOString(), lancamentos:lista }, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'bsafe-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('✓ Backup exportado!');
+}
+
+function importarDados(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const lista = data.lancamentos || data;
+      if (!Array.isArray(lista)) { showToast('Arquivo inválido', true); return; }
+      if (!confirm('Importar ' + lista.length + ' lançamentos? Os dados atuais serão substituídos.')) return;
+      saveLancamentos(lista);
+      renderHistorico(); updateChartFromLancamentos(); updateKPIsFromLancamentos();
+      fecharResetModal();
+      showToast('✓ ' + lista.length + ' lançamentos importados!');
+    } catch(err) { showToast('Erro ao ler o arquivo JSON', true); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function editarUltimoLancamento() {
+  const lista = getLancamentos();
+  if (lista.length === 0) { showToast('Nenhum lançamento para editar', true); return; }
+  const u = lista[lista.length - 1];
+  fecharResetModal();
+  setTimeout(() => {
+    abrirModal();
+    setTimeout(() => {
+      document.getElementById('f-mes').value         = u.mes || '';
+      document.getElementById('f-cambio').value      = u.cambio || '';
+      document.getElementById('f-ibkr-usd').value    = u.ibkr_usd || u.ibkrUsd || '';
+      document.getElementById('f-ibkr-aporte').value = u.aporte_mes || u.aporteMes || '';
+      document.getElementById('f-vt').value          = u.vt || '';
+      document.getElementById('f-voo').value         = u.voo || '';
+      document.getElementById('f-cash').value        = u.cash || '';
+      document.getElementById('f-outros').value      = u.outros || '';
+      document.getElementById('f-btc').value         = u.btc_qtd || u.btcQtd || '';
+      document.getElementById('f-btc-price').value   = u.btc_price_mes || u.btcPriceMes || '';
+      document.getElementById('f-btc-aporte').value  = u.btc_aporte || u.btcAporte || '';
+      document.getElementById('f-notas').value       = u.notas || '';
+    }, 150);
+  }, 200);
+}
+
+async function resetarTudo() {
+  if (!confirm('⚠️ Tem certeza? Esta ação vai APAGAR todos os lançamentos.\n\nRecomendamos exportar um backup antes.')) return;
+  if (!confirm('Confirme: apagar TODOS os lançamentos?')) return;
+  saveLancamentos([]);
+  if (SB_SESSION) {
+    try {
+      await sbFetch('/rest/v1/lancamentos?user_id=eq.' + SB_SESSION.user.id, { method:'DELETE' });
+    } catch(e) {}
+  }
+  renderHistorico(); updateKPIs();
+  if (window.patrimonioChartInstance) {
+    window.patrimonioChartInstance.data.labels = [];
+    window.patrimonioChartInstance.data.datasets[0].data = [];
+    window.patrimonioChartInstance.update();
+  }
+  fecharResetModal();
+  showToast('✓ Dados apagados. Pronto para começar do zero!');
+}
+</script>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobile-menu">
+  <button class="mob-close" onclick="toggleMenu()">×</button>
+  <a href="index.html" onclick="toggleMenu()">Início</a>
+  <a href="bsafe-sobre.html" onclick="toggleMenu()">Sobre</a>
+  <a href="bsafe-ibkr.html" onclick="toggleMenu()">IBKR</a>
+  <a href="bsafe-wise.html" onclick="toggleMenu()">Wise</a>
+  <a href="bsafe-bitcoin.html" onclick="toggleMenu()">Bitcoin</a>
+  <a href="bsafe-planos.html" onclick="toggleMenu()">Planos</a>
+  <a href="bsafe-dashboard.html" class="mob-dashboard active" onclick="toggleMenu()">Dashboard</a>
+</div>
+<script>
+function toggleMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const ham  = document.getElementById('hamburger');
+  if (!menu || !ham) return;
+  menu.classList.toggle('open');
+  ham.classList.toggle('open');
+  document.body.style.overflow = menu.classList.contains('open') ? 'hidden' : '';
+}
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 860) {
+    const menu = document.getElementById('mobile-menu');
+    const ham  = document.getElementById('hamburger');
+    if (menu) { menu.classList.remove('open'); document.body.style.overflow=''; }
+    if (ham)  ham.classList.remove('open');
   }
 });
 </script>
-
-
 </body>
 </html>
