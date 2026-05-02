@@ -593,6 +593,436 @@ canvas{width:100%!important;height:100%!important}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
+
+
+// ── SUPABASE CONFIG ───────────────────────────────────────────
+const SB_URL = 'https://ahbryorcrmlvkesioplp.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoYnJ5b3Jjcm1sdmtlc2lvcGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2OTU0MzAsImV4cCI6MjA5MzI3MTQzMH0.JabFIHCppvWC1zZugJVVEadFa7ptC1G4clUnFs20d6w';
+let SB_SESSION = null;
+
+async function sbFetch(path, opts={}) {
+  const token = SB_SESSION ? SB_SESSION.access_token : SB_KEY;
+  const headers = {
+    'apikey': SB_KEY,
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + token,
+    ...(opts.headers||{})
+  };
+  const res = await fetch(SB_URL + path, {...opts, headers});
+  const text = await res.text();
+  try { return {ok:res.ok, status:res.status, data:JSON.parse(text)}; }
+  catch(e) { return {ok:res.ok, status:res.status, data:text}; }
+}
+
+async function sbSignUp(email, password, nome) {
+  const res = await sbFetch('/auth/v1/signup', {
+    method:'POST',
+    body: JSON.stringify({email, password, data:{nome}})
+  });
+  if (res.ok && res.data.access_token) {
+    SB_SESSION = res.data;
+    localStorage.setItem('bsafe_session', JSON.stringify(res.data));
+  }
+  return res;
+}
+
+async function sbSignIn(email, password) {
+  const res = await sbFetch('/auth/v1/token?grant_type=password', {
+    method:'POST',
+    body: JSON.stringify({email, password})
+  });
+  if (res.ok && res.data.access_token) {
+    SB_SESSION = res.data;
+    localStorage.setItem('bsafe_session', JSON.stringify(res.data));
+  }
+  return res;
+}
+
+async function sbSignOut() {
+  await sbFetch('/auth/v1/logout', {method:'POST'});
+  SB_SESSION = null;
+  localStorage.removeItem('bsafe_session');
+  location.reload();
+}
+
+async function sbRefreshSession() {
+  const saved = localStorage.getItem('bsafe_session');
+  if (!saved) return false;
+  try {
+    const session = JSON.parse(saved);
+    const payload = JSON.parse(atob(session.access_token.split('.')[1]));
+    if (payload.exp * 1000 > Date.now()) { SB_SESSION = session; return true; }
+    const res = await sbFetch('/auth/v1/token?grant_type=refresh_token', {
+      method:'POST',
+      body: JSON.stringify({refresh_token: session.refresh_token})
+    });
+    if (res.ok && res.data.access_token) {
+      SB_SESSION = res.data;
+      localStorage.setItem('bsafe_session', JSON.stringify(res.data));
+      return true;
+    }
+  } catch(e) {}
+  localStorage.removeItem('bsafe_session');
+  return false;
+}
+
+async function getProfile() {
+  if (!SB_SESSION) return null;
+  const res = await sbFetch('/rest/v1/profiles?select=*', {headers:{'Accept':'application/json'}});
+  if (res.ok && Array.isArray(res.data) && res.data.length > 0) return res.data[0];
+  return null;
+}
+
+function getDaysLeft(expiryStr) {
+  const diff = Math.ceil((new Date(expiryStr) - new Date()) / 86400000);
+  return Math.max(0, diff);
+}
+
+// ── LANCAMENTOS SUPABASE ──────────────────────────────────────
+async function getLancamentosDB() {
+  if (!SB_SESSION) return getLancamentos(); // fallback to localStorage
+  const res = await sbFetch('/rest/v1/lancamentos?select=*&order=mes.asc', {
+    headers:{'Accept':'application/json'}
+  });
+  if (res.ok && Array.isArray(res.data)) return res.data;
+  return [];
+}
+
+async function salvarLancamentoDB(lancamento) {
+  if (!SB_SESSION) { saveLancamentos([...getLancamentos(), lancamento]); return true; }
+  const userId = SB_SESSION.user.id;
+  const payload = {...lancamento, user_id: userId, id: undefined, criadoEm: undefined};
+  // Upsert by user_id + mes
+  const res = await sbFetch('/rest/v1/lancamentos', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Prefer': 'resolution=merge-duplicates,return=minimal'
+    },
+    body: JSON.stringify(payload)
+  });
+  return res.ok || res.status === 201 || res.status === 204;
+}
+
+async function deletarLancamentoDB(mes) {
+  if (!SB_SESSION) return;
+  await sbFetch('/rest/v1/lancamentos?mes=eq.' + encodeURIComponent(mes) + '&user_id=eq.' + SB_SESSION.user.id, {
+    method: 'DELETE'
+  });
+}
+
+// ── AUTH GATE ─────────────────────────────────────────────────
+async function checkAuth() {
+  const hasSession = await sbRefreshSession();
+  if (hasSession) {
+    const profile = await getProfile();
+    if (profile) {
+      const daysLeft = getDaysLeft(profile.trial_expira);
+      if (!profile.assinante && daysLeft <= 0) {
+        showExpired();
+        return false;
+      }
+      showDashboard(profile, daysLeft);
+      await loadDadosFromDB();
+      return true;
+    }
+  }
+  // Not logged in — show auth gate
+  showAuthGate();
+  return false;
+}
+
+async function loadDadosFromDB() {
+  const lista = await getLancamentosDB();
+  if (lista.length > 0) {
+    // Store in localStorage as cache
+    saveLancamentos(lista.map(l => ({
+      ...l,
+      id: l.id || Date.now(),
+      criadoEm: l.created_at
+    })));
+    updateKPIsFromLancamentos();
+    updateChartFromLancamentos();
+  }
+  renderHistorico();
+}
+
+function showDashboard(profile, daysLeft) {
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('expired-overlay').classList.remove('show');
+
+  // Update user info in sidebar
+  const userNameEl = document.querySelector('.user-name');
+  const userPlanEl = document.querySelector('.user-plan');
+  if (userNameEl) userNameEl.textContent = profile.nome || profile.email.split('@')[0];
+  if (userPlanEl) userPlanEl.textContent = profile.assinante ? '✦ MEMBRO PRO' : '◆ TRIAL';
+
+  // Show trial banner if in trial
+  if (!profile.assinante && daysLeft > 0) {
+    const banner = document.getElementById('trial-banner');
+    if (banner) {
+      banner.style.display = 'flex';
+      const topbar = document.querySelector('.topbar');
+      if (topbar && topbar.parentNode) topbar.parentNode.insertBefore(banner, topbar);
+      const nameEl = document.getElementById('trial-user-name');
+      const daysEl = document.getElementById('trial-days-left');
+      if (nameEl) nameEl.textContent = profile.nome || 'você';
+      if (daysEl) {
+        daysEl.textContent = daysLeft;
+        if (daysLeft <= 2) { daysEl.style.color='#EF4444'; daysEl.style.borderColor='rgba(239,68,68,.3)'; }
+      }
+    }
+  }
+  // Show logout button
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) logoutBtn.style.display = 'flex';
+}
+
+function showExpired() {
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('expired-overlay').classList.add('show');
+}
+
+function showAuthGate(tab='register') {
+  document.getElementById('auth-overlay').style.display = 'flex';
+  switchTab(tab);
+}
+
+// ── AUTH FORM ACTIONS ─────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('tab-register').style.display = tab==='register' ? 'block' : 'none';
+  document.getElementById('tab-login').style.display    = tab==='login'    ? 'block' : 'none';
+  document.getElementById('tab-btn-register').classList.toggle('active', tab==='register');
+  document.getElementById('tab-btn-login').classList.toggle('active', tab==='login');
+}
+
+async function doRegister() {
+  const nome  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  const btn   = document.getElementById('reg-btn');
+  const err   = document.getElementById('reg-error');
+
+  if (!nome)               { err.textContent='Informe seu nome'; return; }
+  if (!email.includes('@')){ err.textContent='E-mail inválido'; return; }
+  if (pass.length < 6)     { err.textContent='Senha deve ter pelo menos 6 caracteres'; return; }
+  if (pass !== pass2)      { err.textContent='As senhas não coincidem'; return; }
+
+  err.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Criando conta...';
+
+  try {
+    const res = await sbSignUp(email, pass, nome);
+    console.log('Signup response:', res.status, JSON.stringify(res.data).substring(0,200));
+
+    // Success with token — auto login
+    if (res.data && res.data.access_token) {
+      btn.textContent = '✓ Entrando...';
+      const profile = await getProfile();
+      if (profile) {
+        showDashboard(profile, getDaysLeft(profile.trial_expira));
+      } else {
+        // Profile may take a moment — try once more
+        await new Promise(r => setTimeout(r, 1500));
+        const profile2 = await getProfile();
+        showDashboard(profile2 || {nome, email, plano:'trial', trial_expira: new Date(Date.now()+7*86400000).toISOString(), assinante:false}, 7);
+      }
+      document.getElementById('auth-overlay').style.display = 'none';
+      await loadDadosFromDB();
+      return;
+    }
+
+    // Supabase returned user but no token = email confirmation required
+    if (res.data && res.data.user && !res.data.session) {
+      err.style.color = 'var(--green)';
+      err.textContent = '✓ Conta criada! Verifique seu e-mail para confirmar e depois faça login.';
+      btn.textContent = 'Ir para Login';
+      btn.disabled = false;
+      btn.onclick = () => switchTab('login');
+      return;
+    }
+
+    // Error cases
+    const errData = res.data || {};
+    const msg = errData.error_description || errData.msg || errData.message || errData.error || '';
+    if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
+      err.style.color = '#EF4444';
+      err.textContent = 'E-mail já cadastrado. Faça login abaixo.';
+      btn.disabled = false;
+      btn.textContent = 'Criar Conta e Começar →';
+      setTimeout(() => switchTab('login'), 1500);
+    } else if (res.status === 403 || msg.includes('not allowed') || msg.includes('allowlist')) {
+      err.style.color = '#EF4444';
+      err.textContent = 'Domínio não autorizado no Supabase. Configure em Authentication → URL Configuration.';
+      btn.disabled = false;
+      btn.textContent = 'Criar Conta e Começar →';
+    } else if (msg) {
+      err.style.color = '#EF4444';
+      err.textContent = msg;
+      btn.disabled = false;
+      btn.textContent = 'Criar Conta e Começar →';
+    } else {
+      // Unknown error — show status for debugging
+      err.style.color = '#EF4444';
+      err.textContent = 'Erro ' + res.status + '. Tente novamente.';
+      btn.disabled = false;
+      btn.textContent = 'Criar Conta e Começar →';
+      console.error('Unknown signup error:', res);
+    }
+  } catch(e) {
+    console.error('Register exception:', e);
+    err.style.color = '#EF4444';
+    err.textContent = 'Erro de conexão: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Criar Conta e Começar →';
+  }
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('login-error');
+
+  if (!email.includes('@')) { err.textContent='E-mail inválido'; return; }
+  if (!pass)                { err.textContent='Informe a senha'; return; }
+
+  err.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+
+  try {
+    const res = await sbSignIn(email, pass);
+    console.log('Login response:', res.status, JSON.stringify(res.data).substring(0,200));
+
+    if (res.data && res.data.access_token) {
+      btn.textContent = '✓ Bem-vindo!';
+      const profile = await getProfile();
+      if (profile) {
+        showDashboard(profile, getDaysLeft(profile.trial_expira));
+      } else {
+        // Profile trigger may not have run — create minimal profile display
+        showDashboard({nome: email.split('@')[0], email, plano:'trial', trial_expira: new Date(Date.now()+7*86400000).toISOString(), assinante:false}, 7);
+      }
+      document.getElementById('auth-overlay').style.display = 'none';
+      await loadDadosFromDB();
+    } else {
+      const errData = res.data || {};
+      const msg = errData.error_description || errData.msg || errData.message || errData.error || '';
+      if (msg.toLowerCase().includes('email not confirmed')) {
+        err.style.color = '#F7931A';
+        err.textContent = 'Confirme seu e-mail antes de fazer login. Verifique sua caixa de entrada.';
+      } else if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('credentials')) {
+        err.textContent = 'E-mail ou senha incorretos.';
+      } else {
+        err.textContent = msg || 'Erro ao fazer login. Tente novamente.';
+      }
+      btn.disabled = false;
+      btn.textContent = 'Entrar →';
+    }
+  } catch(e) {
+    console.error('Login exception:', e);
+    err.textContent = 'Erro de conexão: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Entrar →';
+  }
+}
+
+async function doForgotPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email.includes('@')) { alert('Digite seu e-mail acima primeiro.'); return; }
+  const res = await sbFetch('/auth/v1/recover', {
+    method:'POST',
+    body: JSON.stringify({email})
+  });
+  if (res.ok) alert('✓ E-mail de redefinição enviado! Verifique sua caixa de entrada.');
+  else alert('Erro ao enviar e-mail. Tente novamente.');
+}
+
+// ── SALVAR LANÇAMENTO COM SUPABASE ────────────────────────────
+async function salvarLancamentoComDB() {
+  const mes       = document.getElementById('f-mes').value;
+  const cambio    = parseFloat(document.getElementById('f-cambio').value);
+  const ibkrUsd   = parseFloat(document.getElementById('f-ibkr-usd').value);
+  const aporteMes = parseFloat(document.getElementById('f-ibkr-aporte').value)||0;
+  const btcQtd    = parseFloat(document.getElementById('f-btc').value)||0;
+  const btcPriceMes = parseFloat(document.getElementById('f-btc-price').value)||btcPrice;
+  const btcAporte = parseFloat(document.getElementById('f-btc-aporte').value)||0;
+  const notas     = document.getElementById('f-notas').value.trim();
+
+  if (!mes)              { showToast('Informe o mês', true); return; }
+  if (!cambio||cambio<=0){ showToast('Informe o câmbio', true); return; }
+  if (!ibkrUsd||ibkrUsd<=0){ showToast('Informe o saldo IBKR', true); return; }
+
+  const ibkrBrl    = ibkrUsd * cambio;
+  const btcBrl     = btcQtd * btcPriceMes * cambio;
+  const totalBrl   = ibkrBrl + btcBrl;
+  const totalAporte = aporteMes * cambio + btcAporte;
+
+  const lancamento = {
+    mes, cambio,
+    ibkr_usd: ibkrUsd, ibkr_brl: ibkrBrl,
+    aporte_mes: aporteMes,
+    btc_qtd: btcQtd, btc_price_mes: btcPriceMes,
+    btc_brl: btcBrl, btc_aporte: btcAporte,
+    total_brl: totalBrl, total_aporte: totalAporte,
+    vt:    parseFloat(document.getElementById('f-vt').value)||0,
+    voo:   parseFloat(document.getElementById('f-voo').value)||0,
+    cash:  parseFloat(document.getElementById('f-cash').value)||0,
+    outros:parseFloat(document.getElementById('f-outros').value)||0,
+    notas
+  };
+
+  const btn = document.querySelector('.btn-save');
+  if (btn) { btn.disabled=true; btn.textContent='Salvando...'; }
+
+  const ok = await salvarLancamentoDB(lancamento);
+
+  if (btn) { btn.disabled=false; btn.textContent='💾 Salvar Lançamento'; }
+
+  if (ok) {
+    fecharModal();
+    await loadDadosFromDB();
+    showToast('✓ Lançamento de ' + formatMes(mes) + ' salvo na nuvem!');
+  } else {
+    showToast('Erro ao salvar. Tente novamente.', true);
+  }
+}
+
+// ── DELETAR LANÇAMENTO COM SUPABASE ───────────────────────────
+async function deletarLancamentoComDB(id) {
+  if (!confirm('Remover este lançamento?')) return;
+  const lista = getLancamentos();
+  const item  = lista.find(l => l.id === id);
+  if (!item) return;
+  if (SB_SESSION) await deletarLancamentoDB(item.mes);
+  saveLancamentos(lista.filter(l => l.id !== id));
+  renderHistorico();
+  updateChartFromLancamentos();
+  updateKPIsFromLancamentos();
+  showToast('Lançamento removido');
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuth();
+  buildChart();
+  renderPortfolio();
+  renderHistorico();
+  const hasDados = getLancamentos().length > 0;
+  if (!hasDados) {
+    updateKPIs();
+  } else {
+    updateKPIsFromLancamentos();
+    updateChartFromLancamentos();
+  }
+  fetchPrices();
+  setInterval(fetchPrices, 30000);
+});
+
+
 // ── UTILS ────────────────────────────────────────────────────────
 const USD_RATE = 5.71;
 const fmt = (n, decimals=2) => n.toLocaleString('pt-BR', {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
@@ -1100,434 +1530,6 @@ function refreshAll() {
 }
 
 // ── INIT ─────────────────────────────────────────────────────────
-
-
-// ── SUPABASE CONFIG ───────────────────────────────────────────
-const SB_URL = 'https://ahbryorcrmlvkesioplp.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoYnJ5b3Jjcm1sdmtlc2lvcGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2OTU0MzAsImV4cCI6MjA5MzI3MTQzMH0.JabFIHCppvWC1zZugJVVEadFa7ptC1G4clUnFs20d6w';
-let SB_SESSION = null;
-
-async function sbFetch(path, opts={}) {
-  const token = SB_SESSION ? SB_SESSION.access_token : SB_KEY;
-  const headers = {
-    'apikey': SB_KEY,
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer ' + token,
-    ...(opts.headers||{})
-  };
-  const res = await fetch(SB_URL + path, {...opts, headers});
-  const text = await res.text();
-  try { return {ok:res.ok, status:res.status, data:JSON.parse(text)}; }
-  catch(e) { return {ok:res.ok, status:res.status, data:text}; }
-}
-
-async function sbSignUp(email, password, nome) {
-  const res = await sbFetch('/auth/v1/signup', {
-    method:'POST',
-    body: JSON.stringify({email, password, data:{nome}})
-  });
-  if (res.ok && res.data.access_token) {
-    SB_SESSION = res.data;
-    localStorage.setItem('bsafe_session', JSON.stringify(res.data));
-  }
-  return res;
-}
-
-async function sbSignIn(email, password) {
-  const res = await sbFetch('/auth/v1/token?grant_type=password', {
-    method:'POST',
-    body: JSON.stringify({email, password})
-  });
-  if (res.ok && res.data.access_token) {
-    SB_SESSION = res.data;
-    localStorage.setItem('bsafe_session', JSON.stringify(res.data));
-  }
-  return res;
-}
-
-async function sbSignOut() {
-  await sbFetch('/auth/v1/logout', {method:'POST'});
-  SB_SESSION = null;
-  localStorage.removeItem('bsafe_session');
-  location.reload();
-}
-
-async function sbRefreshSession() {
-  const saved = localStorage.getItem('bsafe_session');
-  if (!saved) return false;
-  try {
-    const session = JSON.parse(saved);
-    const payload = JSON.parse(atob(session.access_token.split('.')[1]));
-    if (payload.exp * 1000 > Date.now()) { SB_SESSION = session; return true; }
-    const res = await sbFetch('/auth/v1/token?grant_type=refresh_token', {
-      method:'POST',
-      body: JSON.stringify({refresh_token: session.refresh_token})
-    });
-    if (res.ok && res.data.access_token) {
-      SB_SESSION = res.data;
-      localStorage.setItem('bsafe_session', JSON.stringify(res.data));
-      return true;
-    }
-  } catch(e) {}
-  localStorage.removeItem('bsafe_session');
-  return false;
-}
-
-async function getProfile() {
-  if (!SB_SESSION) return null;
-  const res = await sbFetch('/rest/v1/profiles?select=*', {headers:{'Accept':'application/json'}});
-  if (res.ok && Array.isArray(res.data) && res.data.length > 0) return res.data[0];
-  return null;
-}
-
-function getDaysLeft(expiryStr) {
-  const diff = Math.ceil((new Date(expiryStr) - new Date()) / 86400000);
-  return Math.max(0, diff);
-}
-
-// ── LANCAMENTOS SUPABASE ──────────────────────────────────────
-async function getLancamentosDB() {
-  if (!SB_SESSION) return getLancamentos(); // fallback to localStorage
-  const res = await sbFetch('/rest/v1/lancamentos?select=*&order=mes.asc', {
-    headers:{'Accept':'application/json'}
-  });
-  if (res.ok && Array.isArray(res.data)) return res.data;
-  return [];
-}
-
-async function salvarLancamentoDB(lancamento) {
-  if (!SB_SESSION) { saveLancamentos([...getLancamentos(), lancamento]); return true; }
-  const userId = SB_SESSION.user.id;
-  const payload = {...lancamento, user_id: userId, id: undefined, criadoEm: undefined};
-  // Upsert by user_id + mes
-  const res = await sbFetch('/rest/v1/lancamentos', {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Prefer': 'resolution=merge-duplicates,return=minimal'
-    },
-    body: JSON.stringify(payload)
-  });
-  return res.ok || res.status === 201 || res.status === 204;
-}
-
-async function deletarLancamentoDB(mes) {
-  if (!SB_SESSION) return;
-  await sbFetch('/rest/v1/lancamentos?mes=eq.' + encodeURIComponent(mes) + '&user_id=eq.' + SB_SESSION.user.id, {
-    method: 'DELETE'
-  });
-}
-
-// ── AUTH GATE ─────────────────────────────────────────────────
-async function checkAuth() {
-  const hasSession = await sbRefreshSession();
-  if (hasSession) {
-    const profile = await getProfile();
-    if (profile) {
-      const daysLeft = getDaysLeft(profile.trial_expira);
-      if (!profile.assinante && daysLeft <= 0) {
-        showExpired();
-        return false;
-      }
-      showDashboard(profile, daysLeft);
-      await loadDadosFromDB();
-      return true;
-    }
-  }
-  // Not logged in — show auth gate
-  showAuthGate();
-  return false;
-}
-
-async function loadDadosFromDB() {
-  const lista = await getLancamentosDB();
-  if (lista.length > 0) {
-    // Store in localStorage as cache
-    saveLancamentos(lista.map(l => ({
-      ...l,
-      id: l.id || Date.now(),
-      criadoEm: l.created_at
-    })));
-    updateKPIsFromLancamentos();
-    updateChartFromLancamentos();
-  }
-  renderHistorico();
-}
-
-function showDashboard(profile, daysLeft) {
-  document.getElementById('auth-overlay').style.display = 'none';
-  document.getElementById('expired-overlay').classList.remove('show');
-
-  // Update user info in sidebar
-  const userNameEl = document.querySelector('.user-name');
-  const userPlanEl = document.querySelector('.user-plan');
-  if (userNameEl) userNameEl.textContent = profile.nome || profile.email.split('@')[0];
-  if (userPlanEl) userPlanEl.textContent = profile.assinante ? '✦ MEMBRO PRO' : '◆ TRIAL';
-
-  // Show trial banner if in trial
-  if (!profile.assinante && daysLeft > 0) {
-    const banner = document.getElementById('trial-banner');
-    if (banner) {
-      banner.style.display = 'flex';
-      const topbar = document.querySelector('.topbar');
-      if (topbar && topbar.parentNode) topbar.parentNode.insertBefore(banner, topbar);
-      const nameEl = document.getElementById('trial-user-name');
-      const daysEl = document.getElementById('trial-days-left');
-      if (nameEl) nameEl.textContent = profile.nome || 'você';
-      if (daysEl) {
-        daysEl.textContent = daysLeft;
-        if (daysLeft <= 2) { daysEl.style.color='#EF4444'; daysEl.style.borderColor='rgba(239,68,68,.3)'; }
-      }
-    }
-  }
-  // Show logout button
-  const logoutBtn = document.getElementById('logout-btn');
-  if (logoutBtn) logoutBtn.style.display = 'flex';
-}
-
-function showExpired() {
-  document.getElementById('auth-overlay').style.display = 'none';
-  document.getElementById('expired-overlay').classList.add('show');
-}
-
-function showAuthGate(tab='register') {
-  document.getElementById('auth-overlay').style.display = 'flex';
-  switchTab(tab);
-}
-
-// ── AUTH FORM ACTIONS ─────────────────────────────────────────
-function switchTab(tab) {
-  document.getElementById('tab-register').style.display = tab==='register' ? 'block' : 'none';
-  document.getElementById('tab-login').style.display    = tab==='login'    ? 'block' : 'none';
-  document.getElementById('tab-btn-register').classList.toggle('active', tab==='register');
-  document.getElementById('tab-btn-login').classList.toggle('active', tab==='login');
-}
-
-async function doRegister() {
-  const nome  = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const pass  = document.getElementById('reg-pass').value;
-  const pass2 = document.getElementById('reg-pass2').value;
-  const btn   = document.getElementById('reg-btn');
-  const err   = document.getElementById('reg-error');
-
-  if (!nome)               { err.textContent='Informe seu nome'; return; }
-  if (!email.includes('@')){ err.textContent='E-mail inválido'; return; }
-  if (pass.length < 6)     { err.textContent='Senha deve ter pelo menos 6 caracteres'; return; }
-  if (pass !== pass2)      { err.textContent='As senhas não coincidem'; return; }
-
-  err.textContent = '';
-  btn.disabled = true;
-  btn.textContent = 'Criando conta...';
-
-  try {
-    const res = await sbSignUp(email, pass, nome);
-    console.log('Signup response:', res.status, JSON.stringify(res.data).substring(0,200));
-
-    // Success with token — auto login
-    if (res.data && res.data.access_token) {
-      btn.textContent = '✓ Entrando...';
-      const profile = await getProfile();
-      if (profile) {
-        showDashboard(profile, getDaysLeft(profile.trial_expira));
-      } else {
-        // Profile may take a moment — try once more
-        await new Promise(r => setTimeout(r, 1500));
-        const profile2 = await getProfile();
-        showDashboard(profile2 || {nome, email, plano:'trial', trial_expira: new Date(Date.now()+7*86400000).toISOString(), assinante:false}, 7);
-      }
-      document.getElementById('auth-overlay').style.display = 'none';
-      await loadDadosFromDB();
-      return;
-    }
-
-    // Supabase returned user but no token = email confirmation required
-    if (res.data && res.data.user && !res.data.session) {
-      err.style.color = 'var(--green)';
-      err.textContent = '✓ Conta criada! Verifique seu e-mail para confirmar e depois faça login.';
-      btn.textContent = 'Ir para Login';
-      btn.disabled = false;
-      btn.onclick = () => switchTab('login');
-      return;
-    }
-
-    // Error cases
-    const errData = res.data || {};
-    const msg = errData.error_description || errData.msg || errData.message || errData.error || '';
-    if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
-      err.style.color = '#EF4444';
-      err.textContent = 'E-mail já cadastrado. Faça login abaixo.';
-      btn.disabled = false;
-      btn.textContent = 'Criar Conta e Começar →';
-      setTimeout(() => switchTab('login'), 1500);
-    } else if (res.status === 403 || msg.includes('not allowed') || msg.includes('allowlist')) {
-      err.style.color = '#EF4444';
-      err.textContent = 'Domínio não autorizado no Supabase. Configure em Authentication → URL Configuration.';
-      btn.disabled = false;
-      btn.textContent = 'Criar Conta e Começar →';
-    } else if (msg) {
-      err.style.color = '#EF4444';
-      err.textContent = msg;
-      btn.disabled = false;
-      btn.textContent = 'Criar Conta e Começar →';
-    } else {
-      // Unknown error — show status for debugging
-      err.style.color = '#EF4444';
-      err.textContent = 'Erro ' + res.status + '. Tente novamente.';
-      btn.disabled = false;
-      btn.textContent = 'Criar Conta e Começar →';
-      console.error('Unknown signup error:', res);
-    }
-  } catch(e) {
-    console.error('Register exception:', e);
-    err.style.color = '#EF4444';
-    err.textContent = 'Erro de conexão: ' + e.message;
-    btn.disabled = false;
-    btn.textContent = 'Criar Conta e Começar →';
-  }
-}
-
-async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const pass  = document.getElementById('login-pass').value;
-  const btn   = document.getElementById('login-btn');
-  const err   = document.getElementById('login-error');
-
-  if (!email.includes('@')) { err.textContent='E-mail inválido'; return; }
-  if (!pass)                { err.textContent='Informe a senha'; return; }
-
-  err.textContent = '';
-  btn.disabled = true;
-  btn.textContent = 'Entrando...';
-
-  try {
-    const res = await sbSignIn(email, pass);
-    console.log('Login response:', res.status, JSON.stringify(res.data).substring(0,200));
-
-    if (res.data && res.data.access_token) {
-      btn.textContent = '✓ Bem-vindo!';
-      const profile = await getProfile();
-      if (profile) {
-        showDashboard(profile, getDaysLeft(profile.trial_expira));
-      } else {
-        // Profile trigger may not have run — create minimal profile display
-        showDashboard({nome: email.split('@')[0], email, plano:'trial', trial_expira: new Date(Date.now()+7*86400000).toISOString(), assinante:false}, 7);
-      }
-      document.getElementById('auth-overlay').style.display = 'none';
-      await loadDadosFromDB();
-    } else {
-      const errData = res.data || {};
-      const msg = errData.error_description || errData.msg || errData.message || errData.error || '';
-      if (msg.toLowerCase().includes('email not confirmed')) {
-        err.style.color = '#F7931A';
-        err.textContent = 'Confirme seu e-mail antes de fazer login. Verifique sua caixa de entrada.';
-      } else if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('credentials')) {
-        err.textContent = 'E-mail ou senha incorretos.';
-      } else {
-        err.textContent = msg || 'Erro ao fazer login. Tente novamente.';
-      }
-      btn.disabled = false;
-      btn.textContent = 'Entrar →';
-    }
-  } catch(e) {
-    console.error('Login exception:', e);
-    err.textContent = 'Erro de conexão: ' + e.message;
-    btn.disabled = false;
-    btn.textContent = 'Entrar →';
-  }
-}
-
-async function doForgotPassword() {
-  const email = document.getElementById('login-email').value.trim();
-  if (!email.includes('@')) { alert('Digite seu e-mail acima primeiro.'); return; }
-  const res = await sbFetch('/auth/v1/recover', {
-    method:'POST',
-    body: JSON.stringify({email})
-  });
-  if (res.ok) alert('✓ E-mail de redefinição enviado! Verifique sua caixa de entrada.');
-  else alert('Erro ao enviar e-mail. Tente novamente.');
-}
-
-// ── SALVAR LANÇAMENTO COM SUPABASE ────────────────────────────
-async function salvarLancamentoComDB() {
-  const mes       = document.getElementById('f-mes').value;
-  const cambio    = parseFloat(document.getElementById('f-cambio').value);
-  const ibkrUsd   = parseFloat(document.getElementById('f-ibkr-usd').value);
-  const aporteMes = parseFloat(document.getElementById('f-ibkr-aporte').value)||0;
-  const btcQtd    = parseFloat(document.getElementById('f-btc').value)||0;
-  const btcPriceMes = parseFloat(document.getElementById('f-btc-price').value)||btcPrice;
-  const btcAporte = parseFloat(document.getElementById('f-btc-aporte').value)||0;
-  const notas     = document.getElementById('f-notas').value.trim();
-
-  if (!mes)              { showToast('Informe o mês', true); return; }
-  if (!cambio||cambio<=0){ showToast('Informe o câmbio', true); return; }
-  if (!ibkrUsd||ibkrUsd<=0){ showToast('Informe o saldo IBKR', true); return; }
-
-  const ibkrBrl    = ibkrUsd * cambio;
-  const btcBrl     = btcQtd * btcPriceMes * cambio;
-  const totalBrl   = ibkrBrl + btcBrl;
-  const totalAporte = aporteMes * cambio + btcAporte;
-
-  const lancamento = {
-    mes, cambio,
-    ibkr_usd: ibkrUsd, ibkr_brl: ibkrBrl,
-    aporte_mes: aporteMes,
-    btc_qtd: btcQtd, btc_price_mes: btcPriceMes,
-    btc_brl: btcBrl, btc_aporte: btcAporte,
-    total_brl: totalBrl, total_aporte: totalAporte,
-    vt:    parseFloat(document.getElementById('f-vt').value)||0,
-    voo:   parseFloat(document.getElementById('f-voo').value)||0,
-    cash:  parseFloat(document.getElementById('f-cash').value)||0,
-    outros:parseFloat(document.getElementById('f-outros').value)||0,
-    notas
-  };
-
-  const btn = document.querySelector('.btn-save');
-  if (btn) { btn.disabled=true; btn.textContent='Salvando...'; }
-
-  const ok = await salvarLancamentoDB(lancamento);
-
-  if (btn) { btn.disabled=false; btn.textContent='💾 Salvar Lançamento'; }
-
-  if (ok) {
-    fecharModal();
-    await loadDadosFromDB();
-    showToast('✓ Lançamento de ' + formatMes(mes) + ' salvo na nuvem!');
-  } else {
-    showToast('Erro ao salvar. Tente novamente.', true);
-  }
-}
-
-// ── DELETAR LANÇAMENTO COM SUPABASE ───────────────────────────
-async function deletarLancamentoComDB(id) {
-  if (!confirm('Remover este lançamento?')) return;
-  const lista = getLancamentos();
-  const item  = lista.find(l => l.id === id);
-  if (!item) return;
-  if (SB_SESSION) await deletarLancamentoDB(item.mes);
-  saveLancamentos(lista.filter(l => l.id !== id));
-  renderHistorico();
-  updateChartFromLancamentos();
-  updateKPIsFromLancamentos();
-  showToast('Lançamento removido');
-}
-
-
-document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
-  buildChart();
-  renderPortfolio();
-  renderHistorico();
-  const hasDados = getLancamentos().length > 0;
-  if (!hasDados) {
-    updateKPIs();
-  } else {
-    updateKPIsFromLancamentos();
-    updateChartFromLancamentos();
-  }
-  fetchPrices();
-  setInterval(fetchPrices, 30000);
-});
 
 // Close modal on backdrop click
 document.getElementById('report-modal').addEventListener('click', function(e) {
