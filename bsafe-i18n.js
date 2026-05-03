@@ -292,6 +292,7 @@ const T = {
 // ── ENGINE ───────────────────────────────────────────────────────
 const LANG = {
   current: localStorage.getItem('bsafe_lang') || 'pt',
+  version: '2.0', // bump to force re-apply when translations change
 
   set(lang) {
     this.current = lang;
