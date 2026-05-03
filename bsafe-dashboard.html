@@ -1340,39 +1340,58 @@ function saveLancamentos(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-function abrirModal(editIndex = null) {
-  const modal = document.getElementById('modal-lancamento');
-  modal.classList.add('open');
+function abrirModal(editIndex) {
+  try {
+    const modal = document.getElementById('modal-lancamento');
+    if (modal) modal.classList.add('open');
 
-  // Default: hoje
-  const hoje = new Date();
-  const mesAtual = hoje.toISOString().slice(0,7);
-  document.getElementById('f-mes').value = mesAtual;
-  document.getElementById('f-cambio').value = '';
-  document.getElementById('f-ibkr-usd').value = '';
-  document.getElementById('f-ibkr-aporte').value = '';
-  document.getElementById('f-vt').value = '';
-  document.getElementById('f-voo').value = '';
-  document.getElementById('f-cash').value = '';
-  document.getElementById('f-outros').value = '';
-  document.getElementById('f-btc').value = '';
-  document.getElementById('f-btc-price').value = '';
-  document.getElementById('f-btc-aporte').value = '';
-  document.getElementById('f-notas').value = '';
+    // Reset fields
+    const hoje = new Date();
+    const mesAtual = hoje.toISOString().slice(0,7);
+    const setVal = function(id, v) { const el = document.getElementById(id); if(el) el.value = v; };
+    setVal('f-mes', mesAtual);
+    setVal('f-cambio', '');
+    setVal('f-ibkr-usd', '');
+    setVal('f-ibkr-aporte', '');
+    setVal('f-vt', 0);
+    setVal('f-voo', 0);
+    setVal('f-cash', 0);
+    setVal('f-outros', 0);
+    setVal('f-btc', '');
+    setVal('f-btc-aporte', '');
+    setVal('f-notas', '');
+    if (btcPrice) setVal('f-btc-price', Math.round(btcPrice));
+    else setVal('f-btc-price', '');
 
-  // Pre-fill com ultimo lançamento se existir
-  const lista = getLancamentos();
-  if (lista.length > 0) {
-    const ultimo = lista[lista.length - 1];
-    document.getElementById('f-vt').value = ultimo.vt || '';
-    document.getElementById('f-voo').value = ultimo.voo || '';
-    document.getElementById('f-cash').value = ultimo.cash || '';
-    document.getElementById('f-outros').value = ultimo.outros || '';
-    document.getElementById('f-btc').value = ultimo.btc || '';
+    // Reset positions
+    positions = [];
+    renderPositions();
+
+    // Init asset quick buttons
+    setTimeout(initAssetSearch, 100);
+
+    // Pre-fill from last lancamento
+    try {
+      const lista = getLancamentos();
+      if (lista.length > 0) {
+        const u = lista[lista.length - 1];
+        if (u.ibkr_usd || u.ibkrUsd) setVal('f-ibkr-usd', u.ibkr_usd || u.ibkrUsd || '');
+        if (u.btc_qtd || u.btcQtd) setVal('f-btc', u.btc_qtd || u.btcQtd || '');
+        // Restore positions
+        if (u.vt > 0)     positions.push({t:'VT',  n:'Vanguard Total World', clr:'#E8470A', pct:u.vt,   price:null});
+        if (u.voo > 0)    positions.push({t:'VOO', n:'Vanguard S&P 500',     clr:'#ff6b35', pct:u.voo,  price:null});
+        if (u.cash > 0)   positions.push({t:'USD', n:'USD Cash',             clr:'#22C55E', pct:u.cash, price:null});
+        if (u.outros > 0) positions.push({t:'OUTROS', n:'Outros Ativos',     clr:'#8B5CF6', pct:u.outros, price:null});
+        if (positions.length > 0) {
+          renderPositions();
+          positions.forEach(function(p){ if(p.t !== 'OUTROS') fetchAssetPrice(p.t); });
+        }
+      }
+    } catch(e2) { console.log('Pre-fill error:', e2); }
+
+  } catch(e) {
+    console.error('abrirModal error:', e);
   }
-
-  // Pre-fill com preço BTC ao vivo
-  if (btcPrice) document.getElementById('f-btc-price').value = Math.round(btcPrice);
 }
 
 function fecharModal() {
@@ -1736,27 +1755,7 @@ function syncPositionsToHiddenFields() {
   document.getElementById('f-outros').value = otherPct;
 }
 
-// Extend abrirModal to init asset search
-var _origAbrirModal2 = abrirModal;
-abrirModal = function(editIndex) {
-  _origAbrirModal2(editIndex);
-  positions = [];
-  renderPositions();
-  setTimeout(initAssetSearch, 150);
-  // Pre-load from last lancamento
-  var lista = getLancamentos();
-  if (lista.length > 0) {
-    var u = lista[lista.length-1];
-    if (u.vt > 0)     positions.push({t:'VT',  n:'Vanguard Total World', clr:'#E8470A', pct:u.vt,     price:null});
-    if (u.voo > 0)    positions.push({t:'VOO', n:'Vanguard S&P 500',     clr:'#ff6b35', pct:u.voo,    price:null});
-    if (u.cash > 0)   positions.push({t:'USD', n:'USD Cash',             clr:'#22C55E', pct:u.cash,   price:null});
-    if (u.outros > 0) positions.push({t:'OUTROS', n:'Outros Ativos',     clr:'#8B5CF6', pct:u.outros, price:null});
-    if (positions.length > 0) {
-      renderPositions();
-      positions.forEach(function(p){ if(p.t!=='OUTROS') fetchAssetPrice(p.t); });
-    }
-  }
-};
+// abrirModal is now self-contained above
 
 document.addEventListener('click', function(e) {
   var results = document.getElementById('asset-results');
