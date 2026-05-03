@@ -17,10 +17,11 @@ const T = {
 
   // ─── HOMEPAGE ────────────────────────────────────────────────────
   'home.tag':       { pt:'Educação Financeira Internacional', en:'International Financial Education', it:'Educazione Finanziaria Internazionale' },
-  'home.title1':    { pt:'Proteja seu',    en:'Protect your',   it:'Proteggi il tuo' },
-  'home.title2':    { pt:'patrimônio',     en:'wealth',          it:'patrimonio' },
-  'home.title3':    { pt:'do real',        en:'from inflation',  it:"dall'inflazione" },
-  'home.lema':      { pt:'Gaste reais · Invista em dólares · Guarde bitcoin', en:'Spend local · Invest in dollars · Save bitcoin', it:'Spendi locale · Investi in dollari · Salva bitcoin' },
+  'home.title1':    { pt:'Soberania financeira', en:'Financial sovereignty', it:'Sovranità finanziaria' },
+  'home.title2':    { pt:'se conquista',   en:'is conquered',    it:'si conquista' },
+  'home.title3':    { pt:'com ativos sólidos', en:'with solid assets', it:'con asset solidi' },
+  'home.lema':      { pt:'Reais para viver · Dólares para crescer · Bitcoin para preservar', en:'Reais to live · Dollars to grow · Bitcoin to preserve', it:'Reais per vivere · Dollari per crescere · Bitcoin per preservare' },
+  'home.sub':       { pt:'Ativos resistentes à inflação e livres de fronteiras — para quem quer proteger o que construiu.', en:'Assets resistant to inflation and free from borders — for those who want to protect what they built.', it:'Asset resistenti all\'inflazione e liberi dai confini — per chi vuole proteggere ciò che ha costruito.' },
   'home.btn1':      { pt:'Ver a Inflação Real →',  en:'See Real Inflation →', it:"Vedi l'Inflazione Reale →" },
   'home.btn2':      { pt:'Sobre Rafael Bered',      en:'About Rafael Bered',   it:'Chi è Rafael Bered' },
   'home.sec_tag':   { pt:'Guias e Ferramentas',     en:'Guides & Tools',       it:'Guide e Strumenti' },
