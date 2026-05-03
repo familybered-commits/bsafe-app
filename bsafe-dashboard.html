@@ -1995,6 +1995,124 @@ document.getElementById('report-modal').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
 
+
+
+function confirmarLogout() {
+  if (confirm('Deseja sair da sua conta BSafe?')) sbSignOut();
+}
+
+function abrirResetModal() {
+  document.getElementById('reset-modal').style.display = 'flex';
+  const lista = getLancamentos();
+  const summary = document.getElementById('reset-summary');
+  if (lista.length === 0) {
+    summary.textContent = 'Nenhum lançamento cadastrado ainda.';
+  } else {
+    const ultimo = lista[lista.length - 1];
+    summary.innerHTML = '<strong style="color:var(--white)">' + lista.length + ' lançamento' + (lista.length > 1 ? 's' : '') + '</strong> cadastrado' + (lista.length > 1 ? 's' : '') + ' · Último: <strong style="color:var(--orange)">' + formatMes(ultimo.mes) + '</strong>';
+  }
+}
+
+function fecharResetModal() {
+  document.getElementById('reset-modal').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const rm = document.getElementById('reset-modal');
+  if (rm) rm.addEventListener('click', function(e) { if(e.target===this) fecharResetModal(); });
+});
+
+function exportarDados() {
+  const lista = getLancamentos();
+  if (lista.length === 0) { showToast('Nenhum dado para exportar', true); return; }
+  const json = JSON.stringify({ bsafe_backup:true, exportado_em:new Date().toISOString(), lancamentos:lista }, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'bsafe-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('✓ Backup exportado!');
+}
+
+function importarDados(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const lista = data.lancamentos || data;
+      if (!Array.isArray(lista)) { showToast('Arquivo inválido', true); return; }
+      if (!confirm('Importar ' + lista.length + ' lançamentos? Os dados atuais serão substituídos.')) return;
+      saveLancamentos(lista);
+      renderHistorico(); updateChartFromLancamentos(); updateKPIsFromLancamentos();
+      fecharResetModal();
+      showToast('✓ ' + lista.length + ' lançamentos importados!');
+    } catch(err) { showToast('Erro ao ler o arquivo JSON', true); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function editarUltimoLancamento() {
+  const lista = getLancamentos();
+  if (lista.length === 0) { showToast('Nenhum lançamento para editar', true); return; }
+  const u = lista[lista.length - 1];
+  fecharResetModal();
+  setTimeout(() => {
+    abrirModal();
+    setTimeout(() => {
+      document.getElementById('f-mes').value         = u.mes || '';
+      document.getElementById('f-cambio').value      = u.cambio || '';
+      document.getElementById('f-ibkr-usd').value    = u.ibkr_usd || u.ibkrUsd || '';
+      document.getElementById('f-ibkr-aporte').value = u.aporte_mes || u.aporteMes || '';
+      document.getElementById('f-vt').value          = u.vt || '';
+      document.getElementById('f-voo').value         = u.voo || '';
+      document.getElementById('f-cash').value        = u.cash || '';
+      document.getElementById('f-outros').value      = u.outros || '';
+      document.getElementById('f-btc').value         = u.btc_qtd || u.btcQtd || '';
+      document.getElementById('f-btc-price').value   = u.btc_price_mes || u.btcPriceMes || '';
+      document.getElementById('f-btc-aporte').value  = u.btc_aporte || u.btcAporte || '';
+      document.getElementById('f-notas').value       = u.notas || '';
+    }, 150);
+  }, 200);
+}
+
+async function resetarTudo() {
+  if (!confirm('⚠️ Tem certeza? Esta ação vai APAGAR todos os lançamentos.\n\nRecomendamos exportar um backup antes.')) return;
+  if (!confirm('Confirme: apagar TODOS os lançamentos?')) return;
+  saveLancamentos([]);
+  if (SB_SESSION) {
+    try {
+      await sbFetch('/rest/v1/lancamentos?user_id=eq.' + SB_SESSION.user.id, { method:'DELETE' });
+    } catch(e) {}
+  }
+  renderHistorico(); updateKPIs();
+  if (window.patrimonioChartInstance) {
+    window.patrimonioChartInstance.data.labels = [];
+    window.patrimonioChartInstance.data.datasets[0].data = [];
+    window.patrimonioChartInstance.update();
+  }
+  fecharResetModal();
+  showToast('✓ Dados apagados. Pronto para começar do zero!');
+}
+
+function toggleMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const ham  = document.getElementById('hamburger');
+  if (!menu || !ham) return;
+  menu.classList.toggle('open');
+  ham.classList.toggle('open');
+  document.body.style.overflow = menu.classList.contains('open') ? 'hidden' : '';
+}
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 860) {
+    const menu = document.getElementById('mobile-menu');
+    const ham  = document.getElementById('hamburger');
+    if (menu) { menu.classList.remove('open'); document.body.style.overflow=''; }
+    if (ham)  ham.classList.remove('open');
+  }
+});
 </script>
 
 <!-- MODAL LANÇAMENTO -->
@@ -2115,7 +2233,7 @@ document.getElementById('report-modal').addEventListener('click', function(e) {
 
 
 <!-- ── AUTH GATE ────────────────────────────────────────── -->
-<div id="auth-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:5000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);display:flex">
+<div id="auth-overlay" style="display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:5000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;width:100%;max-width:460px;overflow:hidden;position:relative">
     <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--orange),#ff6b35)"></div>
     <div style="padding:28px 32px 20px;text-align:center;border-bottom:1px solid var(--border-dim)">
@@ -2218,107 +2336,6 @@ document.getElementById('report-modal').addEventListener('click', function(e) {
   </div>
 </div>
 
-<script>
-function confirmarLogout() {
-  if (confirm('Deseja sair da sua conta BSafe?')) sbSignOut();
-}
-
-function abrirResetModal() {
-  document.getElementById('reset-modal').style.display = 'flex';
-  const lista = getLancamentos();
-  const summary = document.getElementById('reset-summary');
-  if (lista.length === 0) {
-    summary.textContent = 'Nenhum lançamento cadastrado ainda.';
-  } else {
-    const ultimo = lista[lista.length - 1];
-    summary.innerHTML = '<strong style="color:var(--white)">' + lista.length + ' lançamento' + (lista.length > 1 ? 's' : '') + '</strong> cadastrado' + (lista.length > 1 ? 's' : '') + ' · Último: <strong style="color:var(--orange)">' + formatMes(ultimo.mes) + '</strong>';
-  }
-}
-
-function fecharResetModal() {
-  document.getElementById('reset-modal').style.display = 'none';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const rm = document.getElementById('reset-modal');
-  if (rm) rm.addEventListener('click', function(e) { if(e.target===this) fecharResetModal(); });
-});
-
-function exportarDados() {
-  const lista = getLancamentos();
-  if (lista.length === 0) { showToast('Nenhum dado para exportar', true); return; }
-  const json = JSON.stringify({ bsafe_backup:true, exportado_em:new Date().toISOString(), lancamentos:lista }, null, 2);
-  const blob = new Blob([json], {type:'application/json'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = 'bsafe-backup-' + new Date().toISOString().slice(0,10) + '.json';
-  a.click(); URL.revokeObjectURL(url);
-  showToast('✓ Backup exportado!');
-}
-
-function importarDados(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      const lista = data.lancamentos || data;
-      if (!Array.isArray(lista)) { showToast('Arquivo inválido', true); return; }
-      if (!confirm('Importar ' + lista.length + ' lançamentos? Os dados atuais serão substituídos.')) return;
-      saveLancamentos(lista);
-      renderHistorico(); updateChartFromLancamentos(); updateKPIsFromLancamentos();
-      fecharResetModal();
-      showToast('✓ ' + lista.length + ' lançamentos importados!');
-    } catch(err) { showToast('Erro ao ler o arquivo JSON', true); }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
-
-function editarUltimoLancamento() {
-  const lista = getLancamentos();
-  if (lista.length === 0) { showToast('Nenhum lançamento para editar', true); return; }
-  const u = lista[lista.length - 1];
-  fecharResetModal();
-  setTimeout(() => {
-    abrirModal();
-    setTimeout(() => {
-      document.getElementById('f-mes').value         = u.mes || '';
-      document.getElementById('f-cambio').value      = u.cambio || '';
-      document.getElementById('f-ibkr-usd').value    = u.ibkr_usd || u.ibkrUsd || '';
-      document.getElementById('f-ibkr-aporte').value = u.aporte_mes || u.aporteMes || '';
-      document.getElementById('f-vt').value          = u.vt || '';
-      document.getElementById('f-voo').value         = u.voo || '';
-      document.getElementById('f-cash').value        = u.cash || '';
-      document.getElementById('f-outros').value      = u.outros || '';
-      document.getElementById('f-btc').value         = u.btc_qtd || u.btcQtd || '';
-      document.getElementById('f-btc-price').value   = u.btc_price_mes || u.btcPriceMes || '';
-      document.getElementById('f-btc-aporte').value  = u.btc_aporte || u.btcAporte || '';
-      document.getElementById('f-notas').value       = u.notas || '';
-    }, 150);
-  }, 200);
-}
-
-async function resetarTudo() {
-  if (!confirm('⚠️ Tem certeza? Esta ação vai APAGAR todos os lançamentos.\n\nRecomendamos exportar um backup antes.')) return;
-  if (!confirm('Confirme: apagar TODOS os lançamentos?')) return;
-  saveLancamentos([]);
-  if (SB_SESSION) {
-    try {
-      await sbFetch('/rest/v1/lancamentos?user_id=eq.' + SB_SESSION.user.id, { method:'DELETE' });
-    } catch(e) {}
-  }
-  renderHistorico(); updateKPIs();
-  if (window.patrimonioChartInstance) {
-    window.patrimonioChartInstance.data.labels = [];
-    window.patrimonioChartInstance.data.datasets[0].data = [];
-    window.patrimonioChartInstance.update();
-  }
-  fecharResetModal();
-  showToast('✓ Dados apagados. Pronto para começar do zero!');
-}
-</script>
 
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobile-menu">
@@ -2331,23 +2348,5 @@ async function resetarTudo() {
   <a href="bsafe-planos.html" onclick="toggleMenu()">Planos</a>
   <a href="bsafe-dashboard.html" class="mob-dashboard active" onclick="toggleMenu()">Dashboard</a>
 </div>
-<script>
-function toggleMenu() {
-  const menu = document.getElementById('mobile-menu');
-  const ham  = document.getElementById('hamburger');
-  if (!menu || !ham) return;
-  menu.classList.toggle('open');
-  ham.classList.toggle('open');
-  document.body.style.overflow = menu.classList.contains('open') ? 'hidden' : '';
-}
-window.addEventListener('resize', () => {
-  if (window.innerWidth > 860) {
-    const menu = document.getElementById('mobile-menu');
-    const ham  = document.getElementById('hamburger');
-    if (menu) { menu.classList.remove('open'); document.body.style.overflow=''; }
-    if (ham)  ham.classList.remove('open');
-  }
-});
-</script>
 </body>
 </html>
