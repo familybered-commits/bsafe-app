@@ -398,10 +398,10 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);
         <div class="form-grid">
           <div class="form-group">
             <label class="form-label">Mês de Referência</label>
-            <input type="month" class="form-input" id="f-mes">
+            <input type="month" class="form-input" id="f-mes" onchange="buscarCotacoes(this.value)">
           </div>
           <div class="form-group">
-            <label class="form-label">Câmbio USD/BRL no mês</label>
+            <label class="form-label">Câmbio USD/BRL no mês <span id="cambio-status" style="font-size:10px;color:var(--green);margin-left:4px"></span></label>
             <input type="number" class="form-input" id="f-cambio" placeholder="ex: 5.71" step="0.01">
           </div>
         </div>
@@ -432,7 +432,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);
         <div class="modal-section-label">₿ Bitcoin</div>
         <div class="form-grid">
           <div class="form-group"><label class="form-label">Saldo em BTC</label><input type="number" class="form-input" id="f-btc" placeholder="ex: 0.18450000" step="0.00000001"></div>
-          <div class="form-group"><label class="form-label">Preço BTC no mês (USD)</label><input type="number" class="form-input" id="f-btc-price" placeholder="ex: 95000" step="1"></div>
+          <div class="form-group"><label class="form-label">Preço BTC no mês (USD) <span id="btcprice-status" style="font-size:10px;color:var(--green);margin-left:4px"></span></label><input type="number" class="form-input" id="f-btc-price" placeholder="ex: 95000" step="1"></div>
           <div class="form-group"><label class="form-label">Aporte BTC do mês (BRL)</label><input type="number" class="form-input" id="f-btc-aporte" placeholder="ex: 1200" step="0.01"></div>
         </div>
       </div>
@@ -1203,6 +1203,133 @@ async function processIBKR(file) {
   reader.readAsText(file);
 }
 
+
+// ─────────────────────────────────────────────────────────────
+// AUTO-FETCH COTAÇÕES HISTÓRICAS
+// ─────────────────────────────────────────────────────────────
+async function buscarCotacoes(mesAno) {
+  if (!mesAno) return;
+  const [ano, mes] = mesAno.split('-');
+  
+  // Last day of the month for better accuracy
+  const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate();
+  const dataMeio  = `${ano}-${mes}-15`; // mid-month for average
+  const dataFim   = `${ano}-${mes}-${String(ultimoDia).padStart(2,'0')}`;
+  
+  // Don't fetch if month is current (use live price)
+  const hoje = new Date();
+  const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
+  if (mesAno >= mesAtual) {
+    // Use live prices for current month
+    if (usdBrl > 0) {
+      document.getElementById('f-cambio').value = usdBrl.toFixed(2);
+      setStatus('cambio-status', '✓ cotação ao vivo', 'var(--green)');
+    }
+    if (btcPrice > 0) {
+      document.getElementById('f-btc-price').value = Math.round(btcPrice);
+      setStatus('btcprice-status', '✓ preço ao vivo', 'var(--green)');
+    }
+    return;
+  }
+
+  // Fetch historical
+  setStatus('cambio-status', '⏳ buscando...', 'var(--muted)');
+  setStatus('btcprice-status', '⏳ buscando...', 'var(--muted)');
+
+  await Promise.all([
+    fetchCambioHistorico(ano, mes, dataFim),
+    fetchBTCHistorico(ano, mes, ultimoDia)
+  ]);
+}
+
+function setStatus(id, msg, color) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+async function fetchCambioHistorico(ano, mes, dataFim) {
+  // Strategy: try AwesomeAPI (Brazilian) → Frankfurter (ECB) → manual
+  const dataInicio = `${ano}${mes}01`;
+  const dataFimStr = dataFim.replace(/-/g, '');
+  
+  try {
+    // AwesomeAPI — most accurate for BRL
+    const url = `https://economia.awesomeapi.com.br/json/daily/USD-BRL/5?start_date=${dataInicio}&end_date=${dataFimStr}`;
+    const r = await fetch(url);
+    if (r.ok) {
+      const data = await r.json();
+      if (data && data.length > 0) {
+        // Get mid-month or last available rate
+        const rates = data.map(d => parseFloat(d.bid));
+        const avg = rates.reduce((a,b) => a+b, 0) / rates.length;
+        document.getElementById('f-cambio').value = avg.toFixed(2);
+        setStatus('cambio-status', '✓ via AwesomeAPI', 'var(--green)');
+        return;
+      }
+    }
+  } catch(e) {}
+
+  try {
+    // Frankfurter fallback — ECB official rates
+    const url2 = `https://api.frankfurter.app/${dataFim}?from=USD&to=BRL`;
+    const r2 = await fetch(url2);
+    if (r2.ok) {
+      const d2 = await r2.json();
+      if (d2.rates && d2.rates.BRL) {
+        document.getElementById('f-cambio').value = d2.rates.BRL.toFixed(2);
+        setStatus('cambio-status', '✓ via Frankfurter', 'var(--green)');
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // If both fail
+  setStatus('cambio-status', '⚠ preencha manualmente', 'var(--btc)');
+}
+
+async function fetchBTCHistorico(ano, mes, ultimoDia) {
+  // CoinGecko free API — historical price on specific date
+  const dd = String(Math.min(28, ultimoDia)).padStart(2,'0');
+  const mm  = mes;
+  const yyyy= ano;
+  const dateStr = `${dd}-${mm}-${yyyy}`; // CoinGecko format: DD-MM-YYYY
+  
+  try {
+    const url = `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}&localization=false`;
+    const r = await fetch(url);
+    if (r.ok) {
+      const d = await r.json();
+      const price = d?.market_data?.current_price?.usd;
+      if (price) {
+        document.getElementById('f-btc-price').value = Math.round(price);
+        setStatus('btcprice-status', '✓ via CoinGecko', 'var(--green)');
+        return;
+      }
+    }
+  } catch(e) {}
+
+  try {
+    // Fallback: CoinGecko market chart range
+    const from = Math.floor(new Date(`${yyyy}-${mm}-01`).getTime() / 1000);
+    const to   = Math.floor(new Date(`${yyyy}-${mm}-${String(ultimoDia).padStart(2,'0')}`).getTime() / 1000);
+    const url2 = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=usd&from=${from}&to=${to}`;
+    const r2 = await fetch(url2);
+    if (r2.ok) {
+      const d2 = await r2.json();
+      if (d2.prices && d2.prices.length > 0) {
+        // Average of month
+        const prices = d2.prices.map(p => p[1]);
+        const avg = prices.reduce((a,b) => a+b, 0) / prices.length;
+        document.getElementById('f-btc-price').value = Math.round(avg);
+        setStatus('btcprice-status', '✓ média mensal CoinGecko', 'var(--green)');
+        return;
+      }
+    }
+  } catch(e) {}
+
+  setStatus('btcprice-status', '⚠ preencha manualmente', 'var(--btc)');
+}
+// ─────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────
 // TOAST
 // ─────────────────────────────────────────────────────────────
