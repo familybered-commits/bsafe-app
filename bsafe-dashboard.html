@@ -451,14 +451,20 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);
       <div class="modal-section">
         <div class="modal-section-label">₿ Bitcoin — via xpub</div>
         <!-- xpub saved indicator -->
-        <div id="xpub-saved-info" style="display:none;background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px">
-          <div>
-            <div style="font-size:11px;color:var(--muted);margin-bottom:3px">xpub monitorado</div>
-            <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--btc)" id="xpub-display">—</div>
+        <div id="xpub-saved-info" style="display:none;background:var(--bg3);border:1px solid rgba(247,147,26,0.2);border-radius:2px;padding:12px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+            <div>
+              <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">xpub monitorado</div>
+              <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--btc)" id="xpub-display">—</div>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button onclick="buscarSaldoBTC()" style="padding:5px 10px;background:rgba(247,147,26,0.15);border:1px solid rgba(247,147,26,0.3);border-radius:2px;color:var(--btc);font-size:11px;cursor:pointer;font-weight:700" title="Atualizar saldo">↻</button>
+              <button onclick="localStorage.removeItem(XPUB_KEY);initXpub()" style="padding:5px 10px;background:transparent;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;cursor:pointer" title="Trocar xpub">✎</button>
+            </div>
           </div>
-          <div style="text-align:right">
-            <div style="font-size:11px;color:var(--muted);margin-bottom:3px">Saldo ao vivo</div>
-            <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--btc)" id="xpub-balance-display">—</div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:11px;color:var(--muted)">Saldo ao vivo:</div>
+            <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:800;color:var(--btc)" id="xpub-balance-display">—</div>
           </div>
         </div>
         <div id="xpub-input-area">
@@ -1082,32 +1088,55 @@ function parseIBKRExtrato(file) {
 }
 
 function salvarXpub() {
-  const val = document.getElementById('f-xpub-input') ? document.getElementById('f-xpub-input').value.trim() : '';
-  if (!val || (!val.startsWith('xpub') && !val.startsWith('zpub') && !val.startsWith('ypub'))) {
-    showToast('xpub inválido. Deve começar com xpub, zpub ou ypub', true); return;
+  const input = document.getElementById('f-xpub-input');
+  const val = input ? input.value.trim() : '';
+  if (!val || (!val.startsWith('xpub') && !val.startsWith('zpub') && !val.startsWith('ypub') && !val.startsWith('bc1'))) {
+    showToast('xpub inválido. Deve começar com xpub, zpub, ypub ou bc1', true); return;
   }
   localStorage.setItem(XPUB_KEY, val);
-  showToast('✓ xpub salvo!');
-  initXpub(); buscarSaldoBTC();
+  showToast('✓ xpub salvo! Buscando saldo...');
+  initXpub();
+  buscarSaldoBTC(); // modal já está aberto aqui, f-btc existe
 }
 
 async function buscarSaldoBTC() {
   const xpub = getSavedXpub();
   if (!xpub) return;
-  setStatus('btc-status', '⏳ buscando...', 'var(--muted)');
+
+  setStatus('btc-status', '⏳ buscando saldo...', 'var(--muted)');
+
+  // Also update display area
+  const bd = document.getElementById('xpub-balance-display');
+  if (bd) bd.textContent = '⏳ buscando...';
+
   try {
-    const r = await fetch('https://mempool.space/api/v1/xpub/' + xpub);
-    if (r.ok) {
-      const d = await r.json();
-      const sats = (d.funded_txo_sum||0) - (d.spent_txo_sum||0);
-      const bal = sats / 1e8;
-      const el = document.getElementById('f-btc');
-      if (el) el.value = bal.toFixed(8);
-      setStatus('btc-status', '✓ mempool.space', 'var(--green)');
-      const bd = document.getElementById('xpub-balance-display');
-      if (bd) bd.textContent = '₿ ' + bal.toFixed(6);
-    } else { setStatus('btc-status', '⚠ preencha manualmente', 'var(--btc)'); }
-  } catch(e) { setStatus('btc-status', '⚠ preencha manualmente', 'var(--btc)'); }
+    // Try xpub endpoint
+    const url = xpub.startsWith('bc1') || xpub.length === 34 || xpub.length === 42
+      ? 'https://mempool.space/api/address/' + xpub   // single address
+      : 'https://mempool.space/api/v1/xpub/' + xpub;  // xpub/zpub
+
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+
+    const d = await r.json();
+    const funded = d.chain_stats ? d.chain_stats.funded_txo_sum : (d.funded_txo_sum || 0);
+    const spent  = d.chain_stats ? d.chain_stats.spent_txo_sum  : (d.spent_txo_sum  || 0);
+    const sats   = funded - spent;
+    const bal    = sats / 1e8;
+
+    // Fill form field if modal is open
+    const fBtc = document.getElementById('f-btc');
+    if (fBtc) fBtc.value = bal.toFixed(8);
+
+    // Update display
+    if (bd) bd.textContent = '₿ ' + bal.toFixed(6);
+    setStatus('btc-status', '✓ via mempool.space', 'var(--green)');
+
+  } catch(e) {
+    setStatus('btc-status', '⚠ Erro: ' + e.message + ' — tente outro endpoint', 'var(--red)');
+    if (bd) bd.textContent = '— erro';
+    console.log('xpub error:', e);
+  }
 }
 
 function initXpub() {
@@ -1129,9 +1158,8 @@ function onMesChange(mes) {
   if (!mes) return;
   buscarCambioHistorico(mes);
   buscarBTCHistorico(mes);
-  const hoje = new Date();
-  const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
-  if (mes >= mesAtual) buscarSaldoBTC();
+  // Always fetch BTC balance from xpub if saved
+  if (getSavedXpub()) buscarSaldoBTC();
 }
 
 function abrirModal() {
