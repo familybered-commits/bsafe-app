@@ -393,53 +393,102 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);
       <button class="modal-close" onclick="fecharModal()">×</button>
     </div>
     <div class="modal-body">
+
+      <!-- MÊS + CÂMBIO AUTO -->
       <div class="modal-section">
-        <div class="modal-section-label">📅 Período e Câmbio</div>
+        <div class="modal-section-label">📅 Período</div>
         <div class="form-grid">
           <div class="form-group">
             <label class="form-label">Mês de Referência</label>
-            <input type="month" class="form-input" id="f-mes" onchange="buscarCotacoes(this.value)">
+            <input type="month" class="form-input" id="f-mes" onchange="onMesChange(this.value)">
           </div>
           <div class="form-group">
-            <label class="form-label">Câmbio USD/BRL no mês <span id="cambio-status" style="font-size:10px;color:var(--green);margin-left:4px"></span></label>
-            <input type="number" class="form-input" id="f-cambio" placeholder="ex: 5.71" step="0.01">
+            <label class="form-label">Câmbio USD/BRL <span id="cambio-status" style="font-size:10px;margin-left:4px;color:var(--green)"></span></label>
+            <input type="number" class="form-input" id="f-cambio" placeholder="Buscando..." step="0.01">
           </div>
         </div>
       </div>
+
+      <!-- IBKR UPLOAD -->
       <div class="modal-section">
-        <div class="modal-section-label">🏦 Carteira IBKR</div>
+        <div class="modal-section-label">🏦 Carteira IBKR — via Extrato</div>
+        <div id="ibkr-upload-zone" style="border:2px dashed var(--border-dim);border-radius:4px;padding:24px;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:12px"
+          onclick="document.getElementById('ibkr-modal-file').click()"
+          ondragover="event.preventDefault();this.style.borderColor='var(--orange)';this.style.background='var(--orange-dim)'"
+          ondragleave="this.style.borderColor='var(--border-dim)';this.style.background='transparent'"
+          ondrop="event.preventDefault();this.style.borderColor='var(--border-dim)';this.style.background='transparent';parseIBKRExtrato(event.dataTransfer.files[0])"
+          onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border-dim)'">
+          <div style="font-size:28px;margin-bottom:6px">📊</div>
+          <div style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px">Arraste o extrato da IBKR aqui</div>
+          <div style="font-size:11px;color:var(--muted)">Activity Statement exportado como CSV</div>
+          <input type="file" id="ibkr-modal-file" accept=".csv,.txt" style="display:none" onchange="parseIBKRExtrato(this.files[0]);this.value=''">
+        </div>
+        <!-- Result after parsing -->
+        <div id="ibkr-parsed-result" style="display:none;background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:14px;margin-bottom:12px"></div>
+        <!-- Manual fallback -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="height:1px;flex:1;background:var(--border-dim)"></div>
+          <span style="font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:1px">OU PREENCHA MANUALMENTE</span>
+          <div style="height:1px;flex:1;background:var(--border-dim)"></div>
+        </div>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">Saldo Total em USD</label>
+            <label class="form-label">Saldo Total NAV (USD)</label>
             <input type="number" class="form-input" id="f-ibkr-usd" placeholder="ex: 9500.00" step="0.01">
           </div>
           <div class="form-group">
             <label class="form-label">Aporte do Mês (USD)</label>
             <input type="number" class="form-input" id="f-ibkr-aporte" placeholder="ex: 500.00" step="0.01">
           </div>
+          <div class="form-group"><label class="form-label">% VT</label><input type="number" class="form-input" id="f-vt" placeholder="ex: 45" step="0.1" min="0" max="100"></div>
+          <div class="form-group"><label class="form-label">% VOO</label><input type="number" class="form-input" id="f-voo" placeholder="ex: 20" step="0.1" min="0" max="100"></div>
+          <div class="form-group"><label class="form-label">% Cash</label><input type="number" class="form-input" id="f-cash" placeholder="ex: 15" step="0.1" min="0" max="100"></div>
+          <div class="form-group"><label class="form-label">% Outros</label><input type="number" class="form-input" id="f-outros" placeholder="ex: 20" step="0.1" min="0" max="100"></div>
         </div>
-        <div style="margin-top:14px">
-          <div class="form-label" style="margin-bottom:8px">Alocação por ativo (% da carteira)</div>
-          <div class="form-grid">
-            <div class="form-group"><label class="form-label">% VT</label><input type="number" class="form-input" id="f-vt" placeholder="ex: 45" step="0.1" min="0" max="100"></div>
-            <div class="form-group"><label class="form-label">% VOO</label><input type="number" class="form-input" id="f-voo" placeholder="ex: 20" step="0.1" min="0" max="100"></div>
-            <div class="form-group"><label class="form-label">% USD Cash</label><input type="number" class="form-input" id="f-cash" placeholder="ex: 15" step="0.1" min="0" max="100"></div>
-            <div class="form-group"><label class="form-label">% Outros</label><input type="number" class="form-input" id="f-outros" placeholder="ex: 20" step="0.1" min="0" max="100"></div>
+      </div>
+
+      <!-- BITCOIN VIA XPUB -->
+      <div class="modal-section">
+        <div class="modal-section-label">₿ Bitcoin — via xpub</div>
+        <!-- xpub saved indicator -->
+        <div id="xpub-saved-info" style="display:none;background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:3px">xpub monitorado</div>
+            <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--btc)" id="xpub-display">—</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:3px">Saldo ao vivo</div>
+            <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--btc)" id="xpub-balance-display">—</div>
+          </div>
+        </div>
+        <div id="xpub-input-area">
+          <label class="form-label" style="display:block;margin-bottom:6px">Adicionar xpub (salvo para futuros lançamentos)</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" class="form-input" id="f-xpub-input" placeholder="xpub6... ou zpub..." style="font-family:'DM Mono',monospace;font-size:12px">
+            <button onclick="salvarXpub()" style="padding:10px 16px;background:var(--btc);color:#111;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:2px;cursor:pointer;white-space:nowrap;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Salvar</button>
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:12px">
+          <div class="form-group">
+            <label class="form-label">Saldo BTC <span id="btc-status" style="font-size:10px;color:var(--green);margin-left:4px"></span></label>
+            <input type="number" class="form-input" id="f-btc" placeholder="0.00000000" step="0.00000001">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preço BTC no mês (USD) <span id="btcprice-status" style="font-size:10px;color:var(--green);margin-left:4px"></span></label>
+            <input type="number" class="form-input" id="f-btc-price" placeholder="Buscando..." step="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Aporte BTC do mês (BRL)</label>
+            <input type="number" class="form-input" id="f-btc-aporte" placeholder="ex: 1200" step="0.01">
           </div>
         </div>
       </div>
-      <div class="modal-section">
-        <div class="modal-section-label">₿ Bitcoin</div>
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Saldo em BTC</label><input type="number" class="form-input" id="f-btc" placeholder="ex: 0.18450000" step="0.00000001"></div>
-          <div class="form-group"><label class="form-label">Preço BTC no mês (USD) <span id="btcprice-status" style="font-size:10px;color:var(--green);margin-left:4px"></span></label><input type="number" class="form-input" id="f-btc-price" placeholder="ex: 95000" step="1"></div>
-          <div class="form-group"><label class="form-label">Aporte BTC do mês (BRL)</label><input type="number" class="form-input" id="f-btc-aporte" placeholder="ex: 1200" step="0.01"></div>
-        </div>
-      </div>
+
       <div class="modal-section">
         <div class="modal-section-label">📝 Observações</div>
-        <div class="form-group full"><input type="text" class="form-input" id="f-notas" placeholder="Notas do mês (opcional)"></div>
+        <input type="text" class="form-input" id="f-notas" placeholder="Notas do mês (opcional)">
       </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
@@ -961,36 +1010,161 @@ function renderHistorico() {
 // ─────────────────────────────────────────────────────────────
 // LANÇAMENTO MODAL
 // ─────────────────────────────────────────────────────────────
+// XPUB
+const XPUB_KEY = 'bsafe_xpub';
+function getSavedXpub() { return localStorage.getItem(XPUB_KEY) || ''; }
+
+function parseIBKRExtrato(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const content = e.target.result;
+    let nav = null;
+    const positions = [];
+
+    content.split('\n').forEach(line => {
+      const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g,''));
+      // NAV Total
+      if (cols[0] === 'Net Asset Value' && cols[1] === 'Data' && cols[2].includes('Total')) {
+        for (let i = 3; i < Math.min(cols.length, 9); i++) {
+          const v = parseFloat(cols[i].replace(/,/g,''));
+          if (!isNaN(v) && v > 1000) { nav = v; break; }
+        }
+      }
+      // Open Positions
+      if (cols[0] === 'Open Positions' && cols[1] === 'Data' && cols[2] === 'Summary' && cols[5]) {
+        try {
+          const val = parseFloat(cols[11].replace(/,/g,''));
+          const prc = parseFloat(cols[10].replace(/,/g,''));
+          const qty = parseFloat(cols[6].replace(/,/g,''));
+          if (!isNaN(val) && cols[5]) positions.push({ symbol:cols[5], qty, price:prc, value:val });
+        } catch(e) {}
+      }
+    });
+
+    // Fill form fields
+    if (nav) document.getElementById('f-ibkr-usd').value = nav.toFixed(2);
+
+    if (positions.length > 0) {
+      const totalVal = positions.reduce((s,p) => s+(p.value||0), 0);
+      let vtP=0, vooP=0, cashP=0, outP=0;
+      positions.forEach(p => {
+        const s = p.symbol.toUpperCase();
+        const pct = totalVal > 0 ? Math.round((p.value/totalVal)*100) : 0;
+        if (s==='VT') vtP+=pct;
+        else if (s==='VOO') vooP+=pct;
+        else if (['USD','CASH','BIL','SHV','SGOV'].includes(s)) cashP+=pct;
+        else outP+=pct;
+      });
+      if (vtP)   document.getElementById('f-vt').value = vtP;
+      if (vooP)  document.getElementById('f-voo').value = vooP;
+      if (cashP) document.getElementById('f-cash').value = cashP;
+      if (outP)  document.getElementById('f-outros').value = outP;
+    }
+
+    // Show result
+    const zone   = document.getElementById('ibkr-upload-zone');
+    const result = document.getElementById('ibkr-parsed-result');
+    if (zone)   zone.style.display = 'none';
+    if (result) {
+      result.style.display = 'block';
+      const posHtml = positions.slice(0,6).map(p =>
+        '<span style="display:inline-flex;align-items:center;gap:5px;background:var(--bg4);border:1px solid var(--border-dim);border-radius:2px;padding:4px 10px;font-family:\'DM Mono\',monospace;font-size:11px"><span style="color:var(--orange);font-weight:700">'
+        + p.symbol + '</span><span style="color:var(--muted)">$' + (p.value||0).toLocaleString('en-US',{maximumFractionDigits:0}) + '</span></span>'
+      ).join('');
+      result.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:var(--green)">✓ Extrato processado</div><button onclick="document.getElementById(\'ibkr-upload-zone\').style.display=\'block\';document.getElementById(\'ibkr-parsed-result\').style.display=\'none\'" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline">trocar</button></div>'
+        + (nav ? '<div style="font-family:\'DM Mono\',monospace;font-size:16px;font-weight:800;color:var(--orange);margin-bottom:10px">NAV: US$ ' + nav.toLocaleString('en-US',{maximumFractionDigits:2}) + '</div>' : '<div style="color:var(--btc);font-size:12px;margin-bottom:10px">⚠ NAV não encontrado — confirme o valor.</div>')
+        + '<div style="display:flex;flex-wrap:wrap;gap:6px">' + posHtml + '</div>';
+    }
+    showToast(nav ? '✓ NAV US$ ' + Math.round(nav).toLocaleString('en-US') + ' extraído!' : '⚠ Preencha o saldo manualmente');
+  };
+  reader.readAsText(file);
+}
+
+function salvarXpub() {
+  const val = document.getElementById('f-xpub-input') ? document.getElementById('f-xpub-input').value.trim() : '';
+  if (!val || (!val.startsWith('xpub') && !val.startsWith('zpub') && !val.startsWith('ypub'))) {
+    showToast('xpub inválido. Deve começar com xpub, zpub ou ypub', true); return;
+  }
+  localStorage.setItem(XPUB_KEY, val);
+  showToast('✓ xpub salvo!');
+  initXpub(); buscarSaldoBTC();
+}
+
+async function buscarSaldoBTC() {
+  const xpub = getSavedXpub();
+  if (!xpub) return;
+  setStatus('btc-status', '⏳ buscando...', 'var(--muted)');
+  try {
+    const r = await fetch('https://mempool.space/api/v1/xpub/' + xpub);
+    if (r.ok) {
+      const d = await r.json();
+      const sats = (d.funded_txo_sum||0) - (d.spent_txo_sum||0);
+      const bal = sats / 1e8;
+      const el = document.getElementById('f-btc');
+      if (el) el.value = bal.toFixed(8);
+      setStatus('btc-status', '✓ mempool.space', 'var(--green)');
+      const bd = document.getElementById('xpub-balance-display');
+      if (bd) bd.textContent = '₿ ' + bal.toFixed(6);
+    } else { setStatus('btc-status', '⚠ preencha manualmente', 'var(--btc)'); }
+  } catch(e) { setStatus('btc-status', '⚠ preencha manualmente', 'var(--btc)'); }
+}
+
+function initXpub() {
+  const xpub = getSavedXpub();
+  const si = document.getElementById('xpub-saved-info');
+  const ia = document.getElementById('xpub-input-area');
+  const xd = document.getElementById('xpub-display');
+  if (xpub) {
+    if (si) si.style.display = 'flex';
+    if (ia) ia.style.display = 'none';
+    if (xd) xd.textContent = xpub.slice(0,12) + '...' + xpub.slice(-6);
+  } else {
+    if (si) si.style.display = 'none';
+    if (ia) ia.style.display = 'block';
+  }
+}
+
+function onMesChange(mes) {
+  if (!mes) return;
+  buscarCambioHistorico(mes);
+  buscarBTCHistorico(mes);
+  const hoje = new Date();
+  const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
+  if (mes >= mesAtual) buscarSaldoBTC();
+}
+
 function abrirModal() {
   const modal = document.getElementById('modal-lancamento');
   if (!modal) return;
   modal.classList.add('open');
 
-  // Set current month
   const mesAtual = new Date().toISOString().slice(0, 7);
-  document.getElementById('f-mes').value = mesAtual;
-  document.getElementById('f-cambio').value = usdBrl > 0 ? usdBrl.toFixed(2) : '';
-  document.getElementById('f-ibkr-usd').value = '';
-  document.getElementById('f-ibkr-aporte').value = '';
-  document.getElementById('f-vt').value = '';
-  document.getElementById('f-voo').value = '';
-  document.getElementById('f-cash').value = '';
-  document.getElementById('f-outros').value = '';
-  document.getElementById('f-btc').value = '';
-  document.getElementById('f-btc-price').value = btcPrice > 0 ? Math.round(btcPrice) : '';
-  document.getElementById('f-btc-aporte').value = '';
-  document.getElementById('f-notas').value = '';
+  const setV = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  setV('f-mes', mesAtual);
+  setV('f-cambio', ''); setV('f-ibkr-usd', ''); setV('f-ibkr-aporte', '');
+  setV('f-vt', ''); setV('f-voo', ''); setV('f-cash', ''); setV('f-outros', '');
+  setV('f-btc', ''); setV('f-btc-price', ''); setV('f-btc-aporte', ''); setV('f-notas', '');
 
-  // Pre-fill from last entry
+  // Reset IBKR upload
+  const zone = document.getElementById('ibkr-upload-zone');
+  const parsed = document.getElementById('ibkr-parsed-result');
+  if (zone) zone.style.display = 'block';
+  if (parsed) { parsed.style.display = 'none'; parsed.innerHTML = ''; }
+
+  // Init xpub
+  initXpub();
+
+  // Pre-fill allocations from last entry
   const lista = getLancamentos();
   if (lista.length > 0) {
     const u = lista[lista.length - 1];
-    document.getElementById('f-vt').value     = u.vt    || '';
-    document.getElementById('f-voo').value    = u.voo   || '';
-    document.getElementById('f-cash').value   = u.cash  || '';
-    document.getElementById('f-outros').value = u.outros|| '';
-    document.getElementById('f-btc').value    = u.btc_qtd || u.btcQtd || '';
+    setV('f-vt', u.vt || ''); setV('f-voo', u.voo || '');
+    setV('f-cash', u.cash || ''); setV('f-outros', u.outros || '');
   }
+
+  // Auto-fetch prices
+  onMesChange(mesAtual);
 }
 
 function fecharModal() {
@@ -1205,129 +1379,95 @@ async function processIBKR(file) {
 
 
 // ─────────────────────────────────────────────────────────────
-// AUTO-FETCH COTAÇÕES HISTÓRICAS
+// COTAÇÕES HISTÓRICAS AUTO-FETCH
 // ─────────────────────────────────────────────────────────────
-async function buscarCotacoes(mesAno) {
-  if (!mesAno) return;
-  const [ano, mes] = mesAno.split('-');
-  
-  // Last day of the month for better accuracy
-  const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate();
-  const dataMeio  = `${ano}-${mes}-15`; // mid-month for average
-  const dataFim   = `${ano}-${mes}-${String(ultimoDia).padStart(2,'0')}`;
-  
-  // Don't fetch if month is current (use live price)
-  const hoje = new Date();
-  const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
-  if (mesAno >= mesAtual) {
-    // Use live prices for current month
-    if (usdBrl > 0) {
-      document.getElementById('f-cambio').value = usdBrl.toFixed(2);
-      setStatus('cambio-status', '✓ cotação ao vivo', 'var(--green)');
-    }
-    if (btcPrice > 0) {
-      document.getElementById('f-btc-price').value = Math.round(btcPrice);
-      setStatus('btcprice-status', '✓ preço ao vivo', 'var(--green)');
-    }
-    return;
-  }
-
-  // Fetch historical
-  setStatus('cambio-status', '⏳ buscando...', 'var(--muted)');
-  setStatus('btcprice-status', '⏳ buscando...', 'var(--muted)');
-
-  await Promise.all([
-    fetchCambioHistorico(ano, mes, dataFim),
-    fetchBTCHistorico(ano, mes, ultimoDia)
-  ]);
-}
-
 function setStatus(id, msg, color) {
   const el = document.getElementById(id);
   if (el) { el.textContent = msg; el.style.color = color; }
 }
 
-async function fetchCambioHistorico(ano, mes, dataFim) {
-  // Strategy: try AwesomeAPI (Brazilian) → Frankfurter (ECB) → manual
-  const dataInicio = `${ano}${mes}01`;
-  const dataFimStr = dataFim.replace(/-/g, '');
-  
+async function buscarCambioHistorico(mesAno) {
+  const [ano, mes] = mesAno.split('-');
+  const hoje = new Date();
+  const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
+
+  if (mesAno >= mesAtual) {
+    if (usdBrl > 0) { document.getElementById('f-cambio').value = usdBrl.toFixed(2); setStatus('cambio-status','✓ ao vivo','var(--green)'); }
+    return;
+  }
+
+  setStatus('cambio-status','⏳ buscando...','var(--muted)');
+  const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate();
+  const dataFimStr = ano + mes + String(ultimoDia).padStart(2,'0');
+
   try {
-    // AwesomeAPI — most accurate for BRL
-    const url = `https://economia.awesomeapi.com.br/json/daily/USD-BRL/5?start_date=${dataInicio}&end_date=${dataFimStr}`;
-    const r = await fetch(url);
+    const r = await fetch('https://economia.awesomeapi.com.br/json/daily/USD-BRL/5?start_date=' + ano + mes + '01&end_date=' + dataFimStr);
     if (r.ok) {
-      const data = await r.json();
-      if (data && data.length > 0) {
-        // Get mid-month or last available rate
-        const rates = data.map(d => parseFloat(d.bid));
-        const avg = rates.reduce((a,b) => a+b, 0) / rates.length;
+      const d = await r.json();
+      if (d && d.length > 0) {
+        const avg = d.reduce((s,x) => s + parseFloat(x.bid), 0) / d.length;
         document.getElementById('f-cambio').value = avg.toFixed(2);
-        setStatus('cambio-status', '✓ via AwesomeAPI', 'var(--green)');
+        setStatus('cambio-status','✓ AwesomeAPI','var(--green)');
         return;
       }
     }
   } catch(e) {}
 
   try {
-    // Frankfurter fallback — ECB official rates
-    const url2 = `https://api.frankfurter.app/${dataFim}?from=USD&to=BRL`;
-    const r2 = await fetch(url2);
+    const dataFmt = ano + '-' + mes + '-' + String(ultimoDia).padStart(2,'0');
+    const r2 = await fetch('https://api.frankfurter.app/' + dataFmt + '?from=USD&to=BRL');
     if (r2.ok) {
       const d2 = await r2.json();
       if (d2.rates && d2.rates.BRL) {
         document.getElementById('f-cambio').value = d2.rates.BRL.toFixed(2);
-        setStatus('cambio-status', '✓ via Frankfurter', 'var(--green)');
+        setStatus('cambio-status','✓ Frankfurter','var(--green)');
         return;
       }
     }
   } catch(e) {}
 
-  // If both fail
-  setStatus('cambio-status', '⚠ preencha manualmente', 'var(--btc)');
+  setStatus('cambio-status','⚠ preencha manualmente','var(--btc)');
 }
 
-async function fetchBTCHistorico(ano, mes, ultimoDia) {
-  // CoinGecko free API — historical price on specific date
+async function buscarBTCHistorico(mesAno) {
+  const [ano, mes] = mesAno.split('-');
+  const hoje = new Date();
+  const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
+
+  if (mesAno >= mesAtual) {
+    if (btcPrice > 0) { document.getElementById('f-btc-price').value = Math.round(btcPrice); setStatus('btcprice-status','✓ ao vivo','var(--green)'); }
+    return;
+  }
+
+  setStatus('btcprice-status','⏳ buscando...','var(--muted)');
+  const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate();
   const dd = String(Math.min(28, ultimoDia)).padStart(2,'0');
-  const mm  = mes;
-  const yyyy= ano;
-  const dateStr = `${dd}-${mm}-${yyyy}`; // CoinGecko format: DD-MM-YYYY
-  
+
   try {
-    const url = `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}&localization=false`;
-    const r = await fetch(url);
+    const r = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/history?date=' + dd + '-' + mes + '-' + ano + '&localization=false');
     if (r.ok) {
       const d = await r.json();
       const price = d?.market_data?.current_price?.usd;
-      if (price) {
-        document.getElementById('f-btc-price').value = Math.round(price);
-        setStatus('btcprice-status', '✓ via CoinGecko', 'var(--green)');
-        return;
-      }
+      if (price) { document.getElementById('f-btc-price').value = Math.round(price); setStatus('btcprice-status','✓ CoinGecko','var(--green)'); return; }
     }
   } catch(e) {}
 
   try {
-    // Fallback: CoinGecko market chart range
-    const from = Math.floor(new Date(`${yyyy}-${mm}-01`).getTime() / 1000);
-    const to   = Math.floor(new Date(`${yyyy}-${mm}-${String(ultimoDia).padStart(2,'0')}`).getTime() / 1000);
-    const url2 = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=usd&from=${from}&to=${to}`;
-    const r2 = await fetch(url2);
+    const from = Math.floor(new Date(ano + '-' + mes + '-01').getTime() / 1000);
+    const to   = Math.floor(new Date(ano + '-' + mes + '-' + String(ultimoDia).padStart(2,'0')).getTime() / 1000);
+    const r2 = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=usd&from=' + from + '&to=' + to);
     if (r2.ok) {
       const d2 = await r2.json();
       if (d2.prices && d2.prices.length > 0) {
-        // Average of month
-        const prices = d2.prices.map(p => p[1]);
-        const avg = prices.reduce((a,b) => a+b, 0) / prices.length;
+        const avg = d2.prices.reduce((s,p) => s+p[1],0) / d2.prices.length;
         document.getElementById('f-btc-price').value = Math.round(avg);
-        setStatus('btcprice-status', '✓ média mensal CoinGecko', 'var(--green)');
+        setStatus('btcprice-status','✓ média CoinGecko','var(--green)');
         return;
       }
     }
   } catch(e) {}
 
-  setStatus('btcprice-status', '⚠ preencha manualmente', 'var(--btc)');
+  setStatus('btcprice-status','⚠ preencha manualmente','var(--btc)');
 }
 // ─────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────
