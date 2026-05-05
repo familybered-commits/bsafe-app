@@ -624,16 +624,38 @@ async function sendMsg() {
   chatHistory.push({role:'user', content: text});
   showTyping();
   try {
+    // Get API key - ask user once and store locally
+    let apiKey = localStorage.getItem('bsafe_api_key');
+    if (!apiKey) {
+      apiKey = prompt('Para usar a Sofia, cole sua chave da API Anthropic:\n(Obtida em console.anthropic.com → API Keys)\n\nA chave fica salva localmente no seu navegador.');
+      if (!apiKey) { hideTyping(); return; }
+      localStorage.setItem('bsafe_api_key', apiKey.trim());
+    }
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-calls': 'true'
+      },
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:800,
         system: SOFIA_CONTEXT,
         messages: chatHistory
       })
     });
+    if (!resp.ok) {
+      const err = await resp.json();
+      if (resp.status === 401) {
+        localStorage.removeItem('bsafe_api_key');
+        hideTyping();
+        addMsg('Chave de API inválida. Recarregue a página para tentar novamente.', 'sofia');
+        return;
+      }
+      throw new Error(err.error?.message || 'Erro ' + resp.status);
+    }
     const data = await resp.json();
     const reply = data.content?.[0]?.text || 'Desculpe, tive um problema. Tente novamente!';
     hideTyping();
