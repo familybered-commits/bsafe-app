@@ -6,7 +6,7 @@
 <title>Dashboard — BSafe Invest Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="bsafe-i18n.js"></script>
+
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1100,42 +1100,92 @@ function salvarXpub() {
 }
 
 async function buscarSaldoBTC() {
-  const xpub = getSavedXpub();
+  var xpub = getSavedXpub();
   if (!xpub) return;
 
   setStatus('btc-status', '⏳ buscando saldo...', 'var(--muted)');
-
-  // Also update display area
-  const bd = document.getElementById('xpub-balance-display');
+  var bd = document.getElementById('xpub-balance-display');
   if (bd) bd.textContent = '⏳ buscando...';
 
-  try {
-    // Try xpub endpoint
-    const url = xpub.startsWith('bc1') || xpub.length === 34 || xpub.length === 42
-      ? 'https://mempool.space/api/address/' + xpub   // single address
-      : 'https://mempool.space/api/v1/xpub/' + xpub;  // xpub/zpub
+  // Detect type
+  var isAddress = xpub.startsWith('bc1') || xpub.startsWith('1') || xpub.startsWith('3');
+  var isXpub    = xpub.startsWith('xpub') || xpub.startsWith('zpub') || xpub.startsWith('ypub');
 
-    const r = await fetch(url);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+  // Multiple endpoints with fallback
+  var urls = [];
+  if (isAddress) {
+    urls = [
+      'https://mempool.space/api/address/' + xpub,
+      'https://blockstream.info/api/address/' + xpub,
+      'https://api.blockcypher.com/v1/btc/main/addrs/' + xpub + '/balance',
+    ];
+  } else if (isXpub) {
+    urls = [
+      'https://mempool.space/api/v1/xpub/' + xpub,
+      'https://blockstream.info/api/xpub/' + xpub,
+    ];
+  } else {
+    setStatus('btc-status', '⚠ Formato inválido. Use xpub, zpub ou endereço Bitcoin.', 'var(--red)');
+    if (bd) bd.textContent = '— formato inválido';
+    return;
+  }
 
-    const d = await r.json();
-    const funded = d.chain_stats ? d.chain_stats.funded_txo_sum : (d.funded_txo_sum || 0);
-    const spent  = d.chain_stats ? d.chain_stats.spent_txo_sum  : (d.spent_txo_sum  || 0);
-    const sats   = funded - spent;
-    const bal    = sats / 1e8;
+  var bal = null;
+  var usedSource = '';
 
-    // Fill form field if modal is open
-    const fBtc = document.getElementById('f-btc');
+  for (var i = 0; i < urls.length; i++) {
+    try {
+      var r = await fetch(urls[i], { headers: { 'Accept': 'application/json' } });
+      if (!r.ok) continue;
+      var d = await r.json();
+
+      // mempool.space / blockstream xpub format
+      if (typeof d.funded_txo_sum !== 'undefined') {
+        var sats = (d.funded_txo_sum || 0) - (d.spent_txo_sum || 0);
+        bal = sats / 1e8;
+        usedSource = i === 0 ? 'mempool.space' : 'blockstream.info';
+        break;
+      }
+      // blockstream address format
+      if (d.chain_stats) {
+        var sats = (d.chain_stats.funded_txo_sum || 0) - (d.chain_stats.spent_txo_sum || 0);
+        bal = sats / 1e8;
+        usedSource = 'blockstream.info';
+        break;
+      }
+      // blockcypher format
+      if (typeof d.balance !== 'undefined') {
+        bal = d.balance / 1e8;
+        usedSource = 'blockcypher.com';
+        break;
+      }
+    } catch(e) {
+      console.log('xpub attempt ' + (i+1) + ' failed:', e.message);
+    }
+  }
+
+  if (bal !== null) {
+    var fBtc = document.getElementById('f-btc');
     if (fBtc) fBtc.value = bal.toFixed(8);
-
-    // Update display
-    if (bd) bd.textContent = '₿ ' + bal.toFixed(6);
-    setStatus('btc-status', '✓ via mempool.space', 'var(--green)');
-
-  } catch(e) {
-    setStatus('btc-status', '⚠ Erro: ' + e.message + ' — tente outro endpoint', 'var(--red)');
-    if (bd) bd.textContent = '— erro';
-    console.log('xpub error:', e);
+    if (bd) bd.textContent = '\u20BF ' + bal.toFixed(6);
+    setStatus('btc-status', '\u2713 via ' + usedSource, 'var(--green)');
+    showToast('\u2713 Saldo BTC: \u20BF ' + bal.toFixed(6));
+  } else {
+    setStatus('btc-status', '\u26A0 Não foi possível buscar — cole o saldo manualmente', 'var(--btc)');
+    if (bd) bd.textContent = '— ver instruções';
+    // Show helper message
+    var old = document.getElementById('xpub-instrucoes');
+    if (old) old.remove();
+    var instrucoes = document.createElement('div');
+    instrucoes.id = 'xpub-instrucoes';
+    instrucoes.style.cssText = 'margin-top:10px;padding:12px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:2px;font-size:12px;color:var(--muted);line-height:1.8';
+    instrucoes.innerHTML = '<strong style="color:var(--btc)">Como verificar manualmente:</strong><br>'
+      + '1. Acesse <a href="https://mempool.space" target="_blank" style="color:var(--orange)">mempool.space</a><br>'
+      + '2. Cole seu xpub na barra de busca e pressione Enter<br>'
+      + '3. Copie o saldo em BTC e cole no campo abaixo<br>'
+      + '<button onclick="this.parentElement.remove()" style="margin-top:8px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:4px 10px;cursor:pointer">Fechar</button>';
+    var xpubSaved = document.getElementById('xpub-saved-info');
+    if (xpubSaved && xpubSaved.parentNode) xpubSaved.after(instrucoes);
   }
 }
 
