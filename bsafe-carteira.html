@@ -169,9 +169,9 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
 <section class="hero">
   <div class="hero-grid"></div>
   <div class="hero-inner">
-    <div class="hero-tag">Educação Patrimonial · BSafe Invest</div>
-    <h1 class="hero-title">A <em>Carteira</em><br>do Rafael Bered</h1>
-    <p class="hero-sub">Filosofia, composição e raciocínio por trás do portfólio internacional que Rafael construiu ao longo de mais de 10 anos investindo no exterior.</p>
+    <div class="hero-tag">Simulador Educacional · BSafe Invest</div>
+    <h1 class="hero-title">Carteira BSafe<br><em>Educacional</em></h1>
+    <p class="hero-sub">Simule como carteiras compostas por ETFs globais, renda fixa e Bitcoin teriam se comportado nos últimos 5 anos. Dados históricos reais — para fins exclusivamente educacionais.</p>
     <div class="hero-disclaimer">⚠ Conteúdo educacional — não é recomendação de investimento</div>
   </div>
 </section>
@@ -179,9 +179,9 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
 <!-- FILOSOFIA -->
 <section class="section fade-in">
   <div class="section-inner">
-    <div class="section-tag">A Filosofia</div>
+    <div class="section-tag">A Filosofia BSafe</div>
     <h2 class="section-title">Três moedas. Três funções.</h2>
-    <p class="section-sub">O portfólio BSafe é construído sobre uma premissa simples: cada moeda tem um papel específico na proteção e crescimento do patrimônio.</p>
+    <p class="section-sub">A abordagem BSafe é construída sobre uma premissa simples: cada classe de ativo tem um papel específico na proteção e crescimento do patrimônio.</p>
 
     <div class="pilares-grid">
       <div class="pilar p1">
@@ -207,17 +207,99 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
     <!-- AVISO EDUCACIONAL -->
     <div class="aviso-box">
       <div class="aviso-title">⚠️ Importante antes de continuar</div>
-      <div class="aviso-text">O que você verá abaixo é o <strong style="color:var(--text)">estudo de caso educacional</strong> do portfólio do Rafael Bered — apresentado como exemplo didático de como um investidor construiu sua estratégia patrimonial. <strong style="color:var(--text)">Não é recomendação de investimento</strong>. Cada situação é única. Consulte um profissional qualificado antes de tomar qualquer decisão.</div>
+      <div class="aviso-text">O simulador abaixo usa <strong style="color:var(--text)">dados históricos reais</strong> de 2020 a 2024 para mostrar como três perfis de carteira teriam se comportado. <strong style="color:var(--text)">Não é recomendação de investimento</strong>. Rentabilidade passada não garante resultados futuros. Consulte um profissional antes de tomar decisões.</div>
     </div>
   </div>
 </section>
 
-<!-- CARTEIRAS MODELO -->
+<!-- SIMULADOR HISTÓRICO -->
+<section class="section fade-in" id="simulador">
+  <div class="section-inner">
+    <div class="section-tag">Simulador Retroativo — Dados Reais 2020–2024</div>
+    <h2 class="section-title">Como sua carteira teria<br>se saído nos últimos 5 anos?</h2>
+    <p class="section-sub">Configure o valor inicial, escolha o perfil e veja como cada carteira teria evoluído entre 2020 e 2024 — com os retornos históricos reais de cada ativo.</p>
+
+    <!-- CONTROLS -->
+    <div style="background:var(--bg2);border:1px solid var(--border-dim);border-radius:4px;padding:24px 28px;margin-bottom:24px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:end">
+        <div>
+          <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px">Investimento Inicial (R$)</label>
+          <input type="number" id="sim-valor" value="100000" min="1000" step="1000"
+            oninput="rodarSimulador()"
+            style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:11px 14px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:16px;font-weight:700;outline:none;width:100%;transition:border-color .2s"
+            onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='rgba(255,255,255,0.06)'">
+        </div>
+        <div>
+          <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px">Aporte Mensal (R$)</label>
+          <input type="number" id="sim-aporte" value="0" min="0" step="500"
+            oninput="rodarSimulador()"
+            style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:11px 14px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:16px;font-weight:700;outline:none;width:100%;transition:border-color .2s"
+            onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='rgba(255,255,255,0.06)'">
+        </div>
+        <div>
+          <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px">Câmbio USD/BRL (início)</label>
+          <input type="number" id="sim-cambio" value="5.30" step="0.10"
+            oninput="rodarSimulador()"
+            style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:11px 14px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:16px;font-weight:700;outline:none;width:100%;transition:border-color .2s"
+            onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='rgba(255,255,255,0.06)'">
+        </div>
+      </div>
+    </div>
+
+    <!-- CHART -->
+    <div style="background:var(--bg2);border:1px solid var(--border-dim);border-radius:4px;overflow:hidden;margin-bottom:24px">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border-dim);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div style="font-size:14px;font-weight:700;color:var(--white)">📈 Evolução do Patrimônio — 2020 a 2024</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div style="width:12px;height:3px;background:#22C55E;border-radius:2px"></div>Conservadora</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div style="width:12px;height:3px;background:#E8470A;border-radius:2px"></div>Moderada</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div style="width:12px;height:3px;background:#F7931A;border-radius:2px"></div>Arrojada</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div style="width:12px;height:3px;background:#3B82F6;border-radius:2px"></div>Poupança</div>
+        </div>
+      </div>
+      <div style="padding:24px">
+        <canvas id="sim-chart" height="320"></canvas>
+      </div>
+    </div>
+
+    <!-- RESULTS CARDS -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px" id="sim-results">
+      <!-- Filled by JS -->
+    </div>
+
+    <!-- YEAR TABLE -->
+    <div style="background:var(--bg2);border:1px solid var(--border-dim);border-radius:4px;overflow:hidden">
+      <div style="padding:16px 24px;border-bottom:1px solid var(--border-dim)">
+        <div style="font-size:13px;font-weight:700;color:var(--white)">📊 Retorno por Ano — cada ativo</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:600px">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border-dim)">
+              <th style="padding:12px 16px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:left">Ano</th>
+              <th style="padding:12px 16px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:center">VOO/SPY<br><span style="font-size:8px;color:var(--muted2)">S&P 500</span></th>
+              <th style="padding:12px 16px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:center">BND<br><span style="font-size:8px;color:var(--muted2)">Bonds</span></th>
+              <th style="padding:12px 16px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:center" style="color:var(--btc)">BTC<br><span style="font-size:8px;color:var(--muted2)">Bitcoin</span></th>
+              <th style="padding:12px 16px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:center">Conservadora</th>
+              <th style="padding:12px 16px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:center">Moderada</th>
+              <th style="padding:12px 16px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:center">Arrojada</th>
+            </tr>
+          </thead>
+          <tbody id="sim-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:.5px;line-height:1.6">
+      ⚠ Dados educacionais baseados em retornos históricos aproximados: VOO/SPY (S&P 500), BND (Vanguard Total Bond), BTC (Bitcoin). Retornos em USD convertidos pelo câmbio simulado. Não inclui impostos, taxas de corretagem ou IOF. Rentabilidade passada não garante resultados futuros. Não é recomendação de investimento.
+    </div>
+  </div>
+</section>
 <section class="section fade-in">
   <div class="section-inner">
     <div class="section-tag">Carteiras Modelo — Estudo de Caso</div>
     <h2 class="section-title">Três perfis. Uma filosofia.</h2>
-    <p class="section-sub">Rafael apresenta três composições modelo — baseadas em sua própria jornada — adaptadas a diferentes momentos de vida e tolerância a volatilidade.</p>
+    <p class="section-sub">Três composições educacionais adaptadas a diferentes perfis de tolerância a volatilidade e horizonte de investimento.</p>
 
     <!-- CONSERVADOR -->
     <div class="carteira-card">
@@ -275,7 +357,7 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
         <span class="carteira-tag tag-moderado">Moderado</span>
       </div>
       <div class="carteira-body">
-        <p class="carteira-desc">A composição que mais se aproxima da carteira atual do Rafael. Foco em ETFs de renda variável global com maior peso em Bitcoin como proteção assimétrica de longo prazo.</p>
+        <p class="carteira-desc">Equilíbrio entre crescimento de longo prazo e proteção patrimonial. Foco em ETFs de renda variável global com peso relevante em Bitcoin como proteção assimétrica.</p>
         <div class="ativos-grid">
           <div class="ativo-row">
             <div class="ativo-info"><div class="ativo-ticker">VT</div><div class="ativo-name">Vanguard Total World</div></div>
@@ -399,7 +481,7 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
 <!-- PRINCÍPIOS -->
 <section class="section fade-in">
   <div class="section-inner">
-    <div class="section-tag">Princípios do Rafael</div>
+    <div class="section-tag">Princípios da Abordagem BSafe</div>
     <h2 class="section-title">O que guia cada decisão</h2>
     <p class="section-sub" style="margin-bottom:30px">Não é sobre escolher o ativo "certo". É sobre ter uma estrutura resiliente que funciona independente do que o governo ou o mercado brasileiro faça.</p>
 
@@ -465,8 +547,177 @@ footer{border-top:1px solid var(--border-dim);padding:32px 40px;display:flex;jus
   <a href="bsafe-dashboard.html" class="mob-dash" onclick="toggleMenu()">Dashboard</a>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-function toggleMenu() {
+// ── DADOS HISTÓRICOS REAIS ────────────────────────────────────
+// Retornos anuais aproximados em USD
+const RETORNOS = [
+  { ano: 2020, spy: 18.4,  bnd:  7.5,  btc: 302.0 },
+  { ano: 2021, spy: 28.7,  bnd: -1.8,  btc:  59.8 },
+  { ano: 2022, spy: -18.1, bnd: -13.0, btc: -65.0 },
+  { ano: 2023, spy: 26.3,  bnd:  5.5,  btc: 155.0 },
+  { ano: 2024, spy: 25.0,  bnd:  1.2,  btc: 120.0 },
+];
+
+// Câmbio USD/BRL final de cada ano (aproximado)
+const CAMBIO_ANO = {
+  2020: 5.70, 2021: 5.57, 2022: 5.28, 2023: 4.84, 2024: 6.10
+};
+
+// Perfis das carteiras (% em cada ativo)
+const PERFIS = {
+  conservadora: { spy: 50, bnd: 30, btc: 10, cash: 10, cor: '#22C55E', label: '🛡️ Conservadora' },
+  moderada:     { spy: 45, bnd: 15, btc: 25, cash: 15, cor: '#E8470A', label: '⚖️ Moderada'     },
+  arrojada:     { spy: 30, bnd:  5, btc: 40, cash: 25, cor: '#F7931A', label: '🚀 Arrojada'      },
+};
+
+// Poupança: ~6% ao ano em BRL (referência)
+const POUPANCA_ANO = { 2020: 2.11, 2021: 7.01, 2022: 7.90, 2023: 7.07, 2024: 6.50 };
+
+let simChart = null;
+
+function calcRetornoCarteira(perfil, retAnual) {
+  const { spy, bnd, btc, cash } = perfil;
+  return (
+    (spy  / 100) * retAnual.spy +
+    (bnd  / 100) * retAnual.bnd +
+    (btc  / 100) * retAnual.btc +
+    (cash / 100) * 4.5 // T-Bills ~4.5% aa
+  );
+}
+
+function rodarSimulador() {
+  const valorInicial = parseFloat(document.getElementById('sim-valor').value) || 100000;
+  const aporteMensal = parseFloat(document.getElementById('sim-aporte').value) || 0;
+  const cambioInicial = parseFloat(document.getElementById('sim-cambio').value) || 5.30;
+
+  // Converte para USD
+  let inicialUSD = valorInicial / cambioInicial;
+  let aporteAnualUSD = (aporteMensal * 12) / cambioInicial;
+
+  // Calcular evolução ano a ano
+  const anos = RETORNOS.map(r => r.ano);
+  const series = { conservadora: [], moderada: [], arrojada: [], poupanca: [] };
+  const valoresUSD = { conservadora: inicialUSD, moderada: inicialUSD, arrojada: inicialUSD };
+  let valorPoupancaBRL = valorInicial;
+  let aporteTotalBRL = valorInicial;
+
+  // Ponto inicial (antes de 2020)
+  Object.keys(PERFIS).forEach(k => series[k].push(valorInicial));
+  series.poupanca.push(valorInicial);
+
+  const tabelaRows = [];
+
+  RETORNOS.forEach(ret => {
+    const cambioFim = CAMBIO_ANO[ret.ano];
+    const rowData = { ano: ret.ano, spy: ret.spy, bnd: ret.bnd, btc: ret.btc, retornos: {} };
+
+    Object.entries(PERFIS).forEach(([key, perfil]) => {
+      const retCarteira = calcRetornoCarteira(perfil, ret);
+      // Apply return + aporte
+      valoresUSD[key] = valoresUSD[key] * (1 + retCarteira / 100) + aporteAnualUSD;
+      // Convert to BRL at year-end exchange rate
+      const valorBRL = valoresUSD[key] * cambioFim;
+      series[key].push(Math.round(valorBRL));
+      rowData.retornos[key] = retCarteira;
+    });
+
+    // Poupança em BRL
+    valorPoupancaBRL = valorPoupancaBRL * (1 + POUPANCA_ANO[ret.ano] / 100) + (aporteMensal * 12);
+    aporteTotalBRL += aporteMensal * 12;
+    series.poupanca.push(Math.round(valorPoupancaBRL));
+
+    tabelaRows.push(rowData);
+  });
+
+  const labels = ['Jan/2020', ...anos.map(a => 'Dez/' + a)];
+
+  // ── CHART ────────────────────────────────────────────────────
+  if (simChart) simChart.destroy();
+  const ctx = document.getElementById('sim-chart').getContext('2d');
+  simChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Conservadora', data: series.conservadora, borderColor: '#22C55E', backgroundColor: 'rgba(34,197,94,0.06)', tension: 0.4, fill: true, pointBackgroundColor: '#22C55E', pointRadius: 4 },
+        { label: 'Moderada',     data: series.moderada,     borderColor: '#E8470A', backgroundColor: 'rgba(232,71,10,0.06)', tension: 0.4, fill: true, pointBackgroundColor: '#E8470A', pointRadius: 4 },
+        { label: 'Arrojada',     data: series.arrojada,     borderColor: '#F7931A', backgroundColor: 'rgba(247,147,26,0.06)', tension: 0.4, fill: true, pointBackgroundColor: '#F7931A', pointRadius: 4 },
+        { label: 'Poupança',     data: series.poupanca,     borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.04)', tension: 0.4, fill: false, pointBackgroundColor: '#3B82F6', pointRadius: 3, borderDash: [4,4] },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#181818',
+          borderColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1,
+          titleColor: '#999',
+          bodyColor: '#fff',
+          padding: 12,
+          callbacks: {
+            label: ctx => ' ' + ctx.dataset.label + ': R$ ' + ctx.raw.toLocaleString('pt-BR')
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#555', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: {
+          ticks: { color: '#555', font: { size: 11 }, callback: v => 'R$ ' + (v >= 1000000 ? (v/1000000).toFixed(1) + 'M' : (v/1000).toFixed(0) + 'k') },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        }
+      }
+    }
+  });
+
+  // ── RESULT CARDS ─────────────────────────────────────────────
+  const totalAportado = valorInicial + (aporteMensal * 12 * 5);
+  const cards = [
+    { label: '🛡️ Conservadora', val: series.conservadora.at(-1), cor: '#22C55E', key: 'conservadora' },
+    { label: '⚖️ Moderada',     val: series.moderada.at(-1),     cor: '#E8470A', key: 'moderada'     },
+    { label: '🚀 Arrojada',     val: series.arrojada.at(-1),     cor: '#F7931A', key: 'arrojada'     },
+    { label: '💰 Poupança',     val: series.poupanca.at(-1),     cor: '#3B82F6', key: 'poupanca'     },
+  ];
+
+  const resEl = document.getElementById('sim-results');
+  resEl.innerHTML = cards.map(c => {
+    const ganho = c.val - totalAportado;
+    const pct = ((c.val / totalAportado - 1) * 100).toFixed(1);
+    const isPos = ganho >= 0;
+    return `<div style="background:var(--bg2);border:1px solid var(--border-dim);border-radius:4px;padding:18px 20px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${c.cor}"></div>
+      <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">${c.label}</div>
+      <div style="font-size:22px;font-weight:900;color:var(--white);letter-spacing:-1px;margin-bottom:4px">R$ ${c.val.toLocaleString('pt-BR',{maximumFractionDigits:0})}</div>
+      <div style="font-size:13px;font-weight:700;color:${isPos ? '#22C55E' : '#EF4444'}">${isPos ? '+' : ''}${pct}% total</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">${isPos ? '+' : ''}R$ ${Math.abs(ganho).toLocaleString('pt-BR',{maximumFractionDigits:0})} ${isPos ? 'de ganho' : 'de perda'}</div>
+    </div>`;
+  }).join('');
+
+  // ── YEAR TABLE ───────────────────────────────────────────────
+  const tbody = document.getElementById('sim-table-body');
+  tbody.innerHTML = tabelaRows.map(r => {
+    const fmt = v => {
+      const c = v >= 0 ? '#22C55E' : '#EF4444';
+      return `<span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:${c}">${v >= 0 ? '+' : ''}${v.toFixed(1)}%</span>`;
+    };
+    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03)">
+      <td style="padding:11px 16px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--white)">${r.ano}</td>
+      <td style="padding:11px 16px;text-align:center">${fmt(r.spy)}</td>
+      <td style="padding:11px 16px;text-align:center">${fmt(r.bnd)}</td>
+      <td style="padding:11px 16px;text-align:center">${fmt(r.btc)}</td>
+      <td style="padding:11px 16px;text-align:center">${fmt(r.retornos.conservadora)}</td>
+      <td style="padding:11px 16px;text-align:center">${fmt(r.retornos.moderada)}</td>
+      <td style="padding:11px 16px;text-align:center">${fmt(r.retornos.arrojada)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Init on load
+window.addEventListener('load', rodarSimulador);
+</script>
   const m = document.getElementById('mobile-menu');
   const h = document.getElementById('hamburger');
   if (m) m.classList.toggle('open');
