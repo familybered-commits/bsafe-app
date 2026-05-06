@@ -266,6 +266,8 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);
   <!-- CONTENT -->
   <div class="content">
 
+    <!-- ══ VISÃO GERAL ══════════════════════════════════════════ -->
+
     <!-- KPIs -->
     <div class="kpi-grid fade-in">
       <div class="kpi-card kpi-orange">
@@ -294,96 +296,191 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);
       </div>
     </div>
 
-    <!-- CHART + ALLOCATION -->
+    <!-- EVOLUÇÃO + ALOCAÇÃO -->
     <div class="dash-grid-3 fade-in">
       <div class="card">
         <div class="card-header">
-          <span class="card-title">📈 Evolução do Patrimônio — 12 meses</span>
+          <span class="card-title">📈 Evolução do Patrimônio</span>
+          <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px" id="chart-periodo">—</span>
         </div>
         <div class="card-body">
-          <canvas id="patrimonio-chart" height="180"></canvas>
+          <canvas id="patrimonio-chart" height="200"></canvas>
         </div>
       </div>
       <div class="card">
-        <div class="card-header">
-          <span class="card-title">🥧 Alocação de Ativos</span>
-        </div>
+        <div class="card-header"><span class="card-title">🥧 Alocação</span></div>
         <div class="card-body" style="display:flex;flex-direction:column;align-items:center">
-          <canvas id="alloc-chart" width="160" height="160"></canvas>
+          <canvas id="alloc-chart" width="150" height="150"></canvas>
           <div id="alloc-legend" style="width:100%;margin-top:14px;display:flex;flex-direction:column;gap:6px"></div>
         </div>
       </div>
     </div>
 
-    <!-- IBKR POSITIONS -->
-    <div class="card fade-in">
+    <!-- POSIÇÕES IBKR -->
+    <div class="card fade-in" id="posicoes-card">
       <div class="card-header">
-        <span class="card-title">🏦 Carteira IBKR — Posições</span>
-        <span class="card-tag tag-pro">PRO</span>
+        <span class="card-title">🏦 Posições IBKR — Último Lançamento</span>
+        <span id="posicoes-mes-badge" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px"></span>
       </div>
       <div class="card-body" style="padding:0">
-        <table class="portfolio-table">
-          <thead><tr>
-            <th>Ativo</th><th>Qtd / %</th><th>Preço Atual</th><th>Valor USD</th><th>Variação</th><th>% Carteira</th>
-          </tr></thead>
-          <tbody id="portfolio-body"></tbody>
-        </table>
+        <div id="posicoes-wrap">
+          <div style="text-align:center;padding:32px;color:var(--muted);font-size:13px">
+            <div style="font-size:28px;margin-bottom:10px">📊</div>
+            Lance um Resumo MTM para ver as posições aqui.
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- HISTORICO -->
+    <!-- HISTÓRICO -->
     <div class="card fade-in">
       <div class="card-header">
-        <span class="card-title">📅 Histórico de Lançamentos Mensais</span>
-        <button onclick="abrirModal()" style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:7px 14px;background:var(--orange);color:#fff;border:none;border-radius:2px;cursor:pointer">+ Novo</button>
+        <span class="card-title">📅 Histórico de Lançamentos</span>
+        <button onclick="abrirLancamento()" style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:7px 14px;background:var(--orange);color:#fff;border:none;border-radius:2px;cursor:pointer">+ Novo</button>
       </div>
       <div class="card-body" style="padding:0">
         <div id="historico-wrap"></div>
       </div>
     </div>
 
-    <!-- IBKR RESUMO MTM -->
-    <div class="card fade-in" id="ibkr-card">
+    <!-- ══ LANÇAMENTO MENSAL ═══════════════════════════════════════ -->
+    <div class="card fade-in" id="lancamento-card">
       <div class="card-header">
-        <span class="card-title">📄 Resumo MTM — Interactive Brokers</span>
+        <span class="card-title">📥 Lançamento Mensal</span>
         <div style="display:flex;align-items:center;gap:8px">
-          <span id="ibkr-mes-badge" style="display:none;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:3px 10px;background:var(--orange-dim);border:1px solid var(--border);border-radius:2px;color:var(--orange)"></span>
+          <span id="lanc-mes-badge" style="display:none;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:3px 10px;background:var(--orange-dim);border:1px solid var(--border);border-radius:2px;color:var(--orange)"></span>
           <span class="card-tag tag-pro">PRO</span>
         </div>
       </div>
-      <div class="card-body" id="ibkr-card-body">
+      <div class="card-body">
 
-        <!-- DROP ZONE -->
-        <div id="ibkr-drop" style="border:2px dashed var(--border-dim);border-radius:4px;padding:40px;text-align:center;cursor:pointer;transition:all .3s"
-          onclick="document.getElementById('ibkr-pdf-input').click()"
-          ondragover="event.preventDefault();this.style.borderColor='var(--orange)';this.style.background='var(--orange-dim)'"
-          ondragleave="this.style.borderColor='var(--border-dim)';this.style.background='transparent'"
-          ondrop="event.preventDefault();this.style.borderColor='var(--border-dim)';this.style.background='transparent';parseMTM(event.dataTransfer.files[0])"
-          onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border-dim)'">
-          <div style="font-size:40px;margin-bottom:12px">📑</div>
-          <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:6px">Arraste o Resumo MTM da IBKR aqui</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Relatório PDF exportado como: <strong style="color:var(--text)">Relatórios → Extratos → Resumo MTM</strong></div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:1px">Aceita: PDF</div>
-          <input type="file" id="ibkr-pdf-input" accept=".pdf,.txt,.csv" style="display:none" onchange="parseMTM(this.files[0]);this.value=''">
+        <!-- MÊS -->
+        <div style="margin-bottom:20px">
+          <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px">Mês de Referência</label>
+          <input type="month" id="lanc-mes" style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:11px 14px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;outline:none;width:100%;max-width:280px;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border-dim)'" onchange="onMesLancChange(this.value)">
         </div>
 
-        <!-- LOADING -->
-        <div id="ibkr-loading" style="display:none;text-align:center;padding:32px">
-          <div style="font-size:32px;margin-bottom:12px;animation:spin 1s linear infinite">⚙️</div>
-          <div style="font-size:13px;color:var(--muted)" id="ibkr-loading-msg">Extraindo dados do PDF...</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+          <!-- COLUNA IBKR -->
+          <div>
+            <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--orange);margin-bottom:14px;display:flex;align-items:center;gap:8px">🏦 Interactive Brokers — Resumo MTM</div>
+
+            <!-- DROP ZONE MTM -->
+            <div id="lanc-drop" style="border:2px dashed var(--border-dim);border-radius:4px;padding:28px;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:14px"
+              onclick="document.getElementById('lanc-pdf').click()"
+              ondragover="event.preventDefault();this.style.borderColor='var(--orange)';this.style.background='var(--orange-dim)'"
+              ondragleave="this.style.borderColor='var(--border-dim)';this.style.background='transparent'"
+              ondrop="event.preventDefault();this.style.borderColor='var(--border-dim)';this.style.background='transparent';lancParseMTM(event.dataTransfer.files[0])"
+              onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border-dim)'">
+              <div style="font-size:28px;margin-bottom:8px">📑</div>
+              <div style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px">Arraste o Resumo MTM aqui</div>
+              <div style="font-size:11px;color:var(--muted)">ou clique para selecionar o PDF</div>
+              <input type="file" id="lanc-pdf" accept=".pdf,.txt,.csv" style="display:none" onchange="lancParseMTM(this.files[0]);this.value=''">
+            </div>
+
+            <!-- MTM PARSED RESULT -->
+            <div id="lanc-mtm-result" style="display:none;background:var(--bg3);border:1px solid var(--green-dim);border-radius:2px;padding:12px;margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <div style="font-size:12px;font-weight:700;color:var(--green)">✓ MTM processado</div>
+                <button onclick="resetLancMTM()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline">trocar</button>
+              </div>
+              <div id="lanc-mtm-summary"></div>
+            </div>
+
+            <!-- CAMPOS IBKR MANUAIS -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div>
+                <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">NAV Total (USD) <span id="nav-status" style="color:var(--green);font-size:10px"></span></label>
+                <input type="number" id="lanc-nav" placeholder="ex: 399324" step="0.01" style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:10px 12px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;outline:none;width:100%;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border-dim)'">
+              </div>
+              <div>
+                <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Câmbio USD/BRL <span id="cambio-status" style="color:var(--green);font-size:10px"></span></label>
+                <input type="number" id="lanc-cambio" placeholder="ex: 4.84" step="0.01" style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:10px 12px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;outline:none;width:100%;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border-dim)'">
+              </div>
+              <div>
+                <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Retorno do Mês (%)</label>
+                <input type="number" id="lanc-retorno" placeholder="ex: 5.83" step="0.01" style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:10px 12px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;outline:none;width:100%;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border-dim)'">
+              </div>
+              <div>
+                <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Aporte do Mês (USD)</label>
+                <input type="number" id="lanc-aporte" placeholder="ex: 500" step="0.01" style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:10px 12px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;outline:none;width:100%;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border-dim)'">
+              </div>
+            </div>
+          </div>
+
+          <!-- COLUNA BITCOIN -->
+          <div>
+            <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--btc);margin-bottom:14px">₿ Bitcoin</div>
+
+            <!-- XPUB INFO -->
+            <div id="lanc-xpub-info" style="display:none;background:var(--bg3);border:1px solid rgba(247,147,26,0.2);border-radius:2px;padding:12px;margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <div style="font-size:11px;color:var(--muted)">xpub monitorado</div>
+                <div style="display:flex;gap:6px">
+                  <button onclick="buscarSaldoBTC()" style="padding:4px 8px;background:rgba(247,147,26,0.15);border:1px solid rgba(247,147,26,0.3);border-radius:2px;color:var(--btc);font-size:11px;cursor:pointer" title="Atualizar">↻</button>
+                  <button onclick="localStorage.removeItem(XPUB_KEY);initXpub()" style="padding:4px 8px;background:transparent;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;cursor:pointer" title="Trocar">✎</button>
+                </div>
+              </div>
+              <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--btc)" id="lanc-xpub-display">—</div>
+              <div style="margin-top:8px;display:flex;justify-content:space-between">
+                <div style="font-size:11px;color:var(--muted)">Saldo ao vivo:</div>
+                <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:800;color:var(--btc)" id="lanc-xpub-balance">—</div>
+              </div>
+            </div>
+
+            <!-- XPUB INPUT -->
+            <div id="lanc-xpub-input" style="margin-bottom:12px">
+              <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">xpub da carteira (salvo para próximos meses)</label>
+              <div style="display:flex;gap:8px">
+                <input type="text" id="lanc-xpub-field" placeholder="xpub6... ou zpub..." style="flex:1;background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:10px 12px;color:var(--white);font-family:'DM Mono',monospace;font-size:11px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--btc)'" onblur="this.style.borderColor='var(--border-dim)'">
+                <button onclick="salvarXpub()" style="padding:10px 14px;background:var(--btc);color:#111;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:2px;cursor:pointer;white-space:nowrap">Salvar</button>
+              </div>
+            </div>
+
+            <!-- CAMPOS BTC -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="grid-column:1/-1">
+                <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Saldo BTC <span id="btc-bal-status" style="color:var(--green);font-size:10px"></span></label>
+                <input type="number" id="lanc-btc" placeholder="0.00000000" step="0.00000001" style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:10px 12px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;outline:none;width:100%;transition:border-color .2s" onfocus="this.style.borderColor='var(--btc)'" onblur="this.style.borderColor='var(--border-dim)'">
+              </div>
+              <div>
+                <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Preço Médio BTC/mês <span id="btc-price-status" style="color:var(--green);font-size:10px"></span></label>
+                <input type="number" id="lanc-btc-price" placeholder="Buscando..." step="1" style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:10px 12px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;outline:none;width:100%;transition:border-color .2s" onfocus="this.style.borderColor='var(--btc)'" onblur="this.style.borderColor='var(--border-dim)'">
+              </div>
+              <div>
+                <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Aporte BTC no mês (BRL)</label>
+                <input type="number" id="lanc-btc-aporte" placeholder="ex: 1200" step="0.01" style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:10px 12px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;outline:none;width:100%;transition:border-color .2s" onfocus="this.style.borderColor='var(--btc)'" onblur="this.style.borderColor='var(--border-dim)'">
+              </div>
+            </div>
+
+            <!-- PREVIEW BTC VALUE -->
+            <div id="lanc-btc-preview" style="margin-top:12px;padding:10px 12px;background:var(--btc-dim);border:1px solid rgba(247,147,26,0.15);border-radius:2px;display:none">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Valor estimado BTC em BRL</div>
+              <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:800;color:var(--btc)" id="lanc-btc-brl-preview">—</div>
+            </div>
+          </div>
+
+        </div><!-- /grid 2 cols -->
+
+        <!-- NOTAS -->
+        <div style="margin-top:16px">
+          <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">📝 Observações do mês</label>
+          <input type="text" id="lanc-notas" placeholder="Notas opcionais..." style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:10px 14px;color:var(--white);font-family:'Montserrat',sans-serif;font-size:13px;outline:none;width:100%;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border-dim)'">
         </div>
 
-        <!-- RESULT -->
-        <div id="ibkr-result" style="display:none"></div>
+        <!-- SAVE BUTTON -->
+        <div style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;align-items:center">
+          <div id="lanc-preview-total" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--muted)"></div>
+          <button id="lanc-save-btn" onclick="salvarLancamentoNovo()" style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:13px 32px;background:var(--orange);color:#fff;border:none;border-radius:2px;cursor:pointer;transition:opacity .2s">💾 Salvar Lançamento</button>
+        </div>
 
-      </div>
-    </div>
+      </div><!-- /card-body -->
+    </div><!-- /lancamento-card -->
 
     <!-- MACRO -->
     <div class="card fade-in">
-      <div class="card-header">
-        <span class="card-title">🌐 Macro — Indicadores ao Vivo</span>
-      </div>
+      <div class="card-header"><span class="card-title">🌐 Indicadores Macro ao Vivo</span></div>
       <div class="card-body">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px">
           <div style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:14px;text-align:center">
@@ -633,20 +730,16 @@ async function sbSignUp(email, pass, nome) {
   if (r.ok && r.data && r.data.access_token) { SESSION = r.data; saveSess(); }
   return r;
 }
-
 async function sbSignIn(email, pass) {
   const r = await sbReq('/auth/v1/token?grant_type=password', { method: 'POST', body: JSON.stringify({ email, password: pass }) });
   if (r.ok && r.data && r.data.access_token) { SESSION = r.data; saveSess(); }
   return r;
 }
-
 async function sbOut() {
   await sbReq('/auth/v1/logout', { method: 'POST' });
   SESSION = null; localStorage.removeItem('bsafe_sess'); location.reload();
 }
-
 function saveSess() { if (SESSION) localStorage.setItem('bsafe_sess', JSON.stringify(SESSION)); }
-
 async function loadSess() {
   const s = localStorage.getItem('bsafe_sess');
   if (!s) return false;
@@ -657,23 +750,19 @@ async function loadSess() {
     const r = await sbReq('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: JSON.stringify({ refresh_token: sess.refresh_token }) });
     if (r.ok && r.data && r.data.access_token) { SESSION = r.data; saveSess(); return true; }
   } catch(e) {}
-  localStorage.removeItem('bsafe_sess');
-  return false;
+  localStorage.removeItem('bsafe_sess'); return false;
 }
-
 async function getProfile() {
   if (!SESSION) return null;
   const r = await sbReq('/rest/v1/profiles?select=*', { headers: { 'Accept': 'application/json' } });
   return (r.ok && Array.isArray(r.data) && r.data.length > 0) ? r.data[0] : null;
 }
-
 async function getLancamentosDB() {
   if (!SESSION) return [];
   const r = await sbReq('/rest/v1/lancamentos?select=*&order=mes.asc', { headers: { 'Accept': 'application/json' } });
   return (r.ok && Array.isArray(r.data)) ? r.data : [];
 }
-
-async function saveLancamentoDB(l) {
+async function saveLancDB(l) {
   if (!SESSION) return false;
   const r = await sbReq('/rest/v1/lancamentos', {
     method: 'POST',
@@ -682,14 +771,13 @@ async function saveLancamentoDB(l) {
   });
   return r.ok || r.status === 201 || r.status === 204;
 }
-
-async function deleteLancamentoDB(mes) {
+async function deleteLancDB(mes) {
   if (!SESSION) return;
   await sbReq('/rest/v1/lancamentos?mes=eq.' + encodeURIComponent(mes) + '&user_id=eq.' + SESSION.user.id, { method: 'DELETE' });
 }
 
 // ─────────────────────────────────────────────────────────────
-// AUTH FLOW
+// AUTH
 // ─────────────────────────────────────────────────────────────
 async function checkAuth() {
   const ok = await loadSess();
@@ -706,66 +794,51 @@ async function checkAuth() {
   }
   showAuth();
 }
-
-function showAuth() {
-  document.getElementById('auth-overlay').style.display = 'flex';
-}
-
+function showAuth() { document.getElementById('auth-overlay').style.display = 'flex'; }
 function showDash(p, dias) {
   document.getElementById('auth-overlay').style.display = 'none';
   const nome = p.nome || (p.email ? p.email.split('@')[0] : '—');
+  const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
   const av = document.getElementById('user-avatar');
-  const nm = document.getElementById('user-name-text');
-  const pl = document.getElementById('user-plan-text');
-  const pb = document.getElementById('plan-badge');
-  if (av) { av.textContent = nome.charAt(0).toUpperCase(); }
-  if (nm) nm.textContent = nome;
-  if (pl) pl.textContent = p.assinante ? '✦ MEMBRO PRO' : '◆ TRIAL ATIVO';
-  if (pb) pb.textContent = p.assinante ? '✦ BSafe Pro' : '◆ Trial';
+  if (av) av.textContent = nome.charAt(0).toUpperCase();
+  el('user-name-text', nome); el('user-plan-text', p.assinante ? '✦ MEMBRO PRO' : '◆ TRIAL ATIVO');
+  el('plan-badge', p.assinante ? '✦ BSafe Pro' : '◆ Trial');
   if (!p.assinante && dias > 0) {
     const banner = document.getElementById('trial-banner');
-    const tn = document.getElementById('trial-name');
+    if (banner) banner.style.display = 'flex';
+    el('trial-name', nome); el('trial-days', dias);
     const td = document.getElementById('trial-days');
-    if (banner) { banner.style.display = 'flex'; }
-    if (tn) tn.textContent = nome;
-    if (td) {
-      td.textContent = dias;
-      if (dias <= 2) { td.style.color = '#EF4444'; }
-    }
+    if (td && dias <= 2) td.style.color = '#EF4444';
   }
 }
-
 function showExpired() {
   document.getElementById('auth-overlay').style.display = 'none';
   document.getElementById('expired-overlay').classList.add('show');
 }
-
 function switchTab(tab) {
   document.getElementById('tab-reg').style.display   = tab === 'reg'   ? 'block' : 'none';
   document.getElementById('tab-login').style.display = tab === 'login' ? 'block' : 'none';
   document.getElementById('tab-btn-reg').classList.toggle('active',   tab === 'reg');
   document.getElementById('tab-btn-login').classList.toggle('active', tab === 'login');
 }
-
 async function doRegister() {
-  const nome  = document.getElementById('reg-nome').value.trim();
+  const nome = document.getElementById('reg-nome').value.trim();
   const email = document.getElementById('reg-email').value.trim();
   const pass  = document.getElementById('reg-pass').value;
   const pass2 = document.getElementById('reg-pass2').value;
-  const btn   = document.getElementById('reg-btn');
-  const err   = document.getElementById('reg-error');
+  const btn = document.getElementById('reg-btn');
+  const err = document.getElementById('reg-error');
   err.style.color = 'var(--red)';
-  if (!nome)               { err.textContent = 'Informe seu nome'; return; }
-  if (!email.includes('@')){ err.textContent = 'E-mail inválido'; return; }
-  if (pass.length < 6)     { err.textContent = 'Senha com mínimo 6 caracteres'; return; }
-  if (pass !== pass2)      { err.textContent = 'As senhas não coincidem'; return; }
+  if (!nome) { err.textContent = 'Informe seu nome'; return; }
+  if (!email.includes('@')) { err.textContent = 'E-mail inválido'; return; }
+  if (pass.length < 6) { err.textContent = 'Senha com mínimo 6 caracteres'; return; }
+  if (pass !== pass2) { err.textContent = 'As senhas não coincidem'; return; }
   err.textContent = ''; btn.disabled = true; btn.textContent = 'Criando conta...';
   try {
     const r = await sbSignUp(email, pass, nome);
     if (r.data && r.data.access_token) {
-      btn.textContent = '✓ Entrando...';
       const p = await getProfile();
-      showDash(p || { nome, email, plano: 'trial', trial_expira: new Date(Date.now() + 7*86400000).toISOString(), assinante: false }, 7);
+      showDash(p || { nome, email, assinante: false, trial_expira: new Date(Date.now()+7*86400000).toISOString() }, 7);
       return;
     }
     const msg = (r.data && (r.data.error_description || r.data.msg || r.data.message || r.data.error)) || '';
@@ -776,15 +849,10 @@ async function doRegister() {
       err.style.color = 'var(--green)';
       err.textContent = '✓ Confirme seu e-mail e faça login.';
       setTimeout(() => switchTab('login'), 2000);
-    } else {
-      err.textContent = msg || ('Erro ' + r.status + '. Verifique o Supabase: Authentication → URL Configuration');
-    }
-  } catch(e) {
-    err.textContent = 'Erro: ' + e.message;
-  }
+    } else { err.textContent = msg || 'Erro ' + r.status; }
+  } catch(e) { err.textContent = 'Erro: ' + e.message; }
   btn.disabled = false; btn.textContent = 'Criar Conta e Começar →';
 }
-
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const pass  = document.getElementById('login-pass').value;
@@ -798,112 +866,95 @@ async function doLogin() {
     const r = await sbSignIn(email, pass);
     if (r.data && r.data.access_token) {
       const p = await getProfile();
-      const dias = p ? Math.max(0, Math.ceil((new Date(p.trial_expira) - new Date()) / 86400000)) : 7;
-      showDash(p || { nome: email.split('@')[0], email, plano: 'trial', trial_expira: new Date(Date.now() + 7*86400000).toISOString(), assinante: false }, dias);
+      const dias = p ? Math.max(0, Math.ceil((new Date(p.trial_expira)-new Date())/86400000)) : 7;
+      showDash(p || { nome: email.split('@')[0], email, assinante: false, trial_expira: new Date(Date.now()+7*86400000).toISOString() }, dias);
       const lista = await getLancamentosDB();
       if (lista.length > 0) { setLancamentos(lista); renderAll(); }
-      showToast('✓ Bem-vindo de volta!');
-      return;
+      showToast('✓ Bem-vindo de volta!'); return;
     }
     const msg = (r.data && (r.data.error_description || r.data.msg || r.data.message)) || 'E-mail ou senha incorretos.';
     err.textContent = msg.includes('Email not confirmed') ? 'Confirme seu e-mail antes de fazer login.' : msg;
   } catch(e) { err.textContent = 'Erro: ' + e.message; }
   btn.disabled = false; btn.textContent = 'Entrar →';
 }
-
 async function doForgotPass() {
   const email = document.getElementById('login-email').value.trim();
   if (!email.includes('@')) { alert('Digite seu e-mail acima primeiro.'); return; }
   await sbReq('/auth/v1/recover', { method: 'POST', body: JSON.stringify({ email }) });
   alert('✓ E-mail de redefinição enviado!');
 }
-
-function confirmarLogout() {
-  if (confirm('Sair da conta BSafe?')) sbOut();
-}
+function confirmarLogout() { if (confirm('Sair da conta BSafe?')) sbOut(); }
 
 // ─────────────────────────────────────────────────────────────
-// STORAGE — lançamentos
+// STORAGE
 // ─────────────────────────────────────────────────────────────
-const STORAGE_KEY = 'bsafe_lancamentos';
-
-function getLancamentos() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch(e) { return []; }
-}
-
-function setLancamentos(lista) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
-}
+const SK = 'bsafe_lancamentos';
+function getLancamentos()  { try { return JSON.parse(localStorage.getItem(SK)) || []; } catch(e) { return []; } }
+function setLancamentos(l) { localStorage.setItem(SK, JSON.stringify(l)); }
 
 // ─────────────────────────────────────────────────────────────
 // PRICES
 // ─────────────────────────────────────────────────────────────
-let btcPrice = 0;
-let usdBrl   = 0;
-
+let btcPrice = 0, usdBrl = 0;
 async function fetchPrices() {
   try {
     const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,brl');
     const d = await r.json();
-    btcPrice = d.bitcoin.usd;
-    usdBrl   = d.bitcoin.brl / d.bitcoin.usd;
-    const mb = document.getElementById('macro-btc');
-    const mu = document.getElementById('macro-usd');
-    if (mb) mb.textContent = '$' + btcPrice.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    btcPrice = d.bitcoin.usd; usdBrl = d.bitcoin.brl / d.bitcoin.usd;
+    const mb = document.getElementById('macro-btc'), mu = document.getElementById('macro-usd');
+    if (mb) mb.textContent = '$' + btcPrice.toLocaleString('en-US',{maximumFractionDigits:0});
     if (mu) mu.textContent = 'R$ ' + usdBrl.toFixed(2);
   } catch(e) {}
-  const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const lu = document.getElementById('last-update');
-  if (lu) lu.textContent = now;
+  if (lu) lu.textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 }
 
 // ─────────────────────────────────────────────────────────────
 // CHARTS
 // ─────────────────────────────────────────────────────────────
-let chartPatrimonio = null;
-let chartAlloc = null;
-
+let chartPat = null, chartAlloc = null;
 function buildCharts() {
   const ctx1 = document.getElementById('patrimonio-chart');
   const ctx2 = document.getElementById('alloc-chart');
   if (!ctx1 || !ctx2) return;
-
-  chartPatrimonio = new Chart(ctx1, {
+  chartPat = new Chart(ctx1, {
     type: 'line',
-    data: { labels: [], datasets: [{ label: 'Patrimônio (BRL)', data: [], borderColor: '#E8470A', backgroundColor: 'rgba(232,71,10,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#E8470A', pointRadius: 4 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#666', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { ticks: { color: '#666', font: { size: 11 }, callback: v => 'R$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+    data: { labels: [], datasets: [{
+      label: 'Patrimônio (BRL)', data: [], borderColor: '#E8470A',
+      backgroundColor: 'rgba(232,71,10,0.08)', tension: 0.4, fill: true,
+      pointBackgroundColor: '#E8470A', pointRadius: 4
+    }]},
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#555', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#555', font: { size: 11 }, callback: v => 'R$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
   });
-
   chartAlloc = new Chart(ctx2, {
     type: 'doughnut',
     data: { labels: ['IBKR', 'Bitcoin'], datasets: [{ data: [70, 30], backgroundColor: ['#E8470A', '#F7931A'], borderWidth: 0, hoverOffset: 4 }] },
-    options: { responsive: false, cutout: '65%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + '%' } } } }
+    options: { responsive: false, cutout: '65%', plugins: { legend: { display: false } } }
   });
 }
-
 function updateCharts() {
   const lista = getLancamentos();
-  if (!chartPatrimonio || !chartAlloc) return;
-
+  if (!chartPat || !chartAlloc) return;
   if (lista.length > 0) {
-    chartPatrimonio.data.labels = lista.map(l => formatMes(l.mes));
-    chartPatrimonio.data.datasets[0].data = lista.map(l => l.total_brl || l.totalBrl || 0);
-    chartPatrimonio.update();
-
-    const ultimo = lista[lista.length - 1];
-    const ibkrPct = ultimo.total_brl > 0 ? Math.round(((ultimo.ibkr_brl || ultimo.ibkrBrl || 0) / ultimo.total_brl) * 100) : 70;
-    const btcPct  = 100 - ibkrPct;
-    chartAlloc.data.datasets[0].data = [ibkrPct, btcPct];
+    chartPat.data.labels = lista.map(l => formatMes(l.mes));
+    chartPat.data.datasets[0].data = lista.map(l => l.total_brl || 0);
+    chartPat.update();
+    const p = document.getElementById('chart-periodo');
+    if (p) p.textContent = formatMes(lista[0].mes) + ' — ' + formatMes(lista[lista.length-1].mes);
+    const u = lista[lista.length-1];
+    const ibkrBrl = u.ibkr_brl || 0, btcBrl = u.btc_brl || 0, total = u.total_brl || 1;
+    chartAlloc.data.datasets[0].data = [Math.round(ibkrBrl/total*100), Math.round(btcBrl/total*100)];
     chartAlloc.update();
-
     const legend = document.getElementById('alloc-legend');
-    if (legend) {
-      legend.innerHTML = [
-        { label: 'IBKR', pct: ibkrPct, color: '#E8470A' },
-        { label: 'Bitcoin', pct: btcPct, color: '#F7931A' }
-      ].map(i => `<div style="display:flex;align-items:center;gap:8px;font-size:12px"><div style="width:10px;height:10px;background:${i.color};border-radius:50%;flex-shrink:0"></div><span style="color:var(--muted)">${i.label}</span><span style="margin-left:auto;font-family:'DM Mono',monospace;color:var(--white);font-weight:700">${i.pct}%</span></div>`).join('');
-    }
+    if (legend) legend.innerHTML = [
+      {l:'IBKR',pct:Math.round(ibkrBrl/total*100),c:'#E8470A'},
+      {l:'Bitcoin',pct:Math.round(btcBrl/total*100),c:'#F7931A'}
+    ].map(i=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px"><div style="width:10px;height:10px;background:${i.c};border-radius:50%;flex-shrink:0"></div><span style="color:var(--muted)">${i.l}</span><span style="margin-left:auto;font-family:'DM Mono',monospace;color:var(--white);font-weight:700">${i.pct}%</span></div>`).join('');
   }
 }
 
@@ -912,470 +963,491 @@ function updateCharts() {
 // ─────────────────────────────────────────────────────────────
 function updateKPIs() {
   const lista = getLancamentos();
-  const kTotal = document.getElementById('kpi-total');
-  const kChange = document.getElementById('kpi-total-change');
-  const kIbkr = document.getElementById('kpi-ibkr');
-  const kCambio = document.getElementById('kpi-cambio');
-  const kBtc = document.getElementById('kpi-btc');
-  const kBtcBrl = document.getElementById('kpi-btc-brl');
-  const kProt = document.getElementById('kpi-protected');
-
-  if (lista.length === 0) {
-    if (kTotal) kTotal.textContent = 'R$ 0';
-    if (kChange) kChange.textContent = '—';
-    if (kIbkr) kIbkr.textContent = 'US$ 0';
-    if (kCambio) kCambio.textContent = '—';
-    if (kBtc) kBtc.textContent = '₿ 0,0000';
-    if (kBtcBrl) kBtcBrl.textContent = 'Lance seus dados →';
-    if (kProt) kProt.textContent = '0%';
-    return;
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  if (!lista.length) {
+    set('kpi-total','R$ —'); set('kpi-total-change','—');
+    set('kpi-ibkr','US$ —'); set('kpi-cambio','—');
+    set('kpi-btc','₿ —'); set('kpi-btc-brl','Lance seus dados');
+    set('kpi-protected','0%'); return;
   }
-
-  const u  = lista[lista.length - 1];
-  const u2 = lista.length > 1 ? lista[lista.length - 2] : null;
-  const totalBrl = u.total_brl || u.totalBrl || 0;
-  const ibkrUsd  = u.ibkr_usd  || u.ibkrUsd  || 0;
-  const ibkrBrl  = u.ibkr_brl  || u.ibkrBrl  || 0;
-  const btcQtd   = u.btc_qtd   || u.btcQtd   || 0;
-  const btcBrl   = u.btc_brl   || u.btcBrl   || 0;
-  const cambio   = u.cambio    || 0;
-  const totalAp  = u.total_aporte || u.totalAporte || 0;
-
-  if (kTotal) kTotal.textContent = 'R$ ' + totalBrl.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
-  if (kIbkr) kIbkr.textContent = 'US$ ' + ibkrUsd.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  if (kCambio) kCambio.textContent = 'R$ ' + cambio.toFixed(2);
-  if (kBtc) kBtc.textContent = '₿ ' + btcQtd.toFixed(4);
-  if (kBtcBrl) kBtcBrl.textContent = 'R$ ' + btcBrl.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
-  const prot = totalBrl > 0 ? Math.round(((ibkrBrl + btcBrl) / totalBrl) * 100) : 0;
-  if (kProt) kProt.textContent = prot + '%';
-
-  if (u2 && kChange) {
-    const prev = u2.total_brl || u2.totalBrl || 0;
-    const diff = totalBrl - prev - totalAp;
-    const sign = diff >= 0 ? '+' : '';
-    kChange.textContent = sign + 'R$ ' + Math.abs(diff).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
-    kChange.className = 'kpi-change ' + (diff >= 0 ? 'up' : 'down');
+  const u = lista[lista.length-1], u2 = lista.length > 1 ? lista[lista.length-2] : null;
+  const total = u.total_brl||0, ibkrUsd = u.ibkr_usd||0, ibkrBrl = u.ibkr_brl||0;
+  const btcQtd = u.btc_qtd||0, btcBrl = u.btc_brl||0, cambio = u.cambio||0;
+  set('kpi-total', 'R$ ' + total.toLocaleString('pt-BR',{maximumFractionDigits:0}));
+  set('kpi-ibkr',  'US$ ' + ibkrUsd.toLocaleString('en-US',{maximumFractionDigits:0}));
+  set('kpi-cambio','R$ ' + cambio.toFixed(2));
+  set('kpi-btc',   '₿ ' + btcQtd.toFixed(4));
+  set('kpi-btc-brl','R$ ' + btcBrl.toLocaleString('pt-BR',{maximumFractionDigits:0}));
+  const prot = total > 0 ? Math.round(((ibkrBrl+btcBrl)/total)*100) : 0;
+  set('kpi-protected', prot + '%');
+  if (u2) {
+    const prev = u2.total_brl||0, ap = u.total_aporte||0;
+    const diff = total - prev - ap;
+    const el = document.getElementById('kpi-total-change');
+    if (el) { el.textContent = (diff>=0?'+':'') + 'R$ ' + Math.abs(diff).toLocaleString('pt-BR',{maximumFractionDigits:0}); el.className = 'kpi-change ' + (diff>=0?'up':'down'); }
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// PORTFOLIO TABLE
+// POSIÇÕES IBKR
 // ─────────────────────────────────────────────────────────────
-function renderPortfolio() {
-  const tbody = document.getElementById('portfolio-body');
-  if (!tbody) return;
+function renderPosicoes() {
   const lista = getLancamentos();
-  if (lista.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted);font-size:13px"><div style="font-size:28px;margin-bottom:8px">📊</div>Nenhum dado ainda. Clique em <strong style="color:var(--orange)">+ Lançar Mês</strong>.</td></tr>';
-    return;
-  }
-  const u = lista[lista.length - 1];
-  const ibkr = u.ibkr_usd || u.ibkrUsd || 0;
-  const ativos = [
-    { ticker: 'VT',  name: 'Vanguard Total World', pct: u.vt    || 0, color: '#E8470A' },
-    { ticker: 'VOO', name: 'Vanguard S&P 500',      pct: u.voo   || 0, color: '#ff6b35' },
-    { ticker: 'USD', name: 'USD Cash',               pct: u.cash  || 0, color: '#3B82F6' },
-    { ticker: '—',   name: 'Outros Ativos',          pct: u.outros|| 0, color: '#8B5CF6' },
-  ].filter(a => a.pct > 0);
-
-  if (ativos.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Adicione % de alocação no próximo lançamento.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = ativos.map(a => {
-    const val = ibkr * (a.pct / 100);
-    return `<tr>
-      <td><div class="asset-name">${a.name}</div><div class="asset-ticker">${a.ticker}</div></td>
-      <td style="color:var(--muted);font-size:12px">${a.pct}%</td>
-      <td style="color:var(--muted);font-size:12px">—</td>
-      <td><div class="asset-value">US$ ${val.toLocaleString('en-US',{maximumFractionDigits:0})}</div></td>
-      <td style="color:var(--muted);font-size:12px">—</td>
-      <td><div style="display:flex;align-items:center;gap:8px"><div class="asset-bar-wrap"><div class="asset-bar" style="width:${a.pct}%;background:${a.color}"></div></div><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">${a.pct}%</span></div></td>
-    </tr>`;
-  }).join('');
+  const wrap  = document.getElementById('posicoes-wrap');
+  const badge = document.getElementById('posicoes-mes-badge');
+  if (!wrap) return;
+  if (!lista.length) return;
+  const u = lista[lista.length-1];
+  const positions = u.positions || [];
+  if (badge) badge.textContent = formatMes(u.mes);
+  if (!positions.length) { wrap.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Nenhuma posição neste lançamento.</div>'; return; }
+  const cambio = u.cambio || 5.5;
+  const nav = u.ibkr_usd || 1;
+  let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:580px"><thead><tr style="border-bottom:1px solid var(--border-dim)">';
+  ['Ticker','Descrição','Qtd','Preço','Valor USD','Valor BRL','P&L mês','Peso %'].forEach(h => {
+    html += '<th style="padding:9px 12px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:' + (h==='Ticker'||h==='Descrição'?'left':'right') + '">' + h + '</th>';
+  });
+  html += '</tr></thead><tbody>';
+  positions.forEach(p => {
+    const pct = nav > 0 ? (p.value/nav*100) : 0;
+    const brl = p.value * cambio;
+    const pnlColor = p.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.03)">'
+      + '<td style="padding:9px 12px"><span style="font-family:'DM Mono',monospace;font-weight:700;font-size:12px;color:var(--orange)">' + p.symbol + '</span></td>'
+      + '<td style="padding:9px 12px;font-size:11px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.desc + '</td>'
+      + '<td style="padding:9px 12px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">' + p.qty.toLocaleString('en-US') + '</td>'
+      + '<td style="padding:9px 12px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">$' + (p.price||0).toFixed(2) + '</td>'
+      + '<td style="padding:9px 12px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--white)">$' + p.value.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>'
+      + '<td style="padding:9px 12px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--text)">R$' + brl.toLocaleString('pt-BR',{maximumFractionDigits:0}) + '</td>'
+      + '<td style="padding:9px 12px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:' + pnlColor + '">' + (p.pnl>=0?'+':'') + '$' + p.pnl.toFixed(2) + '</td>'
+      + '<td style="padding:9px 12px;text-align:right">'
+        + '<div style="display:flex;align-items:center;gap:5px;justify-content:flex-end">'
+          + '<div style="width:36px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="height:100%;background:var(--orange);border-radius:2px;width:' + Math.min(100,pct*3) + '%"></div></div>'
+          + '<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">' + pct.toFixed(1) + '%</span>'
+        + '</div></td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  wrap.innerHTML = html;
 }
 
 // ─────────────────────────────────────────────────────────────
-// HISTORICO
+// HISTÓRICO
 // ─────────────────────────────────────────────────────────────
 function formatMes(s) {
+  if (!s) return '—';
   const [ano, mes] = s.split('-');
   return ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][parseInt(mes)-1] + '/' + ano;
 }
-
 function renderHistorico() {
   const wrap = document.getElementById('historico-wrap');
   if (!wrap) return;
   const lista = getLancamentos();
-  if (lista.length === 0) {
-    wrap.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📅</div><div style="font-size:14px;color:var(--muted)">Nenhum lançamento ainda.<br>Clique em <strong style="color:var(--orange)">+ Lançar Mês</strong> para começar.</div></div>';
+  if (!lista.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px"><div style="font-size:28px;margin-bottom:10px">📅</div>Nenhum lançamento. Use o card abaixo para começar.</div>';
     return;
   }
   const rev = [...lista].reverse();
-  wrap.innerHTML = '<table class="historico-table"><thead><tr><th>Mês</th><th>Patrimônio Total</th><th>IBKR (USD)</th><th>Bitcoin</th><th>Câmbio</th><th>Rentab.</th><th></th></tr></thead><tbody>' +
-    rev.map((l, i) => {
-      const prev = rev[i + 1];
-      let rent = '—', rClass = '';
-      if (prev) {
-        const totalBrl = l.total_brl || l.totalBrl || 0;
-        const prevBrl  = prev.total_brl || prev.totalBrl || 0;
-        const aporte   = l.total_aporte || l.totalAporte || 0;
-        const pct = prevBrl > 0 ? ((totalBrl - prevBrl - aporte) / prevBrl * 100) : 0;
-        rClass = pct >= 0 ? 'h-pos' : 'h-neg';
-        rent = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
-      }
-      const mesId = l.mes || '';
-      return `<tr>
-        <td><div class="h-mes">${formatMes(l.mes)}</div></td>
-        <td><div class="h-val">R$ ${((l.total_brl||l.totalBrl||0)).toLocaleString('pt-BR',{maximumFractionDigits:0})}</div></td>
-        <td><div class="h-val">US$ ${((l.ibkr_usd||l.ibkrUsd||0)).toLocaleString('en-US',{maximumFractionDigits:0})}</div></td>
-        <td><div class="h-val" style="color:var(--btc)">₿ ${((l.btc_qtd||l.btcQtd||0)).toFixed(4)}</div></td>
-        <td><div class="h-val">R$ ${((l.cambio||0)).toFixed(2)}</div></td>
-        <td><div class="h-val ${rClass}">${rent}</div></td>
-        <td><button class="h-del" onclick="deletarLancamento('${mesId}')">✕</button></td>
-      </tr>`;
-    }).join('') + '</tbody></table>';
+  wrap.innerHTML = '<table style="width:100%;border-collapse:collapse"><thead><tr style="border-bottom:1px solid var(--border-dim)">'
+    + ['Mês','Patrimônio BRL','IBKR USD','Bitcoin','Câmbio','Retorno',''].map(h=>`<th style="padding:9px 14px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:left">${h}</th>`).join('')
+    + '</tr></thead><tbody>'
+    + rev.map((l, i) => {
+        const prev = rev[i+1];
+        let rent = '—', rClass = '';
+        if (prev) {
+          const diff = (l.total_brl||0) - (prev.total_brl||0) - (l.total_aporte||0);
+          const pct = prev.total_brl > 0 ? (diff/(prev.total_brl)*100) : 0;
+          rClass = pct >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+          rent = (pct>=0?'+':'') + pct.toFixed(1) + '%';
+        }
+        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03)">
+          <td style="padding:10px 14px;font-family:'DM Mono',monospace;font-weight:700;font-size:13px;color:var(--white)">${formatMes(l.mes)}</td>
+          <td style="padding:10px 14px;font-family:'DM Mono',monospace;font-weight:700">R$ ${(l.total_brl||0).toLocaleString('pt-BR',{maximumFractionDigits:0})}</td>
+          <td style="padding:10px 14px;font-family:'DM Mono',monospace;color:var(--muted)">US$ ${(l.ibkr_usd||0).toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+          <td style="padding:10px 14px;font-family:'DM Mono',monospace;color:var(--btc)">₿ ${(l.btc_qtd||0).toFixed(4)}</td>
+          <td style="padding:10px 14px;font-family:'DM Mono',monospace;color:var(--muted)">R$ ${(l.cambio||0).toFixed(2)}</td>
+          <td style="padding:10px 14px;font-family:'DM Mono',monospace;font-weight:700;${rClass}">${rent}</td>
+          <td style="padding:10px 14px"><button onclick="deletarLanc('${l.mes}')" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;padding:3px 7px;border-radius:2px;transition:color .2s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted2)'">✕</button></td>
+        </tr>`;
+      }).join('')
+    + '</tbody></table>';
+}
+async function deletarLanc(mes) {
+  if (!confirm('Remover lançamento de ' + formatMes(mes) + '?')) return;
+  await deleteLancDB(mes);
+  setLancamentos(getLancamentos().filter(l => l.mes !== mes));
+  renderAll(); showToast('Lançamento removido');
 }
 
 // ─────────────────────────────────────────────────────────────
-// LANÇAMENTO MODAL
+// RENDER ALL
+// ─────────────────────────────────────────────────────────────
+function renderAll() { updateKPIs(); renderPosicoes(); renderHistorico(); updateCharts(); }
+
+// ─────────────────────────────────────────────────────────────
+// LANÇAMENTO — NOVO FLUXO INTEGRADO
+// ─────────────────────────────────────────────────────────────
+function abrirLancamento() {
+  const card = document.getElementById('lancamento-card');
+  if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+
+function onMesLancChange(mes) {
+  if (!mes) return;
+  // Badge
+  const badge = document.getElementById('lanc-mes-badge');
+  if (badge) { badge.textContent = formatMes(mes); badge.style.display = 'inline-block'; }
+  // Fetch cambio + BTC price
+  buscarCambioLanc(mes);
+  buscarBTCPriceLanc(mes);
+  // If xpub saved, fetch balance
+  if (getSavedXpub()) buscarSaldoBTC();
+  // Update BTC preview
+  updateBTCPreview();
+}
+
+function setStatus(id, msg, color) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+async function buscarCambioLanc(mesAno) {
+  const [ano, mes] = mesAno.split('-');
+  const hoje = new Date();
+  const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
+  if (mesAno >= mesAtual) {
+    if (usdBrl > 0) { document.getElementById('lanc-cambio').value = usdBrl.toFixed(2); setStatus('cambio-status','✓ ao vivo','var(--green)'); }
+    return;
+  }
+  setStatus('cambio-status','⏳','var(--muted)');
+  const ult = new Date(parseInt(ano), parseInt(mes), 0).getDate();
+  try {
+    const r = await fetch('https://economia.awesomeapi.com.br/json/daily/USD-BRL/5?start_date='+ano+mes+'01&end_date='+ano+mes+String(ult).padStart(2,'0'));
+    if (r.ok) {
+      const d = await r.json();
+      if (d && d.length > 0) {
+        const avg = d.reduce((s,x) => s+parseFloat(x.bid),0)/d.length;
+        document.getElementById('lanc-cambio').value = avg.toFixed(2);
+        setStatus('cambio-status','✓ AwesomeAPI','var(--green)'); return;
+      }
+    }
+  } catch(e) {}
+  try {
+    const r2 = await fetch('https://api.frankfurter.app/'+ano+'-'+mes+'-'+String(ult).padStart(2,'0')+'?from=USD&to=BRL');
+    if (r2.ok) {
+      const d2 = await r2.json();
+      if (d2.rates && d2.rates.BRL) { document.getElementById('lanc-cambio').value = d2.rates.BRL.toFixed(2); setStatus('cambio-status','✓ Frankfurter','var(--green)'); return; }
+    }
+  } catch(e) {}
+  setStatus('cambio-status','⚠ manual','var(--btc)');
+}
+
+async function buscarBTCPriceLanc(mesAno) {
+  const [ano, mes] = mesAno.split('-');
+  const hoje = new Date();
+  const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
+  if (mesAno >= mesAtual) {
+    if (btcPrice > 0) { document.getElementById('lanc-btc-price').value = Math.round(btcPrice); setStatus('btc-price-status','✓ ao vivo','var(--green)'); }
+    return;
+  }
+  setStatus('btc-price-status','⏳ buscando...','var(--muted)');
+  const ult = new Date(parseInt(ano), parseInt(mes), 0).getDate();
+  const dd = String(Math.min(28,ult)).padStart(2,'0');
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/history?date='+dd+'-'+mes+'-'+ano+'&localization=false');
+    if (r.ok) {
+      const d = await r.json();
+      const price = d?.market_data?.current_price?.usd;
+      if (price) {
+        document.getElementById('lanc-btc-price').value = Math.round(price);
+        setStatus('btc-price-status','✓ CoinGecko','var(--green)');
+        updateBTCPreview(); return;
+      }
+    }
+  } catch(e) {}
+  // Fallback: market chart average
+  try {
+    const from = Math.floor(new Date(ano+'-'+mes+'-01').getTime()/1000);
+    const to   = Math.floor(new Date(ano+'-'+mes+'-'+String(ult).padStart(2,'0')).getTime()/1000);
+    const r2 = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=usd&from='+from+'&to='+to);
+    if (r2.ok) {
+      const d2 = await r2.json();
+      if (d2.prices && d2.prices.length > 0) {
+        const avg = Math.round(d2.prices.reduce((s,p)=>s+p[1],0)/d2.prices.length);
+        document.getElementById('lanc-btc-price').value = avg;
+        setStatus('btc-price-status','✓ média CoinGecko','var(--green)');
+        updateBTCPreview(); return;
+      }
+    }
+  } catch(e) {}
+  setStatus('btc-price-status','⚠ preencha manualmente','var(--btc)');
+}
+
+function updateBTCPreview() {
+  const qtd   = parseFloat(document.getElementById('lanc-btc').value) || 0;
+  const price = parseFloat(document.getElementById('lanc-btc-price').value) || 0;
+  const cambio= parseFloat(document.getElementById('lanc-cambio').value) || usdBrl || 5.5;
+  const preview = document.getElementById('lanc-btc-preview');
+  const previewVal = document.getElementById('lanc-btc-brl-preview');
+  if (qtd > 0 && price > 0) {
+    const brl = qtd * price * cambio;
+    if (preview) preview.style.display = 'block';
+    if (previewVal) previewVal.textContent = 'R$ ' + brl.toLocaleString('pt-BR',{maximumFractionDigits:0});
+  } else {
+    if (preview) preview.style.display = 'none';
+  }
+}
+
+// Add event listeners for BTC preview updates
+document.addEventListener('DOMContentLoaded', function() {
+  ['lanc-btc','lanc-btc-price','lanc-cambio'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateBTCPreview);
+  });
+  // Set current month default
+  const lancMes = document.getElementById('lanc-mes');
+  if (lancMes) {
+    lancMes.value = new Date().toISOString().slice(0,7);
+  }
+  initXpub();
+});
+
 // ─────────────────────────────────────────────────────────────
 // XPUB
+// ─────────────────────────────────────────────────────────────
 const XPUB_KEY = 'bsafe_xpub';
 function getSavedXpub() { return localStorage.getItem(XPUB_KEY) || ''; }
 
-function parseIBKRExtrato(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const content = e.target.result;
-    let nav = null;
-    const positions = [];
-
-    content.split('\n').forEach(line => {
-      const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g,''));
-      // NAV Total
-      if (cols[0] === 'Net Asset Value' && cols[1] === 'Data' && cols[2].includes('Total')) {
-        for (let i = 3; i < Math.min(cols.length, 9); i++) {
-          const v = parseFloat(cols[i].replace(/,/g,''));
-          if (!isNaN(v) && v > 1000) { nav = v; break; }
-        }
-      }
-      // Open Positions
-      if (cols[0] === 'Open Positions' && cols[1] === 'Data' && cols[2] === 'Summary' && cols[5]) {
-        try {
-          const val = parseFloat(cols[11].replace(/,/g,''));
-          const prc = parseFloat(cols[10].replace(/,/g,''));
-          const qty = parseFloat(cols[6].replace(/,/g,''));
-          if (!isNaN(val) && cols[5]) positions.push({ symbol:cols[5], qty, price:prc, value:val });
-        } catch(e) {}
-      }
-    });
-
-    // Fill form fields
-    if (nav) document.getElementById('f-ibkr-usd').value = nav.toFixed(2);
-
-    if (positions.length > 0) {
-      const totalVal = positions.reduce((s,p) => s+(p.value||0), 0);
-      let vtP=0, vooP=0, cashP=0, outP=0;
-      positions.forEach(p => {
-        const s = p.symbol.toUpperCase();
-        const pct = totalVal > 0 ? Math.round((p.value/totalVal)*100) : 0;
-        if (s==='VT') vtP+=pct;
-        else if (s==='VOO') vooP+=pct;
-        else if (['USD','CASH','BIL','SHV','SGOV'].includes(s)) cashP+=pct;
-        else outP+=pct;
-      });
-      if (vtP)   document.getElementById('f-vt').value = vtP;
-      if (vooP)  document.getElementById('f-voo').value = vooP;
-      if (cashP) document.getElementById('f-cash').value = cashP;
-      if (outP)  document.getElementById('f-outros').value = outP;
-    }
-
-    // Show result
-    const zone   = document.getElementById('ibkr-upload-zone');
-    const result = document.getElementById('ibkr-parsed-result');
-    if (zone)   zone.style.display = 'none';
-    if (result) {
-      result.style.display = 'block';
-      const posHtml = positions.slice(0,6).map(p =>
-        '<span style="display:inline-flex;align-items:center;gap:5px;background:var(--bg4);border:1px solid var(--border-dim);border-radius:2px;padding:4px 10px;font-family:\'DM Mono\',monospace;font-size:11px"><span style="color:var(--orange);font-weight:700">'
-        + p.symbol + '</span><span style="color:var(--muted)">$' + (p.value||0).toLocaleString('en-US',{maximumFractionDigits:0}) + '</span></span>'
-      ).join('');
-      result.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:var(--green)">✓ Extrato processado</div><button onclick="document.getElementById(\'ibkr-upload-zone\').style.display=\'block\';document.getElementById(\'ibkr-parsed-result\').style.display=\'none\'" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline">trocar</button></div>'
-        + (nav ? '<div style="font-family:\'DM Mono\',monospace;font-size:16px;font-weight:800;color:var(--orange);margin-bottom:10px">NAV: US$ ' + nav.toLocaleString('en-US',{maximumFractionDigits:2}) + '</div>' : '<div style="color:var(--btc);font-size:12px;margin-bottom:10px">⚠ NAV não encontrado — confirme o valor.</div>')
-        + '<div style="display:flex;flex-wrap:wrap;gap:6px">' + posHtml + '</div>';
-    }
-    showToast(nav ? '✓ NAV US$ ' + Math.round(nav).toLocaleString('en-US') + ' extraído!' : '⚠ Preencha o saldo manualmente');
-  };
-  reader.readAsText(file);
-}
-
 function salvarXpub() {
-  const input = document.getElementById('f-xpub-input');
+  const input = document.getElementById('lanc-xpub-field');
   const val = input ? input.value.trim() : '';
-  if (!val || (!val.startsWith('xpub') && !val.startsWith('zpub') && !val.startsWith('ypub') && !val.startsWith('bc1'))) {
-    showToast('xpub inválido. Deve começar com xpub, zpub, ypub ou bc1', true); return;
+  if (!val || (!val.startsWith('xpub') && !val.startsWith('zpub') && !val.startsWith('ypub'))) {
+    showToast('xpub inválido. Deve começar com xpub, zpub ou ypub', true); return;
   }
   localStorage.setItem(XPUB_KEY, val);
   showToast('✓ xpub salvo! Buscando saldo...');
-  initXpub();
-  buscarSaldoBTC(); // modal já está aberto aqui, f-btc existe
-}
-
-async function buscarSaldoBTC() {
-  var xpub = getSavedXpub();
-  if (!xpub) return;
-
-  setStatus('btc-status', '⏳ buscando saldo...', 'var(--muted)');
-  var bd = document.getElementById('xpub-balance-display');
-  if (bd) bd.textContent = '⏳ buscando...';
-
-  // Detect type
-  var isAddress = xpub.startsWith('bc1') || xpub.startsWith('1') || xpub.startsWith('3');
-  var isXpub    = xpub.startsWith('xpub') || xpub.startsWith('zpub') || xpub.startsWith('ypub');
-
-  // Multiple endpoints with fallback
-  var urls = [];
-  if (isAddress) {
-    urls = [
-      'https://mempool.space/api/address/' + xpub,
-      'https://blockstream.info/api/address/' + xpub,
-      'https://api.blockcypher.com/v1/btc/main/addrs/' + xpub + '/balance',
-    ];
-  } else if (isXpub) {
-    urls = [
-      'https://mempool.space/api/v1/xpub/' + xpub,
-      'https://blockstream.info/api/xpub/' + xpub,
-    ];
-  } else {
-    setStatus('btc-status', '⚠ Formato inválido. Use xpub, zpub ou endereço Bitcoin.', 'var(--red)');
-    if (bd) bd.textContent = '— formato inválido';
-    return;
-  }
-
-  var bal = null;
-  var usedSource = '';
-
-  for (var i = 0; i < urls.length; i++) {
-    try {
-      var r = await fetch(urls[i], { headers: { 'Accept': 'application/json' } });
-      if (!r.ok) continue;
-      var d = await r.json();
-
-      // mempool.space / blockstream xpub format
-      if (typeof d.funded_txo_sum !== 'undefined') {
-        var sats = (d.funded_txo_sum || 0) - (d.spent_txo_sum || 0);
-        bal = sats / 1e8;
-        usedSource = i === 0 ? 'mempool.space' : 'blockstream.info';
-        break;
-      }
-      // blockstream address format
-      if (d.chain_stats) {
-        var sats = (d.chain_stats.funded_txo_sum || 0) - (d.chain_stats.spent_txo_sum || 0);
-        bal = sats / 1e8;
-        usedSource = 'blockstream.info';
-        break;
-      }
-      // blockcypher format
-      if (typeof d.balance !== 'undefined') {
-        bal = d.balance / 1e8;
-        usedSource = 'blockcypher.com';
-        break;
-      }
-    } catch(e) {
-      console.log('xpub attempt ' + (i+1) + ' failed:', e.message);
-    }
-  }
-
-  if (bal !== null) {
-    var fBtc = document.getElementById('f-btc');
-    if (fBtc) fBtc.value = bal.toFixed(8);
-    if (bd) bd.textContent = '\u20BF ' + bal.toFixed(6);
-    setStatus('btc-status', '\u2713 via ' + usedSource, 'var(--green)');
-    showToast('\u2713 Saldo BTC: \u20BF ' + bal.toFixed(6));
-  } else {
-    setStatus('btc-status', '\u26A0 Não foi possível buscar — cole o saldo manualmente', 'var(--btc)');
-    if (bd) bd.textContent = '— ver instruções';
-    // Show helper message
-    var old = document.getElementById('xpub-instrucoes');
-    if (old) old.remove();
-    var instrucoes = document.createElement('div');
-    instrucoes.id = 'xpub-instrucoes';
-    instrucoes.style.cssText = 'margin-top:10px;padding:12px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:2px;font-size:12px;color:var(--muted);line-height:1.8';
-    instrucoes.innerHTML = '<strong style="color:var(--btc)">Como verificar manualmente:</strong><br>'
-      + '1. Acesse <a href="https://mempool.space" target="_blank" style="color:var(--orange)">mempool.space</a><br>'
-      + '2. Cole seu xpub na barra de busca e pressione Enter<br>'
-      + '3. Copie o saldo em BTC e cole no campo abaixo<br>'
-      + '<button onclick="this.parentElement.remove()" style="margin-top:8px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:4px 10px;cursor:pointer">Fechar</button>';
-    var xpubSaved = document.getElementById('xpub-saved-info');
-    if (xpubSaved && xpubSaved.parentNode) xpubSaved.after(instrucoes);
-  }
+  initXpub(); buscarSaldoBTC();
 }
 
 function initXpub() {
   const xpub = getSavedXpub();
-  const si = document.getElementById('xpub-saved-info');
-  const ia = document.getElementById('xpub-input-area');
-  const xd = document.getElementById('xpub-display');
+  const si = document.getElementById('lanc-xpub-info');
+  const ia = document.getElementById('lanc-xpub-input');
+  const xd = document.getElementById('lanc-xpub-display');
   if (xpub) {
-    if (si) si.style.display = 'flex';
+    if (si) si.style.display = 'block';
     if (ia) ia.style.display = 'none';
-    if (xd) xd.textContent = xpub.slice(0,12) + '...' + xpub.slice(-6);
+    if (xd) xd.textContent = xpub.slice(0,14) + '...' + xpub.slice(-6);
   } else {
     if (si) si.style.display = 'none';
     if (ia) ia.style.display = 'block';
   }
 }
 
-function onMesChange(mes) {
-  if (!mes) return;
-  buscarCambioHistorico(mes);
-  buscarBTCHistorico(mes);
-  // Always fetch BTC balance from xpub if saved
-  if (getSavedXpub()) buscarSaldoBTC();
-}
-
-function abrirModal() {
-  const modal = document.getElementById('modal-lancamento');
-  if (!modal) return;
-  modal.classList.add('open');
-
-  const mesAtual = new Date().toISOString().slice(0, 7);
-  const setV = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
-  setV('f-mes', mesAtual);
-  setV('f-cambio', ''); setV('f-ibkr-usd', ''); setV('f-ibkr-aporte', '');
-  setV('f-vt', ''); setV('f-voo', ''); setV('f-cash', ''); setV('f-outros', '');
-  setV('f-btc', ''); setV('f-btc-price', ''); setV('f-btc-aporte', ''); setV('f-notas', '');
-
-  // Reset IBKR upload
-  const zone = document.getElementById('ibkr-upload-zone');
-  const parsed = document.getElementById('ibkr-parsed-result');
-  if (zone) zone.style.display = 'block';
-  if (parsed) { parsed.style.display = 'none'; parsed.innerHTML = ''; }
-
-  // Init xpub
-  initXpub();
-
-  // Pre-fill allocations from last entry
-  const lista = getLancamentos();
-  if (lista.length > 0) {
-    const u = lista[lista.length - 1];
-    setV('f-vt', u.vt || ''); setV('f-voo', u.voo || '');
-    setV('f-cash', u.cash || ''); setV('f-outros', u.outros || '');
+async function buscarSaldoBTC() {
+  const xpub = getSavedXpub();
+  if (!xpub) return;
+  setStatus('btc-bal-status','⏳ buscando...','var(--muted)');
+  const bd = document.getElementById('lanc-xpub-balance');
+  if (bd) bd.textContent = '⏳';
+  const isAddr = xpub.startsWith('bc1') || xpub.startsWith('1') || xpub.startsWith('3');
+  const urls = isAddr
+    ? ['https://mempool.space/api/address/'+xpub, 'https://blockstream.info/api/address/'+xpub, 'https://api.blockcypher.com/v1/btc/main/addrs/'+xpub+'/balance']
+    : ['https://mempool.space/api/v1/xpub/'+xpub, 'https://blockstream.info/api/xpub/'+xpub];
+  let bal = null, source = '';
+  for (let i = 0; i < urls.length; i++) {
+    try {
+      const r = await fetch(urls[i], {headers:{'Accept':'application/json'}});
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (typeof d.funded_txo_sum !== 'undefined') { bal = ((d.funded_txo_sum||0)-(d.spent_txo_sum||0))/1e8; source = i===0?'mempool.space':'blockstream'; break; }
+      if (d.chain_stats) { bal = ((d.chain_stats.funded_txo_sum||0)-(d.chain_stats.spent_txo_sum||0))/1e8; source = 'blockstream'; break; }
+      if (typeof d.balance !== 'undefined') { bal = d.balance/1e8; source = 'blockcypher'; break; }
+    } catch(e) { continue; }
   }
-
-  // Auto-fetch prices
-  onMesChange(mesAtual);
+  if (bal !== null) {
+    const fBtc = document.getElementById('lanc-btc');
+    if (fBtc) fBtc.value = bal.toFixed(8);
+    if (bd) bd.textContent = '₿ ' + bal.toFixed(6);
+    setStatus('btc-bal-status','✓ '+source,'var(--green)');
+    updateBTCPreview();
+  } else {
+    setStatus('btc-bal-status','⚠ preencha manualmente','var(--btc)');
+    if (bd) bd.textContent = '—';
+  }
 }
 
-function fecharModal() {
-  const modal = document.getElementById('modal-lancamento');
-  if (modal) modal.classList.remove('open');
+// ─────────────────────────────────────────────────────────────
+// MTM PDF PARSER — no lançamento
+// ─────────────────────────────────────────────────────────────
+function loadPDFJS(cb) {
+  if (window.pdfjsLib) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  s.onload = () => { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; cb(); };
+  document.head.appendChild(s);
 }
 
-async function salvarLancamento() {
-  const mes     = document.getElementById('f-mes').value;
-  const cambio  = parseFloat(document.getElementById('f-cambio').value);
-  const ibkrUsd = parseFloat(document.getElementById('f-ibkr-usd').value);
-  const aporte  = parseFloat(document.getElementById('f-ibkr-aporte').value) || 0;
-  const btcQtd  = parseFloat(document.getElementById('f-btc').value)   || 0;
-  const btcPreco= parseFloat(document.getElementById('f-btc-price').value) || btcPrice || 0;
-  const btcAp   = parseFloat(document.getElementById('f-btc-aporte').value) || 0;
-  const notas   = document.getElementById('f-notas').value.trim();
-  const vt      = parseFloat(document.getElementById('f-vt').value)     || 0;
-  const voo     = parseFloat(document.getElementById('f-voo').value)    || 0;
-  const cash    = parseFloat(document.getElementById('f-cash').value)   || 0;
-  const outros  = parseFloat(document.getElementById('f-outros').value) || 0;
+function lancParseMTM(file) {
+  if (!file) return;
+  const drop = document.getElementById('lanc-drop');
+  const result = document.getElementById('lanc-mtm-result');
+  if (drop) drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)"><div style="font-size:24px;margin-bottom:8px;animation:spin 1s linear infinite">⚙️</div>Lendo PDF...</div>';
 
-  if (!mes)             { showToast('Informe o mês', true); return; }
-  if (!cambio || cambio <= 0) { showToast('Informe o câmbio USD/BRL', true); return; }
-  if (!ibkrUsd || ibkrUsd <= 0) { showToast('Informe o saldo IBKR', true); return; }
+  loadPDFJS(async function() {
+    try {
+      const arrayBuf = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data:arrayBuf}).promise;
+      let fullText = '';
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        fullText += content.items.map(i=>i.str).join(' ') + '
+';
+      }
+      const data = extractMTMData(fullText, file.name);
+      // Fill form fields
+      if (data.nav > 0) {
+        document.getElementById('lanc-nav').value = data.nav.toFixed(2);
+        setStatus('nav-status','✓ MTM','var(--green)');
+      }
+      if (data.retornoPct) document.getElementById('lanc-retorno').value = data.retornoPct.toFixed(2);
 
-  const ibkrBrl  = ibkrUsd * cambio;
-  const btcBrl   = btcQtd * btcPreco * cambio;
-  const totalBrl = ibkrBrl + btcBrl;
-  const totalAp  = aporte * cambio + btcAp;
+      // Show summary
+      if (drop) drop.style.display = 'none';
+      if (result) {
+        result.style.display = 'block';
+        document.getElementById('lanc-mtm-summary').innerHTML =
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">'
+          + '<div><span style="color:var(--muted)">NAV Total:</span> <strong style="color:var(--white)">US$ ' + (data.nav||0).toLocaleString('en-US',{maximumFractionDigits:0}) + '</strong></div>'
+          + '<div><span style="color:var(--muted)">Retorno:</span> <strong style="color:var(--green)">' + (data.retornoPct||0).toFixed(2) + '%</strong></div>'
+          + '<div><span style="color:var(--muted)">Posições:</span> <strong style="color:var(--white)">' + data.positions.length + ' ativos</strong></div>'
+          + '<div><span style="color:var(--muted)">Dividendos:</span> <strong style="color:var(--btc)">US$ ' + (data.dividendos||0).toFixed(2) + '</strong></div>'
+          + '</div>';
+      }
+      // Store positions for this launch
+      window._lancPositions = data.positions;
+      showToast('✓ MTM processado: ' + data.positions.length + ' posições · NAV US$ ' + Math.round(data.nav||0).toLocaleString('en-US'));
+    } catch(e) {
+      if (drop) drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Erro ao ler PDF: ' + e.message + '<br><button onclick="resetLancMTM()" style="margin-top:8px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
+    }
+  });
+}
+
+function resetLancMTM() {
+  const drop = document.getElementById('lanc-drop');
+  const result = document.getElementById('lanc-mtm-result');
+  if (drop) { drop.style.display = 'block'; drop.innerHTML = '<div style="font-size:28px;margin-bottom:8px">📑</div><div style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px">Arraste o Resumo MTM aqui</div><div style="font-size:11px;color:var(--muted)">ou clique para selecionar o PDF</div><input type="file" id="lanc-pdf" accept=".pdf,.txt,.csv" style="display:none" onchange="lancParseMTM(this.files[0]);this.value=''"><style>.lanc-drop-inner{cursor:pointer}</style>'; drop.onclick = () => document.getElementById('lanc-pdf').click(); }
+  if (result) result.style.display = 'none';
+  document.getElementById('lanc-nav').value = '';
+  document.getElementById('lanc-retorno').value = '';
+  setStatus('nav-status','','var(--green)');
+  window._lancPositions = [];
+}
+
+function extractMTMData(text, filename) {
+  const data = { periodo:'', nav:0, navAnterior:0, variacao:0, retornoPct:0, acoes:0, bonds:0, cashUsd:0, dividendos:0, impostoRetido:0, positions:[] };
+  if (filename) data.periodo = filename.replace('.pdf','');
+  // NAV
+  const navMatch = text.match(/Total\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)\s+0?\.?0*\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)/);
+  if (navMatch) { data.navAnterior = pN(navMatch[1]); data.nav = pN(navMatch[3]||navMatch[2]); data.variacao = pN(navMatch[4]); }
+  // Return %
+  const retMatch = text.match(/Taxa de retorno ponderada pelo tempo\s+([\d.,]+)%/);
+  if (retMatch) data.retornoPct = parseFloat(retMatch[1].replace(',','.'));
+  // Dividendos
+  const divMatch = text.match(/Dividendos\s+([\d,]+\.?\d*)/);
+  if (divMatch) data.dividendos = pN(divMatch[1]);
+  // Positions via regex
+  const posRE = /([A-Z]{2,6})\s+([A-Z][A-Z &\/.'-]+?(?:INC|ETF|CORP|CO|LTD|REIT|FUND|TRUST|BOND|SHARES?)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+(-?[\d,]+\.\d{2})/g;
+  const seen = new Set();
+  let m;
+  const skip = new Set(['USD','GBP','EUR','THE','AND','INC','ETF','LLC','LTD','FOR','COT','ALT']);
+  while ((m = posRE.exec(text)) !== null) {
+    const sym = m[1];
+    if (seen.has(sym) || skip.has(sym)) continue;
+    const qty = parseFloat(m[4]), price = pN(m[6]), value = pN(m[8]), pnl = pN(m[9]);
+    if (value > 0 && qty > 0) { seen.add(sym); data.positions.push({symbol:sym, desc:m[2].trim(), qty, price, value, pnl}); }
+  }
+  data.positions.sort((a,b) => b.value - a.value);
+  if (data.nav === 0 && data.positions.length > 0) data.nav = data.positions.reduce((s,p)=>s+p.value,0) + data.cashUsd;
+  return data;
+}
+function pN(s) { return parseFloat(String(s||'').replace(/,/g,'')) || 0; }
+
+// ─────────────────────────────────────────────────────────────
+// SALVAR LANÇAMENTO
+// ─────────────────────────────────────────────────────────────
+async function salvarLancamentoNovo() {
+  const mes    = document.getElementById('lanc-mes').value;
+  const nav    = parseFloat(document.getElementById('lanc-nav').value) || 0;
+  const cambio = parseFloat(document.getElementById('lanc-cambio').value) || 0;
+  const retorno= parseFloat(document.getElementById('lanc-retorno').value) || 0;
+  const aporte = parseFloat(document.getElementById('lanc-aporte').value) || 0;
+  const btcQtd = parseFloat(document.getElementById('lanc-btc').value) || 0;
+  const btcPrc = parseFloat(document.getElementById('lanc-btc-price').value) || 0;
+  const btcAp  = parseFloat(document.getElementById('lanc-btc-aporte').value) || 0;
+  const notas  = document.getElementById('lanc-notas').value.trim();
+
+  if (!mes) { showToast('Informe o mês de referência', true); return; }
+  if (nav <= 0) { showToast('Informe o NAV da IBKR (faça upload do MTM ou preencha manualmente)', true); return; }
+  if (cambio <= 0) { showToast('Informe o câmbio USD/BRL', true); return; }
+
+  const ibkrBrl   = nav * cambio;
+  const btcBrl    = btcQtd * btcPrc * cambio;
+  const totalBrl  = ibkrBrl + btcBrl;
+  const totalAp   = aporte * cambio + btcAp;
+  const positions = window._lancPositions || [];
 
   const l = {
     mes, cambio,
-    ibkr_usd: ibkrUsd, ibkr_brl: ibkrBrl, aporte_mes: aporte,
-    btc_qtd: btcQtd, btc_price_mes: btcPreco, btc_brl: btcBrl, btc_aporte: btcAp,
+    ibkr_usd: nav, ibkr_brl: ibkrBrl, aporte_mes: aporte,
+    btc_qtd: btcQtd, btc_price_mes: btcPrc, btc_brl: btcBrl, btc_aporte: btcAp,
     total_brl: totalBrl, total_aporte: totalAp,
-    vt, voo, cash, outros, notas
+    retorno_pct: retorno, notas,
+    positions: positions
   };
 
-  const btn = document.getElementById('btn-salvar');
+  const btn = document.getElementById('lanc-save-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
 
-  // Save to Supabase
-  const ok = await saveLancamentoDB(l);
-
-  // Always save to localStorage as cache
+  const ok = await saveLancDB(l);
   const lista = getLancamentos().filter(x => x.mes !== mes);
-  lista.push(l);
-  lista.sort((a, b) => a.mes.localeCompare(b.mes));
+  lista.push(l); lista.sort((a,b) => a.mes.localeCompare(b.mes));
   setLancamentos(lista);
 
   if (btn) { btn.disabled = false; btn.textContent = '💾 Salvar Lançamento'; }
 
-  fecharModal();
-  renderAll();
-  showToast('✓ Lançamento de ' + formatMes(mes) + (ok ? ' salvo na nuvem!' : ' salvo localmente.'));
-}
+  // Reset MTM drop
+  resetLancMTM();
+  window._lancPositions = [];
 
-async function deletarLancamento(mes) {
-  if (!confirm('Remover lançamento de ' + formatMes(mes) + '?')) return;
-  await deleteLancamentoDB(mes);
-  setLancamentos(getLancamentos().filter(l => l.mes !== mes));
   renderAll();
-  showToast('Lançamento removido');
-}
-
-// ─────────────────────────────────────────────────────────────
-// RENDER ALL
-// ─────────────────────────────────────────────────────────────
-function renderAll() {
-  updateKPIs();
-  renderPortfolio();
-  renderHistorico();
-  updateCharts();
+  showToast('✓ Lançamento de ' + formatMes(mes) + (ok ? ' salvo!' : ' salvo localmente.'));
 }
 
 // ─────────────────────────────────────────────────────────────
 // GERENCIAR DADOS
 // ─────────────────────────────────────────────────────────────
 function abrirResetModal() {
-  const modal = document.getElementById('reset-modal');
-  if (!modal) return;
-  modal.style.display = 'flex';
+  const m = document.getElementById('reset-modal');
+  if (!m) return;
+  m.style.display = 'flex';
   const lista = getLancamentos();
   const info = document.getElementById('reset-info');
-  if (info) {
-    if (lista.length === 0) {
-      info.textContent = 'Nenhum lançamento cadastrado ainda.';
-    } else {
-      const u = lista[lista.length - 1];
-      info.innerHTML = '<strong style="color:var(--white)">' + lista.length + ' lançamento(s)</strong> · Último: <strong style="color:var(--orange)">' + formatMes(u.mes) + '</strong>';
-    }
-  }
+  if (info) info.innerHTML = lista.length > 0
+    ? '<strong style="color:var(--white)">' + lista.length + ' lançamentos</strong> · Último: <strong style="color:var(--orange)">' + formatMes(lista[lista.length-1].mes) + '</strong>'
+    : 'Nenhum lançamento cadastrado.';
 }
-
 function exportarDados() {
   const lista = getLancamentos();
   if (!lista.length) { showToast('Nenhum dado para exportar', true); return; }
-  const blob = new Blob([JSON.stringify({ bsafe_backup: true, data: new Date().toISOString(), lancamentos: lista }, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'bsafe-backup-' + new Date().toISOString().slice(0, 10) + '.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
+  const blob = new Blob([JSON.stringify({bsafe_backup:true,data:new Date().toISOString(),lancamentos:lista},null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'bsafe-backup-' + new Date().toISOString().slice(0,10) + '.json'; a.click(); URL.revokeObjectURL(a.href);
   showToast('✓ Backup exportado!');
 }
-
 function importarDados(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+  const file = e.target.files[0]; if (!file) return;
   const r = new FileReader();
   r.onload = ev => {
     try {
@@ -1385,484 +1457,27 @@ function importarDados(e) {
       if (!confirm('Importar ' + lista.length + ' lançamentos?')) return;
       setLancamentos(lista);
       document.getElementById('reset-modal').style.display = 'none';
-      renderAll();
-      showToast('✓ ' + lista.length + ' lançamentos importados!');
+      renderAll(); showToast('✓ ' + lista.length + ' lançamentos importados!');
     } catch(err) { showToast('Erro ao ler JSON', true); }
   };
-  r.readAsText(file);
-  e.target.value = '';
+  r.readAsText(file); e.target.value = '';
 }
-
-function editarUltimo() {
-  const lista = getLancamentos();
-  if (!lista.length) { showToast('Nenhum lançamento para editar', true); return; }
-  const u = lista[lista.length - 1];
-  document.getElementById('reset-modal').style.display = 'none';
-  abrirModal();
-  setTimeout(() => {
-    document.getElementById('f-mes').value    = u.mes || '';
-    document.getElementById('f-cambio').value = u.cambio || '';
-    document.getElementById('f-ibkr-usd').value = u.ibkr_usd || u.ibkrUsd || '';
-    document.getElementById('f-ibkr-aporte').value = u.aporte_mes || u.aporteMes || '';
-    document.getElementById('f-vt').value     = u.vt || '';
-    document.getElementById('f-voo').value    = u.voo || '';
-    document.getElementById('f-cash').value   = u.cash || '';
-    document.getElementById('f-outros').value = u.outros || '';
-    document.getElementById('f-btc').value    = u.btc_qtd || u.btcQtd || '';
-    document.getElementById('f-btc-price').value = u.btc_price_mes || u.btcPriceMes || '';
-    document.getElementById('f-btc-aporte').value = u.btc_aporte || u.btcAporte || '';
-    document.getElementById('f-notas').value  = u.notas || '';
-  }, 200);
-}
-
 async function resetarTudo() {
-  if (!confirm('⚠️ Apagar TODOS os lançamentos? Esta ação não pode ser desfeita.')) return;
+  if (!confirm('⚠️ Apagar TODOS os dados? Não é possível desfazer.')) return;
   if (!confirm('Confirme: apagar tudo?')) return;
   setLancamentos([]);
-  if (SESSION) {
-    await sbReq('/rest/v1/lancamentos?user_id=eq.' + SESSION.user.id, { method: 'DELETE' });
-  }
+  if (SESSION) await sbReq('/rest/v1/lancamentos?user_id=eq.' + SESSION.user.id, {method:'DELETE'});
   document.getElementById('reset-modal').style.display = 'none';
-  renderAll();
-  if (chartPatrimonio) { chartPatrimonio.data.labels = []; chartPatrimonio.data.datasets[0].data = []; chartPatrimonio.update(); }
-  showToast('✓ Dados apagados. Comece um novo lançamento!');
+  renderAll(); showToast('✓ Dados apagados.');
 }
 
-// ─────────────────────────────────────────────────────────────
-// IBKR RESUMO MTM — PARSER COMPLETO
-// ─────────────────────────────────────────────────────────────
-
-// Carrega PDF.js dinamicamente
-function loadPDFJS(cb) {
-  if (window.pdfjsLib) { cb(); return; }
-  var s = document.createElement('script');
-  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-  s.onload = function() {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    cb();
-  };
-  document.head.appendChild(s);
-}
-
-async function parseMTM(file) {
-  if (!file) return;
-  showIBKRLoading('Carregando PDF.js...');
-
-  loadPDFJS(async function() {
-    try {
-      showIBKRLoading('Extraindo texto do PDF...');
-      var arrayBuf = await file.arrayBuffer();
-      var pdf = await pdfjsLib.getDocument({ data: arrayBuf }).promise;
-      var fullText = '';
-
-      for (var p = 1; p <= pdf.numPages; p++) {
-        var page = await pdf.getPage(p);
-        var content = await page.getTextContent();
-        var items = content.items.map(function(i) { return i.str; });
-        fullText += items.join(' ') + '\n';
-      }
-
-      showIBKRLoading('Identificando dados do relatório...');
-      var data = extractMTMData(fullText, file.name);
-
-      showIBKRLoading('Buscando cotação USD/BRL...');
-      var cambio = usdBrl > 0 ? usdBrl : 5.71;
-      try {
-        var r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,brl');
-        var d = await r.json();
-        cambio = d.bitcoin.brl / d.bitcoin.usd;
-      } catch(e) {}
-
-      renderMTM(data, cambio);
-    } catch(e) {
-      showIBKRError('Erro ao ler PDF: ' + e.message + '<br><small>Certifique-se de usar o Resumo MTM exportado da IBKR.</small>');
-    }
-  });
-}
-
-function showIBKRLoading(msg) {
-  document.getElementById('ibkr-drop').style.display = 'none';
-  document.getElementById('ibkr-loading').style.display = 'block';
-  document.getElementById('ibkr-result').style.display = 'none';
-  document.getElementById('ibkr-loading-msg').textContent = msg;
-}
-
-function showIBKRError(msg) {
-  document.getElementById('ibkr-loading').style.display = 'none';
-  document.getElementById('ibkr-result').style.display = 'block';
-  document.getElementById('ibkr-result').innerHTML = '<div style="text-align:center;padding:24px"><div style="font-size:28px;margin-bottom:10px">❌</div><div style="font-size:13px;color:var(--red);line-height:1.7">' + msg + '</div><br><button onclick="document.getElementById(\'ibkr-drop\').style.display=\'block\';document.getElementById(\'ibkr-result\').style.display=\'none\'" style="font-family:\'Montserrat\',sans-serif;font-size:11px;padding:8px 16px;background:transparent;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);cursor:pointer">↩ Tentar novamente</button></div>';
-}
-
-function extractMTMData(text, filename) {
-  var data = {
-    periodo: '',
-    nav: 0, navAnterior: 0, variacao: 0, retornoPct: 0,
-    acoes: 0, bonds: 0, cashUsd: 0,
-    dividendos: 0, impostoRetido: 0,
-    positions: []
-  };
-
-  // Extract period
-  var periodoMatch = text.match(/(\w+ \d+,\s*\d{4})\s*[-–]\s*(\w+ \d+,\s*\d{4})/);
-  if (!periodoMatch) periodoMatch = text.match(/Novembro|Outubro|Setembro|Dezembro|Janeiro|Fevereiro|Março|Abril|Maio|Junho|Julho|Agosto/);
-  // Try from filename
-  if (filename) data.periodo = filename.replace('.pdf','').replace('ResumoMTM','Resumo MTM');
-
-  // Extract NAV values — look for "Total" row with 3 numbers
-  // Format: "Total 376,957.06 399,324.38 0.00 399,324.38 22,367.32"
-  var navMatch = text.match(/Total\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)\s+0?\.?0*\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)/);
-  if (navMatch) {
-    data.navAnterior = parseNum(navMatch[1]);
-    data.nav = parseNum(navMatch[3] || navMatch[2]);
-    data.variacao = parseNum(navMatch[4]);
-  }
-
-  // Extract return %
-  var retMatch = text.match(/Taxa de retorno ponderada pelo tempo\s+([\d.,]+)%/);
-  if (retMatch) data.retornoPct = parseFloat(retMatch[1].replace(',','.'));
-
-  // Extract categories
-  var acoesMatch = text.match(/Ações\s+[\d,]+\.?\d*\s+([\d,]+\.?\d*)/);
-  if (acoesMatch) data.acoes = parseNum(acoesMatch[1]);
-
-  var bondsMatch = text.match(/Bonds\s+[\d,]+\.?\d*\s+([\d,]+\.?\d*)/);
-  if (bondsMatch) data.bonds = parseNum(bondsMatch[1]);
-
-  var cashMatch = text.match(/Valor disponível\s+[\d,]+\.?\d*\s+([\d,]+\.?\d*)/);
-  if (cashMatch) data.cashUsd = parseNum(cashMatch[1]);
-
-  var divMatch = text.match(/Dividendos\s+([\d,]+\.?\d*)/);
-  if (divMatch) data.dividendos = parseNum(divMatch[1]);
-
-  var impostoMatch = text.match(/Imposto retido na fonte\s+-?([\d,]+\.?\d*)/);
-  if (impostoMatch) data.impostoRetido = -parseNum(impostoMatch[1]);
-
-  // Extract positions
-  // Pattern: "SYMBOL DESCRIPTION ... QTY QTY PREV_PRICE CURR_PRICE PREV_VAL CURR_VAL PNL_POS PNL_TRADE"
-  // We look for lines matching: UPPERCASE_TICKER followed by a company name, numbers
-  var lines = text.split('\n');
-  var inPositions = false;
-  var posBuffer = '';
-
-  // Known position line pattern: starts with 2-5 uppercase letters/numbers, then description, then numbers
-  var tickerRE = /^([A-Z]{1,5}(?:\.[A-Z])?)\s+(.+?)\s+([\d,]+)\s+([\d,]+)\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)\s+(-?[\d,]+\.?\d*)\s+(-?[\d,]*\.?\d*)/;
-
-  // Simpler approach: find all ticker-like patterns with values
-  // Look for: TICKER DESCRIPTION (long text) QTY QTY PRICE PRICE VALUE VALUE PNL
-  var posRE = /\b([A-Z]{2,5})\s+([A-Z][A-Z &\/.'-]+(?:INC|ETF|CORP|CO|LTD|FUND|REIT|TRUST)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+(-?[\d,]+\.\d{2})/g;
-
-  var match;
-  var seen = new Set();
-  while ((match = posRE.exec(text)) !== null) {
-    var sym = match[1];
-    if (seen.has(sym)) continue;
-    // Filter out non-ticker words
-    if (['USD','GBP','EUR','THE','AND','INC','ETF','FOR','LLC','LTD'].indexOf(sym) > -1) continue;
-    var qty = parseFloat(match[4]);
-    var price = parseNum(match[6]);
-    var value = parseNum(match[8]);
-    var pnl = parseNum(match[9]);
-    if (value > 0 && qty > 0) {
-      seen.add(sym);
-      data.positions.push({ symbol: sym, desc: match[2].trim(), qty: qty, price: price, value: value, pnl: pnl });
-    }
-  }
-
-  // Sort by value desc
-  data.positions.sort(function(a,b) { return b.value - a.value; });
-
-  // If NAV not extracted, sum positions
-  if (data.nav === 0 && data.positions.length > 0) {
-    data.nav = data.positions.reduce(function(s,p) { return s + p.value; }, 0) + data.cashUsd;
-  }
-
-  return data;
-}
-
-function parseNum(s) {
-  if (!s) return 0;
-  return parseFloat(String(s).replace(/,/g,'')) || 0;
-}
-
-function renderMTM(data, cambio) {
-  document.getElementById('ibkr-loading').style.display = 'none';
-
-  // Update badge
-  var badge = document.getElementById('ibkr-mes-badge');
-  if (badge && data.periodo) { badge.textContent = data.periodo; badge.style.display = 'inline-block'; }
-
-  var nav = data.nav || 0;
-  var navBRL = nav * cambio;
-  var totalPos = data.positions.reduce(function(s,p) { return s + p.value; }, 0);
-
-  // Color helpers
-  function posNeg(v, prefix) {
-    prefix = prefix || '';
-    var c = v >= 0 ? 'var(--green)' : 'var(--red)';
-    return '<span style="color:' + c + ';font-family:\'DM Mono\',monospace;font-weight:700">' + prefix + (v >= 0 ? '+' : '') + v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</span>';
-  }
-  function fmtUSD(v) { return 'US$ ' + v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-  function fmtBRL(v) { return 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-
-  // Summary cards
-  var summaryHTML = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">';
-  var summaryItems = [
-    { label: 'NAV Total', val: fmtUSD(nav), sub: fmtBRL(navBRL), color: 'var(--orange)' },
-    { label: 'Retorno do Mês', val: (data.retornoPct > 0 ? '+' : '') + data.retornoPct.toFixed(2) + '%', sub: posNeg(data.variacao, 'US$ '), color: data.retornoPct >= 0 ? 'var(--green)' : 'var(--red)' },
-    { label: 'Ações', val: fmtUSD(data.acoes), sub: fmtBRL(data.acoes * cambio), color: 'var(--blue)' },
-    { label: 'Dividendos', val: fmtUSD(data.dividendos), sub: 'IR retido: ' + fmtUSD(Math.abs(data.impostoRetido)), color: 'var(--btc)' },
-  ];
-  summaryItems.forEach(function(s) {
-    summaryHTML += '<div style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:14px 16px;position:relative;overflow:hidden">'
-      + '<div style="position:absolute;top:0;left:0;right:0;height:2px;background:' + s.color + '"></div>'
-      + '<div style="font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">' + s.label + '</div>'
-      + '<div style="font-size:16px;font-weight:800;color:var(--white);letter-spacing:-.5px;margin-bottom:3px">' + s.val + '</div>'
-      + '<div style="font-size:11px;color:var(--muted)">' + s.sub + '</div>'
-      + '</div>';
-  });
-  summaryHTML += '</div>';
-
-  // Allocation bar
-  var cashUsd = data.cashUsd || (nav - data.acoes - data.bonds);
-  var totalAssets = data.acoes + data.bonds + cashUsd;
-  var pctAcoes = totalAssets > 0 ? (data.acoes / totalAssets * 100) : 0;
-  var pctBonds = totalAssets > 0 ? (data.bonds / totalAssets * 100) : 0;
-  var pctCash  = totalAssets > 0 ? (cashUsd  / totalAssets * 100) : 0;
-
-  var allocHTML = '<div style="margin-bottom:20px">'
-    + '<div style="font-family:\'DM Mono\',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Alocação por Classe</div>'
-    + '<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:8px">'
-    + '<div style="flex:' + pctAcoes + ';background:var(--orange);border-radius:4px 0 0 4px;min-width:2px"></div>'
-    + '<div style="flex:' + pctBonds + ';background:var(--green);min-width:2px"></div>'
-    + '<div style="flex:' + pctCash  + ';background:var(--blue);border-radius:0 4px 4px 0;min-width:2px"></div>'
-    + '</div>'
-    + '<div style="display:flex;gap:20px;font-size:11px">'
-    + '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;background:var(--orange);border-radius:2px"></div><span style="color:var(--muted)">Ações</span><strong style="color:var(--white)">' + pctAcoes.toFixed(1) + '%</strong></div>'
-    + '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;background:var(--green);border-radius:2px"></div><span style="color:var(--muted)">Bonds</span><strong style="color:var(--white)">' + pctBonds.toFixed(1) + '%</strong></div>'
-    + '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;background:var(--blue);border-radius:2px"></div><span style="color:var(--muted)">Cash</span><strong style="color:var(--white)">' + pctCash.toFixed(1) + '%</strong></div>'
-    + '</div></div>';
-
-  // Positions table
-  var posHTML = '';
-  if (data.positions.length > 0) {
-    posHTML = '<div style="font-family:\'DM Mono\',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">'
-      + data.positions.length + ' Posições Abertas</div>'
-      + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:640px">'
-      + '<thead><tr style="border-bottom:1px solid var(--border-dim)">'
-      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:left">Ticker</th>'
-      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:left">Descrição</th>'
-      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:right">Qtd</th>'
-      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:right">Preço</th>'
-      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:right">Valor USD</th>'
-      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:right">Valor BRL</th>'
-      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:right">P&L</th>'
-      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:right">Peso %</th>'
-      + '</tr></thead><tbody>';
-
-    data.positions.forEach(function(p) {
-      var pct = nav > 0 ? (p.value / nav * 100) : 0;
-      var brl = p.value * cambio;
-      posHTML += '<tr style="border-bottom:1px solid rgba(255,255,255,0.03)" onmouseover="this.style.background=\'rgba(255,255,255,0.02)\'" onmouseout="this.style.background=\'\'">'
-        + '<td style="padding:9px 10px"><span style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:12px;color:var(--orange)">' + p.symbol + '</span></td>'
-        + '<td style="padding:9px 10px;font-size:11px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.desc + '</td>'
-        + '<td style="padding:9px 10px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--muted)">' + p.qty.toLocaleString('en-US') + '</td>'
-        + '<td style="padding:9px 10px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--muted)">$' + p.price.toFixed(2) + '</td>'
-        + '<td style="padding:9px 10px;text-align:right;font-family:\'DM Mono\',monospace;font-size:12px;font-weight:700;color:var(--white)">$' + p.value.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>'
-        + '<td style="padding:9px 10px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text)">R$' + brl.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) + '</td>'
-        + '<td style="padding:9px 10px;text-align:right">' + posNeg(p.pnl, '$') + '</td>'
-        + '<td style="padding:9px 10px;text-align:right">'
-          + '<div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">'
-            + '<div style="width:40px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="height:100%;background:var(--orange);border-radius:2px;width:' + Math.min(100, pct * 3) + '%"></div></div>'
-            + '<span style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--muted);min-width:36px;text-align:right">' + pct.toFixed(1) + '%</span>'
-          + '</div>'
-        + '</td>'
-        + '</tr>';
-    });
-    posHTML += '</tbody></table></div>';
-  } else {
-    posHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">⚠ Posições não encontradas no PDF. Certifique-se de usar o <strong>Resumo MTM</strong> da IBKR.</div>';
-  }
-
-  // Action bar
-  var actionHTML = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">'
-    + '<div style="font-size:12px;color:var(--muted)">Câmbio utilizado: <strong style="color:var(--text)">R$ ' + cambio.toFixed(2) + '</strong></div>'
-    + '<div style="display:flex;gap:8px">'
-    + '<button onclick="preencherLancamento(' + nav.toFixed(2) + ',' + cambio.toFixed(2) + ')" style="font-family:\'Montserrat\',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 14px;background:var(--orange);color:#fff;border:none;border-radius:2px;cursor:pointer">→ Usar no Lançamento</button>'
-    + '<button onclick="document.getElementById(\'ibkr-drop\').style.display=\'block\';document.getElementById(\'ibkr-result\').style.display=\'none\';document.getElementById(\'ibkr-mes-badge\').style.display=\'none\'" style="font-family:\'Montserrat\',sans-serif;font-size:11px;font-weight:600;padding:8px 14px;background:transparent;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);cursor:pointer">↩ Carregar outro</button>'
-    + '</div></div>';
-
-  var result = document.getElementById('ibkr-result');
-  result.style.display = 'block';
-  result.innerHTML = actionHTML + summaryHTML + allocHTML + posHTML
-    + '<div style="margin-top:12px;font-size:11px;color:var(--muted2);font-family:\'DM Mono\',monospace;letter-spacing:.4px">⚠ Análise educacional. Câmbio ao vivo. Não é recomendação de investimento.</div>';
-
-  showToast('✓ ' + data.positions.length + ' posições extraídas · NAV US$ ' + nav.toLocaleString('en-US',{maximumFractionDigits:0}));
-}
-
-function preencherLancamento(nav, cambio) {
-  abrirModal();
-  setTimeout(function() {
-    var fIbkr = document.getElementById('f-ibkr-usd');
-    var fCambio = document.getElementById('f-cambio');
-    if (fIbkr) fIbkr.value = nav.toFixed(2);
-    if (fCambio) fCambio.value = cambio.toFixed(2);
-    showToast('✓ NAV e câmbio preenchidos no lançamento!');
-  }, 400);
-}
-
-// ─────────────────────────────────────────────────────────────
-// IBKR REPORT UPLOAD (legacy CSV)
-// ─────────────────────────────────────────────────────────────
-async function processIBKR(file) {
-  if (!file) return;
-  const zone = document.getElementById('ibkr-drop-zone');
-  const result = document.getElementById('ibkr-result');
-  zone.style.display = 'none';
-  result.style.display = 'block';
-  result.innerHTML = '<div style="text-align:center;padding:28px;color:var(--muted)"><div style="font-size:28px;margin-bottom:8px">⏳</div>Analisando relatório com IA...</div>';
-
-  const reader = new FileReader();
-  reader.onload = async e => {
-    const content = e.target.result;
-    const positions = [];
-    const lines = content.split('\n');
-    lines.forEach(line => {
-      const cols = line.split(',').map(c => c.replace(/"/g,'').trim());
-      if (cols[0] === 'Open Positions' && cols[2] && cols[2] !== 'Symbol' && cols[2] !== 'Asset Category') {
-        if (cols[5]) positions.push({ symbol: cols[2], qty: parseFloat(cols[5])||0, price: parseFloat(cols[6])||0, value: parseFloat(cols[8])||0 });
-      }
-    });
-
-    try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514', max_tokens: 1000,
-          messages: [{ role: 'user', content: `Analise este relatório da Interactive Brokers de forma educacional (não é recomendação de investimento). Arquivo: ${file.name}. Posições encontradas: ${JSON.stringify(positions.slice(0,10))}. Amostra do arquivo: ${content.substring(0,1500)}. Responda em português, usando emojis para organizar. Máx 300 palavras.` }]
-        })
-      });
-      const data = await resp.json();
-      const txt = data.content && data.content[0] ? data.content[0].text : 'Não foi possível analisar.';
-
-      result.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-          <div style="font-weight:700;color:var(--white)">${file.name}</div>
-          <button onclick="document.getElementById('ibkr-drop-zone').style.display='block';document.getElementById('ibkr-result').style.display='none'" style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;padding:7px 14px;background:transparent;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);cursor:pointer">↩ Carregar outro</button>
-        </div>
-        ${positions.length > 0 ? `<div style="margin-bottom:14px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--orange);text-transform:uppercase;margin-bottom:8px">${positions.length} posições detectadas</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">${positions.slice(0,8).map(p=>`<div style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:6px 12px;font-family:'DM Mono',monospace;font-size:12px"><span style="color:var(--orange);font-weight:700">${p.symbol}</span> <span style="color:var(--muted)">US$ ${Math.abs(p.value).toLocaleString('en-US',{maximumFractionDigits:0})}</span></div>`).join('')}</div>` : ''}
-        <div style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:18px;font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap">${txt}</div>
-        <div style="margin-top:10px;font-size:11px;color:var(--muted2);padding:8px 12px;background:var(--orange-dim);border:1px solid var(--border);border-radius:2px">⚠ Análise educacional por IA — não é recomendação de investimento.</div>`;
-    } catch(err) {
-      result.innerHTML = `<div style="text-align:center;padding:20px"><div style="color:var(--red);margin-bottom:12px">❌ Erro ao analisar: ${err.message}</div><button onclick="document.getElementById('ibkr-drop-zone').style.display='block';document.getElementById('ibkr-result').style.display='none'" style="font-family:'Montserrat',sans-serif;font-size:11px;padding:7px 14px;background:transparent;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);cursor:pointer">↩ Tentar novamente</button></div>`;
-    }
-  };
-  reader.readAsText(file);
-}
-
-
-// ─────────────────────────────────────────────────────────────
-// COTAÇÕES HISTÓRICAS AUTO-FETCH
-// ─────────────────────────────────────────────────────────────
-function setStatus(id, msg, color) {
-  const el = document.getElementById(id);
-  if (el) { el.textContent = msg; el.style.color = color; }
-}
-
-async function buscarCambioHistorico(mesAno) {
-  const [ano, mes] = mesAno.split('-');
-  const hoje = new Date();
-  const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
-
-  if (mesAno >= mesAtual) {
-    if (usdBrl > 0) { document.getElementById('f-cambio').value = usdBrl.toFixed(2); setStatus('cambio-status','✓ ao vivo','var(--green)'); }
-    return;
-  }
-
-  setStatus('cambio-status','⏳ buscando...','var(--muted)');
-  const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate();
-  const dataFimStr = ano + mes + String(ultimoDia).padStart(2,'0');
-
-  try {
-    const r = await fetch('https://economia.awesomeapi.com.br/json/daily/USD-BRL/5?start_date=' + ano + mes + '01&end_date=' + dataFimStr);
-    if (r.ok) {
-      const d = await r.json();
-      if (d && d.length > 0) {
-        const avg = d.reduce((s,x) => s + parseFloat(x.bid), 0) / d.length;
-        document.getElementById('f-cambio').value = avg.toFixed(2);
-        setStatus('cambio-status','✓ AwesomeAPI','var(--green)');
-        return;
-      }
-    }
-  } catch(e) {}
-
-  try {
-    const dataFmt = ano + '-' + mes + '-' + String(ultimoDia).padStart(2,'0');
-    const r2 = await fetch('https://api.frankfurter.app/' + dataFmt + '?from=USD&to=BRL');
-    if (r2.ok) {
-      const d2 = await r2.json();
-      if (d2.rates && d2.rates.BRL) {
-        document.getElementById('f-cambio').value = d2.rates.BRL.toFixed(2);
-        setStatus('cambio-status','✓ Frankfurter','var(--green)');
-        return;
-      }
-    }
-  } catch(e) {}
-
-  setStatus('cambio-status','⚠ preencha manualmente','var(--btc)');
-}
-
-async function buscarBTCHistorico(mesAno) {
-  const [ano, mes] = mesAno.split('-');
-  const hoje = new Date();
-  const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
-
-  if (mesAno >= mesAtual) {
-    if (btcPrice > 0) { document.getElementById('f-btc-price').value = Math.round(btcPrice); setStatus('btcprice-status','✓ ao vivo','var(--green)'); }
-    return;
-  }
-
-  setStatus('btcprice-status','⏳ buscando...','var(--muted)');
-  const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate();
-  const dd = String(Math.min(28, ultimoDia)).padStart(2,'0');
-
-  try {
-    const r = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/history?date=' + dd + '-' + mes + '-' + ano + '&localization=false');
-    if (r.ok) {
-      const d = await r.json();
-      const price = d?.market_data?.current_price?.usd;
-      if (price) { document.getElementById('f-btc-price').value = Math.round(price); setStatus('btcprice-status','✓ CoinGecko','var(--green)'); return; }
-    }
-  } catch(e) {}
-
-  try {
-    const from = Math.floor(new Date(ano + '-' + mes + '-01').getTime() / 1000);
-    const to   = Math.floor(new Date(ano + '-' + mes + '-' + String(ultimoDia).padStart(2,'0')).getTime() / 1000);
-    const r2 = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=usd&from=' + from + '&to=' + to);
-    if (r2.ok) {
-      const d2 = await r2.json();
-      if (d2.prices && d2.prices.length > 0) {
-        const avg = d2.prices.reduce((s,p) => s+p[1],0) / d2.prices.length;
-        document.getElementById('f-btc-price').value = Math.round(avg);
-        setStatus('btcprice-status','✓ média CoinGecko','var(--green)');
-        return;
-      }
-    }
-  } catch(e) {}
-
-  setStatus('btcprice-status','⚠ preencha manualmente','var(--btc)');
-}
-// ─────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────
 // TOAST
 // ─────────────────────────────────────────────────────────────
 function showToast(msg, isErr) {
   const t = document.getElementById('toast');
   if (!t) return;
-  t.textContent = msg;
-  t.className = 'toast ' + (isErr ? 'err' : 'ok');
-  t.style.display = 'block';
+  t.textContent = msg; t.className = 'toast ' + (isErr ? 'err' : 'ok'); t.style.display = 'block';
   setTimeout(() => { t.style.display = 'none'; }, 3500);
 }
 
@@ -1870,17 +1485,12 @@ function showToast(msg, isErr) {
 // MOBILE MENU
 // ─────────────────────────────────────────────────────────────
 function toggleMenu() {
-  const m = document.getElementById('mobile-menu');
-  const h = document.getElementById('hamburger');
+  const m = document.getElementById('mobile-menu'), h = document.getElementById('hamburger');
   if (m) m.classList.toggle('open');
   if (h) h.classList.toggle('open');
-  document.body.style.overflow = m && m.classList.contains('open') ? 'hidden' : '';
+  document.body.style.overflow = (m && m.classList.contains('open')) ? 'hidden' : '';
 }
-
-// Close modals on backdrop click
 document.addEventListener('click', function(e) {
-  const ml = document.getElementById('modal-lancamento');
-  if (ml && e.target === ml) fecharModal();
   const rm = document.getElementById('reset-modal');
   if (rm && e.target === rm) rm.style.display = 'none';
 });
@@ -1889,19 +1499,15 @@ document.addEventListener('click', function(e) {
 // INIT
 // ─────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  // Always hide auth overlay initially — checkAuth will show it if needed
-  const authEl = document.getElementById('auth-overlay');
-  if (authEl) authEl.style.display = 'none';
-
-  // Build charts first
+  document.getElementById('auth-overlay').style.display = 'none';
   buildCharts();
-
-  // Then check auth (async — won't block UI)
   checkAuth();
-
-  // Fetch prices
   fetchPrices();
   setInterval(fetchPrices, 30000);
+  // Set default month
+  const lancMes = document.getElementById('lanc-mes');
+  if (lancMes && !lancMes.value) lancMes.value = new Date().toISOString().slice(0,7);
+  initXpub();
 });
 </script>
 </body>
