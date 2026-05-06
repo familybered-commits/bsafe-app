@@ -182,6 +182,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);
 .mob-close{position:absolute;top:20px;right:24px;font-size:28px;cursor:pointer;color:var(--muted);background:none;border:none;line-height:1}
 .mob-dash{color:var(--orange)!important;border:1px solid var(--border);border-radius:2px}
 
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 .fade-in{animation:fadeUp .5s ease both}
@@ -341,20 +342,40 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);
       </div>
     </div>
 
-    <!-- IBKR REPORT UPLOAD -->
-    <div class="card fade-in">
+    <!-- IBKR RESUMO MTM -->
+    <div class="card fade-in" id="ibkr-card">
       <div class="card-header">
-        <span class="card-title">📄 Upload Relatório IBKR — Análise com IA</span>
-        <span class="card-tag tag-pro">PRO</span>
-      </div>
-      <div class="card-body">
-        <div id="ibkr-drop-zone" style="border:2px dashed var(--border-dim);border-radius:4px;padding:36px;text-align:center;cursor:pointer;transition:all .3s" onclick="document.getElementById('ibkr-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--orange)';this.style.background='var(--orange-dim)'" ondragleave="this.style.borderColor='var(--border-dim)';this.style.background='transparent'" ondrop="event.preventDefault();this.style.borderColor='var(--border-dim)';this.style.background='transparent';processIBKR(event.dataTransfer.files[0])" onmouseover="this.style.borderColor='var(--orange)';this.style.background='var(--orange-dim)'" onmouseout="this.style.borderColor='var(--border-dim)';this.style.background='transparent'">
-          <div style="font-size:36px;margin-bottom:10px">📊</div>
-          <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:6px">Arraste seu relatório IBKR aqui</div>
-          <div style="font-size:12px;color:var(--muted)">ou clique para selecionar · CSV · XML · HTML</div>
-          <input type="file" id="ibkr-file" accept=".csv,.xml,.html,.htm,.txt" style="display:none" onchange="processIBKR(this.files[0]);this.value=''">
+        <span class="card-title">📄 Resumo MTM — Interactive Brokers</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="ibkr-mes-badge" style="display:none;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:3px 10px;background:var(--orange-dim);border:1px solid var(--border);border-radius:2px;color:var(--orange)"></span>
+          <span class="card-tag tag-pro">PRO</span>
         </div>
+      </div>
+      <div class="card-body" id="ibkr-card-body">
+
+        <!-- DROP ZONE -->
+        <div id="ibkr-drop" style="border:2px dashed var(--border-dim);border-radius:4px;padding:40px;text-align:center;cursor:pointer;transition:all .3s"
+          onclick="document.getElementById('ibkr-pdf-input').click()"
+          ondragover="event.preventDefault();this.style.borderColor='var(--orange)';this.style.background='var(--orange-dim)'"
+          ondragleave="this.style.borderColor='var(--border-dim)';this.style.background='transparent'"
+          ondrop="event.preventDefault();this.style.borderColor='var(--border-dim)';this.style.background='transparent';parseMTM(event.dataTransfer.files[0])"
+          onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border-dim)'">
+          <div style="font-size:40px;margin-bottom:12px">📑</div>
+          <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:6px">Arraste o Resumo MTM da IBKR aqui</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Relatório PDF exportado como: <strong style="color:var(--text)">Relatórios → Extratos → Resumo MTM</strong></div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:1px">Aceita: PDF</div>
+          <input type="file" id="ibkr-pdf-input" accept=".pdf,.txt,.csv" style="display:none" onchange="parseMTM(this.files[0]);this.value=''">
+        </div>
+
+        <!-- LOADING -->
+        <div id="ibkr-loading" style="display:none;text-align:center;padding:32px">
+          <div style="font-size:32px;margin-bottom:12px;animation:spin 1s linear infinite">⚙️</div>
+          <div style="font-size:13px;color:var(--muted)" id="ibkr-loading-msg">Extraindo dados do PDF...</div>
+        </div>
+
+        <!-- RESULT -->
         <div id="ibkr-result" style="display:none"></div>
+
       </div>
     </div>
 
@@ -1408,7 +1429,289 @@ async function resetarTudo() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// IBKR REPORT UPLOAD
+// IBKR RESUMO MTM — PARSER COMPLETO
+// ─────────────────────────────────────────────────────────────
+
+// Carrega PDF.js dinamicamente
+function loadPDFJS(cb) {
+  if (window.pdfjsLib) { cb(); return; }
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  s.onload = function() {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    cb();
+  };
+  document.head.appendChild(s);
+}
+
+async function parseMTM(file) {
+  if (!file) return;
+  showIBKRLoading('Carregando PDF.js...');
+
+  loadPDFJS(async function() {
+    try {
+      showIBKRLoading('Extraindo texto do PDF...');
+      var arrayBuf = await file.arrayBuffer();
+      var pdf = await pdfjsLib.getDocument({ data: arrayBuf }).promise;
+      var fullText = '';
+
+      for (var p = 1; p <= pdf.numPages; p++) {
+        var page = await pdf.getPage(p);
+        var content = await page.getTextContent();
+        var items = content.items.map(function(i) { return i.str; });
+        fullText += items.join(' ') + '\n';
+      }
+
+      showIBKRLoading('Identificando dados do relatório...');
+      var data = extractMTMData(fullText, file.name);
+
+      showIBKRLoading('Buscando cotação USD/BRL...');
+      var cambio = usdBrl > 0 ? usdBrl : 5.71;
+      try {
+        var r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,brl');
+        var d = await r.json();
+        cambio = d.bitcoin.brl / d.bitcoin.usd;
+      } catch(e) {}
+
+      renderMTM(data, cambio);
+    } catch(e) {
+      showIBKRError('Erro ao ler PDF: ' + e.message + '<br><small>Certifique-se de usar o Resumo MTM exportado da IBKR.</small>');
+    }
+  });
+}
+
+function showIBKRLoading(msg) {
+  document.getElementById('ibkr-drop').style.display = 'none';
+  document.getElementById('ibkr-loading').style.display = 'block';
+  document.getElementById('ibkr-result').style.display = 'none';
+  document.getElementById('ibkr-loading-msg').textContent = msg;
+}
+
+function showIBKRError(msg) {
+  document.getElementById('ibkr-loading').style.display = 'none';
+  document.getElementById('ibkr-result').style.display = 'block';
+  document.getElementById('ibkr-result').innerHTML = '<div style="text-align:center;padding:24px"><div style="font-size:28px;margin-bottom:10px">❌</div><div style="font-size:13px;color:var(--red);line-height:1.7">' + msg + '</div><br><button onclick="document.getElementById(\'ibkr-drop\').style.display=\'block\';document.getElementById(\'ibkr-result\').style.display=\'none\'" style="font-family:\'Montserrat\',sans-serif;font-size:11px;padding:8px 16px;background:transparent;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);cursor:pointer">↩ Tentar novamente</button></div>';
+}
+
+function extractMTMData(text, filename) {
+  var data = {
+    periodo: '',
+    nav: 0, navAnterior: 0, variacao: 0, retornoPct: 0,
+    acoes: 0, bonds: 0, cashUsd: 0,
+    dividendos: 0, impostoRetido: 0,
+    positions: []
+  };
+
+  // Extract period
+  var periodoMatch = text.match(/(\w+ \d+,\s*\d{4})\s*[-–]\s*(\w+ \d+,\s*\d{4})/);
+  if (!periodoMatch) periodoMatch = text.match(/Novembro|Outubro|Setembro|Dezembro|Janeiro|Fevereiro|Março|Abril|Maio|Junho|Julho|Agosto/);
+  // Try from filename
+  if (filename) data.periodo = filename.replace('.pdf','').replace('ResumoMTM','Resumo MTM');
+
+  // Extract NAV values — look for "Total" row with 3 numbers
+  // Format: "Total 376,957.06 399,324.38 0.00 399,324.38 22,367.32"
+  var navMatch = text.match(/Total\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)\s+0?\.?0*\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)/);
+  if (navMatch) {
+    data.navAnterior = parseNum(navMatch[1]);
+    data.nav = parseNum(navMatch[3] || navMatch[2]);
+    data.variacao = parseNum(navMatch[4]);
+  }
+
+  // Extract return %
+  var retMatch = text.match(/Taxa de retorno ponderada pelo tempo\s+([\d.,]+)%/);
+  if (retMatch) data.retornoPct = parseFloat(retMatch[1].replace(',','.'));
+
+  // Extract categories
+  var acoesMatch = text.match(/Ações\s+[\d,]+\.?\d*\s+([\d,]+\.?\d*)/);
+  if (acoesMatch) data.acoes = parseNum(acoesMatch[1]);
+
+  var bondsMatch = text.match(/Bonds\s+[\d,]+\.?\d*\s+([\d,]+\.?\d*)/);
+  if (bondsMatch) data.bonds = parseNum(bondsMatch[1]);
+
+  var cashMatch = text.match(/Valor disponível\s+[\d,]+\.?\d*\s+([\d,]+\.?\d*)/);
+  if (cashMatch) data.cashUsd = parseNum(cashMatch[1]);
+
+  var divMatch = text.match(/Dividendos\s+([\d,]+\.?\d*)/);
+  if (divMatch) data.dividendos = parseNum(divMatch[1]);
+
+  var impostoMatch = text.match(/Imposto retido na fonte\s+-?([\d,]+\.?\d*)/);
+  if (impostoMatch) data.impostoRetido = -parseNum(impostoMatch[1]);
+
+  // Extract positions
+  // Pattern: "SYMBOL DESCRIPTION ... QTY QTY PREV_PRICE CURR_PRICE PREV_VAL CURR_VAL PNL_POS PNL_TRADE"
+  // We look for lines matching: UPPERCASE_TICKER followed by a company name, numbers
+  var lines = text.split('\n');
+  var inPositions = false;
+  var posBuffer = '';
+
+  // Known position line pattern: starts with 2-5 uppercase letters/numbers, then description, then numbers
+  var tickerRE = /^([A-Z]{1,5}(?:\.[A-Z])?)\s+(.+?)\s+([\d,]+)\s+([\d,]+)\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)\s+(-?[\d,]+\.?\d*)\s+(-?[\d,]*\.?\d*)/;
+
+  // Simpler approach: find all ticker-like patterns with values
+  // Look for: TICKER DESCRIPTION (long text) QTY QTY PRICE PRICE VALUE VALUE PNL
+  var posRE = /\b([A-Z]{2,5})\s+([A-Z][A-Z &\/.'-]+(?:INC|ETF|CORP|CO|LTD|FUND|REIT|TRUST)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+(-?[\d,]+\.\d{2})/g;
+
+  var match;
+  var seen = new Set();
+  while ((match = posRE.exec(text)) !== null) {
+    var sym = match[1];
+    if (seen.has(sym)) continue;
+    // Filter out non-ticker words
+    if (['USD','GBP','EUR','THE','AND','INC','ETF','FOR','LLC','LTD'].indexOf(sym) > -1) continue;
+    var qty = parseFloat(match[4]);
+    var price = parseNum(match[6]);
+    var value = parseNum(match[8]);
+    var pnl = parseNum(match[9]);
+    if (value > 0 && qty > 0) {
+      seen.add(sym);
+      data.positions.push({ symbol: sym, desc: match[2].trim(), qty: qty, price: price, value: value, pnl: pnl });
+    }
+  }
+
+  // Sort by value desc
+  data.positions.sort(function(a,b) { return b.value - a.value; });
+
+  // If NAV not extracted, sum positions
+  if (data.nav === 0 && data.positions.length > 0) {
+    data.nav = data.positions.reduce(function(s,p) { return s + p.value; }, 0) + data.cashUsd;
+  }
+
+  return data;
+}
+
+function parseNum(s) {
+  if (!s) return 0;
+  return parseFloat(String(s).replace(/,/g,'')) || 0;
+}
+
+function renderMTM(data, cambio) {
+  document.getElementById('ibkr-loading').style.display = 'none';
+
+  // Update badge
+  var badge = document.getElementById('ibkr-mes-badge');
+  if (badge && data.periodo) { badge.textContent = data.periodo; badge.style.display = 'inline-block'; }
+
+  var nav = data.nav || 0;
+  var navBRL = nav * cambio;
+  var totalPos = data.positions.reduce(function(s,p) { return s + p.value; }, 0);
+
+  // Color helpers
+  function posNeg(v, prefix) {
+    prefix = prefix || '';
+    var c = v >= 0 ? 'var(--green)' : 'var(--red)';
+    return '<span style="color:' + c + ';font-family:\'DM Mono\',monospace;font-weight:700">' + prefix + (v >= 0 ? '+' : '') + v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</span>';
+  }
+  function fmtUSD(v) { return 'US$ ' + v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function fmtBRL(v) { return 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+  // Summary cards
+  var summaryHTML = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">';
+  var summaryItems = [
+    { label: 'NAV Total', val: fmtUSD(nav), sub: fmtBRL(navBRL), color: 'var(--orange)' },
+    { label: 'Retorno do Mês', val: (data.retornoPct > 0 ? '+' : '') + data.retornoPct.toFixed(2) + '%', sub: posNeg(data.variacao, 'US$ '), color: data.retornoPct >= 0 ? 'var(--green)' : 'var(--red)' },
+    { label: 'Ações', val: fmtUSD(data.acoes), sub: fmtBRL(data.acoes * cambio), color: 'var(--blue)' },
+    { label: 'Dividendos', val: fmtUSD(data.dividendos), sub: 'IR retido: ' + fmtUSD(Math.abs(data.impostoRetido)), color: 'var(--btc)' },
+  ];
+  summaryItems.forEach(function(s) {
+    summaryHTML += '<div style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:2px;padding:14px 16px;position:relative;overflow:hidden">'
+      + '<div style="position:absolute;top:0;left:0;right:0;height:2px;background:' + s.color + '"></div>'
+      + '<div style="font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">' + s.label + '</div>'
+      + '<div style="font-size:16px;font-weight:800;color:var(--white);letter-spacing:-.5px;margin-bottom:3px">' + s.val + '</div>'
+      + '<div style="font-size:11px;color:var(--muted)">' + s.sub + '</div>'
+      + '</div>';
+  });
+  summaryHTML += '</div>';
+
+  // Allocation bar
+  var cashUsd = data.cashUsd || (nav - data.acoes - data.bonds);
+  var totalAssets = data.acoes + data.bonds + cashUsd;
+  var pctAcoes = totalAssets > 0 ? (data.acoes / totalAssets * 100) : 0;
+  var pctBonds = totalAssets > 0 ? (data.bonds / totalAssets * 100) : 0;
+  var pctCash  = totalAssets > 0 ? (cashUsd  / totalAssets * 100) : 0;
+
+  var allocHTML = '<div style="margin-bottom:20px">'
+    + '<div style="font-family:\'DM Mono\',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Alocação por Classe</div>'
+    + '<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:8px">'
+    + '<div style="flex:' + pctAcoes + ';background:var(--orange);border-radius:4px 0 0 4px;min-width:2px"></div>'
+    + '<div style="flex:' + pctBonds + ';background:var(--green);min-width:2px"></div>'
+    + '<div style="flex:' + pctCash  + ';background:var(--blue);border-radius:0 4px 4px 0;min-width:2px"></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:20px;font-size:11px">'
+    + '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;background:var(--orange);border-radius:2px"></div><span style="color:var(--muted)">Ações</span><strong style="color:var(--white)">' + pctAcoes.toFixed(1) + '%</strong></div>'
+    + '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;background:var(--green);border-radius:2px"></div><span style="color:var(--muted)">Bonds</span><strong style="color:var(--white)">' + pctBonds.toFixed(1) + '%</strong></div>'
+    + '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;background:var(--blue);border-radius:2px"></div><span style="color:var(--muted)">Cash</span><strong style="color:var(--white)">' + pctCash.toFixed(1) + '%</strong></div>'
+    + '</div></div>';
+
+  // Positions table
+  var posHTML = '';
+  if (data.positions.length > 0) {
+    posHTML = '<div style="font-family:\'DM Mono\',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">'
+      + data.positions.length + ' Posições Abertas</div>'
+      + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:640px">'
+      + '<thead><tr style="border-bottom:1px solid var(--border-dim)">'
+      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:left">Ticker</th>'
+      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:left">Descrição</th>'
+      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:right">Qtd</th>'
+      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:right">Preço</th>'
+      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:right">Valor USD</th>'
+      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:right">Valor BRL</th>'
+      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:right">P&L</th>'
+      + '<th style="padding:8px 10px;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:right">Peso %</th>'
+      + '</tr></thead><tbody>';
+
+    data.positions.forEach(function(p) {
+      var pct = nav > 0 ? (p.value / nav * 100) : 0;
+      var brl = p.value * cambio;
+      posHTML += '<tr style="border-bottom:1px solid rgba(255,255,255,0.03)" onmouseover="this.style.background=\'rgba(255,255,255,0.02)\'" onmouseout="this.style.background=\'\'">'
+        + '<td style="padding:9px 10px"><span style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:12px;color:var(--orange)">' + p.symbol + '</span></td>'
+        + '<td style="padding:9px 10px;font-size:11px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.desc + '</td>'
+        + '<td style="padding:9px 10px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--muted)">' + p.qty.toLocaleString('en-US') + '</td>'
+        + '<td style="padding:9px 10px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--muted)">$' + p.price.toFixed(2) + '</td>'
+        + '<td style="padding:9px 10px;text-align:right;font-family:\'DM Mono\',monospace;font-size:12px;font-weight:700;color:var(--white)">$' + p.value.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>'
+        + '<td style="padding:9px 10px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text)">R$' + brl.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) + '</td>'
+        + '<td style="padding:9px 10px;text-align:right">' + posNeg(p.pnl, '$') + '</td>'
+        + '<td style="padding:9px 10px;text-align:right">'
+          + '<div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">'
+            + '<div style="width:40px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="height:100%;background:var(--orange);border-radius:2px;width:' + Math.min(100, pct * 3) + '%"></div></div>'
+            + '<span style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--muted);min-width:36px;text-align:right">' + pct.toFixed(1) + '%</span>'
+          + '</div>'
+        + '</td>'
+        + '</tr>';
+    });
+    posHTML += '</tbody></table></div>';
+  } else {
+    posHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">⚠ Posições não encontradas no PDF. Certifique-se de usar o <strong>Resumo MTM</strong> da IBKR.</div>';
+  }
+
+  // Action bar
+  var actionHTML = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">'
+    + '<div style="font-size:12px;color:var(--muted)">Câmbio utilizado: <strong style="color:var(--text)">R$ ' + cambio.toFixed(2) + '</strong></div>'
+    + '<div style="display:flex;gap:8px">'
+    + '<button onclick="preencherLancamento(' + nav.toFixed(2) + ',' + cambio.toFixed(2) + ')" style="font-family:\'Montserrat\',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 14px;background:var(--orange);color:#fff;border:none;border-radius:2px;cursor:pointer">→ Usar no Lançamento</button>'
+    + '<button onclick="document.getElementById(\'ibkr-drop\').style.display=\'block\';document.getElementById(\'ibkr-result\').style.display=\'none\';document.getElementById(\'ibkr-mes-badge\').style.display=\'none\'" style="font-family:\'Montserrat\',sans-serif;font-size:11px;font-weight:600;padding:8px 14px;background:transparent;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);cursor:pointer">↩ Carregar outro</button>'
+    + '</div></div>';
+
+  var result = document.getElementById('ibkr-result');
+  result.style.display = 'block';
+  result.innerHTML = actionHTML + summaryHTML + allocHTML + posHTML
+    + '<div style="margin-top:12px;font-size:11px;color:var(--muted2);font-family:\'DM Mono\',monospace;letter-spacing:.4px">⚠ Análise educacional. Câmbio ao vivo. Não é recomendação de investimento.</div>';
+
+  showToast('✓ ' + data.positions.length + ' posições extraídas · NAV US$ ' + nav.toLocaleString('en-US',{maximumFractionDigits:0}));
+}
+
+function preencherLancamento(nav, cambio) {
+  abrirModal();
+  setTimeout(function() {
+    var fIbkr = document.getElementById('f-ibkr-usd');
+    var fCambio = document.getElementById('f-cambio');
+    if (fIbkr) fIbkr.value = nav.toFixed(2);
+    if (fCambio) fCambio.value = cambio.toFixed(2);
+    showToast('✓ NAV e câmbio preenchidos no lançamento!');
+  }, 400);
+}
+
+// ─────────────────────────────────────────────────────────────
+// IBKR REPORT UPLOAD (legacy CSV)
 // ─────────────────────────────────────────────────────────────
 async function processIBKR(file) {
   if (!file) return;
