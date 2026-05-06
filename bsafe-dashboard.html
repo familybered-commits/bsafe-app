@@ -1282,56 +1282,107 @@ async function buscarSaldoBTC() {
 // ─────────────────────────────────────────────────────────────
 function loadPDFJS(cb) {
   if (window.pdfjsLib) { cb(); return; }
-  const s = document.createElement('script');
-  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-  s.onload = () => { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; cb(); };
-  document.head.appendChild(s);
+  const sources = [
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+    'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js',
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js'
+  ];
+  const workers = [
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+    'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js',
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
+  ];
+  let idx = 0;
+  function tryNext() {
+    if (idx >= sources.length) { cb(new Error('PDF.js não carregou')); return; }
+    const i = idx++;
+    const s = document.createElement('script');
+    s.src = sources[i];
+    s.onload = function() {
+      try { pdfjsLib.GlobalWorkerOptions.workerSrc = workers[i]; } catch(e) {}
+      cb();
+    };
+    s.onerror = tryNext;
+    document.head.appendChild(s);
+  }
+  tryNext();
 }
 
 function lancParseMTM(file) {
   if (!file) return;
   const drop = document.getElementById('lanc-drop');
   const result = document.getElementById('lanc-mtm-result');
-  if (drop) drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)"><div style="font-size:24px;margin-bottom:8px;animation:spin 1s linear infinite">⚙️</div>Lendo PDF...</div>';
+  if (!file.name.toLowerCase().includes('.pdf') && !file.type.includes('pdf') && !file.name.includes('csv') && !file.name.includes('txt')) {
+    showToast('Use o Resumo MTM em formato PDF', true); return;
+  }
+  if (drop) drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)"><div style="font-size:24px;margin-bottom:8px">⏳</div>Carregando PDF.js...<br><small style="font-size:11px;color:var(--muted2)">Aguarde alguns segundos na primeira vez</small></div>';
 
-  loadPDFJS(async function() {
+  loadPDFJS(async function(loadErr) {
+    if (loadErr) {
+      // Fallback: try reading as text (for .txt or .csv exports)
+      try {
+        const text = await file.text();
+        const data = extractMTMData(text, file.name);
+        showMTMResult(drop, result, data);
+        return;
+      } catch(e2) {
+        if (drop) drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Não foi possível carregar o leitor de PDF.<br><small style="font-size:11px">Tente exportar o relatório como CSV ou TXT na IBKR.</small><br><button onclick="resetLancMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
+        return;
+      }
+    }
+    if (drop) drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)"><div style="font-size:24px;margin-bottom:8px">📖</div>Extraindo texto do PDF...</div>';
     try {
       const arrayBuf = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({data:arrayBuf}).promise;
+      const pdf = await pdfjsLib.getDocument({data: new Uint8Array(arrayBuf)}).promise;
       let fullText = '';
       for (let p = 1; p <= pdf.numPages; p++) {
         const page = await pdf.getPage(p);
         const content = await page.getTextContent();
-        fullText += content.items.map(i=>i.str).join(' ') + '
+        // Preserve spatial order for table parsing
+        const items = content.items;
+        // Sort by Y position (rows) then X (columns)
+        items.sort((a,b) => {
+          const dy = Math.round(b.transform[5]/5)*5 - Math.round(a.transform[5]/5)*5;
+          return dy !== 0 ? dy : a.transform[4] - b.transform[4];
+        });
+        fullText += items.map(i => i.str).join(' ') + '
 ';
       }
       const data = extractMTMData(fullText, file.name);
-      // Fill form fields
-      if (data.nav > 0) {
-        document.getElementById('lanc-nav').value = data.nav.toFixed(2);
-        setStatus('nav-status','✓ MTM','var(--green)');
-      }
-      if (data.retornoPct) document.getElementById('lanc-retorno').value = data.retornoPct.toFixed(2);
-
-      // Show summary
-      if (drop) drop.style.display = 'none';
-      if (result) {
-        result.style.display = 'block';
-        document.getElementById('lanc-mtm-summary').innerHTML =
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">'
-          + '<div><span style="color:var(--muted)">NAV Total:</span> <strong style="color:var(--white)">US$ ' + (data.nav||0).toLocaleString('en-US',{maximumFractionDigits:0}) + '</strong></div>'
-          + '<div><span style="color:var(--muted)">Retorno:</span> <strong style="color:var(--green)">' + (data.retornoPct||0).toFixed(2) + '%</strong></div>'
-          + '<div><span style="color:var(--muted)">Posições:</span> <strong style="color:var(--white)">' + data.positions.length + ' ativos</strong></div>'
-          + '<div><span style="color:var(--muted)">Dividendos:</span> <strong style="color:var(--btc)">US$ ' + (data.dividendos||0).toFixed(2) + '</strong></div>'
-          + '</div>';
-      }
-      // Store positions for this launch
-      window._lancPositions = data.positions;
-      showToast('✓ MTM processado: ' + data.positions.length + ' posições · NAV US$ ' + Math.round(data.nav||0).toLocaleString('en-US'));
+      showMTMResult(drop, result, data);
     } catch(e) {
-      if (drop) drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Erro ao ler PDF: ' + e.message + '<br><button onclick="resetLancMTM()" style="margin-top:8px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
+      console.error('MTM parse error:', e);
+      if (drop) drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Erro ao ler PDF: ' + e.message + '<br><small style="font-size:11px;color:var(--muted)">Certifique-se de usar o <strong>Resumo MTM</strong> exportado da IBKR</small><br><button onclick="resetLancMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
     }
   });
+}
+
+function showMTMResult(drop, result, data) {
+  // Fill form fields
+  if (data.nav > 0) {
+    const navEl = document.getElementById('lanc-nav');
+    if (navEl) navEl.value = data.nav.toFixed(2);
+    setStatus('nav-status', '✓ MTM', 'var(--green)');
+  }
+  const retEl = document.getElementById('lanc-retorno');
+  if (retEl && data.retornoPct) retEl.value = data.retornoPct.toFixed(2);
+  window._lancPositions = data.positions;
+
+  if (drop) drop.style.display = 'none';
+  if (result) {
+    result.style.display = 'block';
+    const retColor = (data.retornoPct||0) >= 0 ? 'var(--green)' : 'var(--red)';
+    const navOk = data.nav > 0;
+    document.getElementById('lanc-mtm-summary').innerHTML =
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">'
+      + '<div><span style="color:var(--muted)">NAV Total:</span> <strong style="color:' + (navOk?'var(--white)':'var(--red)') + '">' + (navOk ? 'US$ ' + (data.nav||0).toLocaleString('en-US',{maximumFractionDigits:0}) : '⚠ não encontrado') + '</strong></div>'
+      + '<div><span style="color:var(--muted)">Retorno:</span> <strong style="color:' + retColor + '">' + ((data.retornoPct||0) >= 0 ? '+' : '') + (data.retornoPct||0).toFixed(2) + '%</strong></div>'
+      + '<div><span style="color:var(--muted)">Posições:</span> <strong style="color:var(--white)">' + data.positions.length + ' ativos</strong></div>'
+      + '<div><span style="color:var(--muted)">Dividendos:</span> <strong style="color:var(--btc)">US$ ' + (data.dividendos||0).toFixed(2) + '</strong></div>'
+      + '</div>'
+      + (!navOk ? '<div style="margin-top:8px;font-size:11px;color:var(--btc)">⚠ NAV não detectado automaticamente — preencha manualmente o campo acima.</div>' : '');
+  }
+  showToast('✓ MTM processado: ' + data.positions.length + ' posições' + (data.nav > 0 ? ' · NAV US$ ' + Math.round(data.nav).toLocaleString('en-US') : ' · preencha o NAV manualmente'));
 }
 
 function resetLancMTM() {
@@ -1346,32 +1397,102 @@ function resetLancMTM() {
 }
 
 function extractMTMData(text, filename) {
-  const data = { periodo:'', nav:0, navAnterior:0, variacao:0, retornoPct:0, acoes:0, bonds:0, cashUsd:0, dividendos:0, impostoRetido:0, positions:[] };
-  if (filename) data.periodo = filename.replace('.pdf','');
-  // NAV
-  const navMatch = text.match(/Total\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)\s+0?\.?0*\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)/);
-  if (navMatch) { data.navAnterior = pN(navMatch[1]); data.nav = pN(navMatch[3]||navMatch[2]); data.variacao = pN(navMatch[4]); }
-  // Return %
-  const retMatch = text.match(/Taxa de retorno ponderada pelo tempo\s+([\d.,]+)%/);
-  if (retMatch) data.retornoPct = parseFloat(retMatch[1].replace(',','.'));
-  // Dividendos
-  const divMatch = text.match(/Dividendos\s+([\d,]+\.?\d*)/);
-  if (divMatch) data.dividendos = pN(divMatch[1]);
-  // Positions via regex
-  const posRE = /([A-Z]{2,6})\s+([A-Z][A-Z &\/.'-]+?(?:INC|ETF|CORP|CO|LTD|REIT|FUND|TRUST|BOND|SHARES?)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+(-?[\d,]+\.\d{2})/g;
-  const seen = new Set();
-  let m;
-  const skip = new Set(['USD','GBP','EUR','THE','AND','INC','ETF','LLC','LTD','FOR','COT','ALT']);
-  while ((m = posRE.exec(text)) !== null) {
-    const sym = m[1];
-    if (seen.has(sym) || skip.has(sym)) continue;
-    const qty = parseFloat(m[4]), price = pN(m[6]), value = pN(m[8]), pnl = pN(m[9]);
-    if (value > 0 && qty > 0) { seen.add(sym); data.positions.push({symbol:sym, desc:m[2].trim(), qty, price, value, pnl}); }
+  const data = { periodo:'', nav:0, navAnterior:0, variacao:0, retornoPct:0,
+    acoes:0, bonds:0, cashUsd:0, dividendos:0, impostoRetido:0, positions:[] };
+  if (filename) data.periodo = filename.replace('.pdf','').replace('ResumoMTM','');
+
+  // ── NAV TOTAL ──────────────────────────────────────────────
+  // IBKR format: "Total 376,957.06 399,324.38 0.00 399,324.38 22,367.32"
+  const navPatterns = [
+    /Total\s+([\d,]+\.?\d+)\s+([\d,]+\.?\d+)\s+0\.00\s+([\d,]+\.?\d+)\s+(-?[\d,]+\.?\d+)/,
+    /Total\s+([\d,]+\.?\d+)\s+([\d,]+\.?\d+)\s+([\d,]+\.?\d+)\s+(-?[\d,]+\.?\d+)/,
+    /Valor final\s+([\d,]+\.?\d+)/,
+  ];
+  for (const re of navPatterns) {
+    const m = text.match(re);
+    if (m) {
+      if (re.source.includes('Valor final')) { data.nav = pN(m[1]); }
+      else { data.navAnterior = pN(m[1]); data.nav = pN(m[3]||m[2]); data.variacao = pN(m[4]); }
+      if (data.nav > 1000) break;
+    }
   }
+
+  // ── RETORNO % ──────────────────────────────────────────────
+  const retM = text.match(/Taxa de retorno ponderada pelo tempo\s+([\d.,]+)\s*%/)
+    || text.match(/Time-Weighted Return\s+([\d.,]+)\s*%/);
+  if (retM) data.retornoPct = parseFloat(retM[1].replace(',','.'));
+
+  // ── CATEGORIAS ──────────────────────────────────────────────
+  const acoesM = text.match(/Ações\s+[\d,]+\.?\d+\s+([\d,]+\.?\d+)/);
+  if (acoesM) data.acoes = pN(acoesM[1]);
+  const bondsM = text.match(/Bonds\s+[\d,]+\.?\d+\s+([\d,]+\.?\d+)/);
+  if (bondsM) data.bonds = pN(bondsM[1]);
+  const cashM = text.match(/Valor disponível\s+[\d,]+\.?\d+\s+([\d,]+\.?\d+)/);
+  if (cashM) data.cashUsd = pN(cashM[1]);
+  const divM = text.match(/Dividendos\s+([\d,]+\.?\d+)/);
+  if (divM) data.dividendos = pN(divM[1]);
+
+  // ── POSIÇÕES ──────────────────────────────────────────────
+  // The MTM format has lines like:
+  // "AAPL APPLE INC 100 100 170.77 189.95 17,077.00 18,995.00 1,918.00 0.00"
+  // sym  desc          qty qty  prev  curr  prev_val  curr_val  pnl_pos  pnl_trd
+  const seen = new Set();
+  const skipWords = new Set(['USD','GBP','EUR','THE','AND','FOR','LLC','COT','ALT','TAX','DIV','INT','NET','TOT','INV','COM','RES','SUB']);
+  
+  // Approach 1: line-by-line parsing
+  const lines = text.split(/
+|
+/);
+  let inStocks = false;
+  
+  for (const line of lines) {
+    const l = line.trim();
+    if (!l) continue;
+    if (/Ações|Stocks|Equities/i.test(l)) { inStocks = true; continue; }
+    if (/Forex|Bonds|Futuros|Total/i.test(l) && inStocks) { inStocks = false; }
+    
+    // Try to parse position line
+    // Pattern: TICKER DESC... QTY QTY PRICE PRICE VALUE VALUE PNL PNL
+    const posMatch = l.match(/^([A-Z][A-Z0-9.]{1,5})\s+([A-Z].{3,40?})\s+(\d[\d,.]*)\s+(\d[\d,.]*)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+(-?[\d,]+\.\d{2})/);
+    if (posMatch) {
+      const sym = posMatch[1];
+      if (seen.has(sym) || skipWords.has(sym)) continue;
+      const qty   = pN(posMatch[4]);
+      const price = pN(posMatch[6]);
+      const value = pN(posMatch[8]);
+      const pnl   = pN(posMatch[9]);
+      if (value > 0 && qty > 0 && qty < 1000000) {
+        seen.add(sym);
+        data.positions.push({ symbol: sym, desc: posMatch[2].trim(), qty, price, value, pnl });
+      }
+    }
+  }
+
+  // Approach 2: if few positions found, try broader regex on full text
+  if (data.positions.length < 3) {
+    const broadRE = /([A-Z]{2,6})\s+([A-Z][A-Z\s&'.\-\/]+?)\s+(\d{1,6}(?:\.\d+)?)\s+(\d{1,6}(?:\.\d+)?)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+(-?[\d,]+\.\d{2})/g;
+    let bm;
+    while ((bm = broadRE.exec(text)) !== null) {
+      const sym = bm[1];
+      if (seen.has(sym) || skipWords.has(sym)) continue;
+      const qty = pN(bm[4]), price = pN(bm[6]), value = pN(bm[8]), pnl = pN(bm[9]);
+      if (value > 0 && qty > 0 && qty < 1000000 && value < 10000000) {
+        seen.add(sym);
+        data.positions.push({ symbol: sym, desc: bm[2].trim().replace(/\s+/g,' '), qty, price, value, pnl });
+      }
+    }
+  }
+
   data.positions.sort((a,b) => b.value - a.value);
-  if (data.nav === 0 && data.positions.length > 0) data.nav = data.positions.reduce((s,p)=>s+p.value,0) + data.cashUsd;
+
+  // If NAV not found, sum positions + cash
+  if (data.nav === 0 && data.positions.length > 0) {
+    data.nav = data.positions.reduce((s,p) => s + p.value, 0) + data.cashUsd;
+  }
+
   return data;
 }
+
 function pN(s) { return parseFloat(String(s||'').replace(/,/g,'')) || 0; }
 
 // ─────────────────────────────────────────────────────────────
