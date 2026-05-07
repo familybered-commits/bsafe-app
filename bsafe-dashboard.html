@@ -1280,88 +1280,223 @@ async function buscarSaldoBTC() {
 // ─────────────────────────────────────────────────────────────
 // MTM PDF PARSER — no lançamento
 // ─────────────────────────────────────────────────────────────
-function loadPDFJS(cb) {
-  if (window.pdfjsLib) { cb(); return; }
-  const sources = [
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
-    'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js',
-    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js'
-  ];
-  const workers = [
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
-    'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js',
-    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
-  ];
-  let idx = 0;
-  function tryNext() {
-    if (idx >= sources.length) { cb(new Error('PDF.js não carregou')); return; }
-    const i = idx++;
-    const s = document.createElement('script');
-    s.src = sources[i];
-    s.onload = function() {
-      try { pdfjsLib.GlobalWorkerOptions.workerSrc = workers[i]; } catch(e) {}
-      cb();
-    };
-    s.onerror = tryNext;
-    document.head.appendChild(s);
-  }
-  tryNext();
-}
+// ─────────────────────────────────────────────────────────────
+// MTM PARSER — sem dependência externa
+// ─────────────────────────────────────────────────────────────
 
 function lancParseMTM(file) {
   if (!file) return;
-  const drop = document.getElementById('lanc-drop');
-  const result = document.getElementById('lanc-mtm-result');
-  if (!file.name.toLowerCase().includes('.pdf') && !file.type.includes('pdf') && !file.name.includes('csv') && !file.name.includes('txt')) {
-    showToast('Use o Resumo MTM em formato PDF', true); return;
-  }
-  if (drop) drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)"><div style="font-size:24px;margin-bottom:8px">⏳</div>Carregando PDF.js...<br><small style="font-size:11px;color:var(--muted2)">Aguarde alguns segundos na primeira vez</small></div>';
 
-  loadPDFJS(async function(loadErr) {
-    if (loadErr) {
-      // Fallback: try reading as text (for .txt or .csv exports)
-      try {
-        const text = await file.text();
-        const data = extractMTMData(text, file.name);
-        showMTMResult(drop, result, data);
-        return;
-      } catch(e2) {
-        if (drop) drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Não foi possível carregar o leitor de PDF.<br><small style="font-size:11px">Tente exportar o relatório como CSV ou TXT na IBKR.</small><br><button onclick="resetLancMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
-        return;
+  const drop    = document.getElementById('lanc-drop');
+  const result  = document.getElementById('lanc-mtm-result');
+  const spinner = '<div style="padding:24px;text-align:center;color:var(--muted)"><div style="font-size:28px;margin-bottom:8px">⏳</div>Lendo relatório...</div>';
+
+  if (drop) drop.innerHTML = spinner;
+
+  // Read file as ArrayBuffer first, extract text from PDF binary
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    const arrayBuffer = e.target.result;
+    const bytes = new Uint8Array(arrayBuffer);
+
+    // Extract readable text from PDF binary
+    // PDFs store text in streams — we extract all readable ASCII/Latin sequences
+    const text = extractTextFromPDF(bytes);
+
+    if (!text || text.length < 100) {
+      if (drop) drop.innerHTML = '<div style="padding:24px;text-align:center"><div style="font-size:28px;margin-bottom:8px">❌</div><div style="color:var(--red);font-size:13px;margin-bottom:12px">Não foi possível ler o PDF.<br><small>Tente exportar como <strong>HTML</strong> na IBKR.</small></div><button onclick="resetLancMTM()" style="background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:7px 14px;cursor:pointer">↩ Tentar novamente</button></div>';
+      return;
+    }
+
+    const data = parseMTMText(text, file.name);
+    showMTMResult(drop, result, data);
+  };
+
+  reader.onerror = function() {
+    if (drop) drop.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red)">❌ Erro ao ler o arquivo.</div>';
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+function extractTextFromPDF(bytes) {
+  // Convert PDF bytes to string, extracting text from PDF streams
+  let text = '';
+  const len = bytes.length;
+
+  // Strategy 1: Extract text between parentheses (PDF text operators)
+  // PDF text: (Hello World) Tj  or  [(H)(e)(l)(l)(o)] TJ
+  let inParens = false, parenDepth = 0, chunk = '';
+  const chars = [];
+
+  for (let i = 0; i < Math.min(len, 2000000); i++) {
+    const c = bytes[i];
+    const ch = String.fromCharCode(c);
+
+    if (!inParens && c === 40) { // '('
+      inParens = true; parenDepth = 1; chunk = '';
+    } else if (inParens) {
+      if (c === 40) parenDepth++;
+      else if (c === 41) { // ')'
+        parenDepth--;
+        if (parenDepth === 0) {
+          inParens = false;
+          // Only keep printable, meaningful chunks
+          if (chunk.length >= 2 && /[a-zA-Z0-9]/.test(chunk)) {
+            // Clean up non-printable chars
+            const clean = chunk.replace(/[^ -~ -ÿ]/g, '');
+            if (clean.trim().length > 0) chars.push(clean.trim());
+          }
+          chunk = '';
+          continue;
+        }
+      } else if (c === 92 && i+1 < len) { // backslash escape
+        i++; continue;
+      }
+      if (c >= 32 || c === 9 || c === 10 || c === 13) chunk += ch;
+    }
+  }
+
+  text = chars.join(' ');
+
+  // Strategy 2: Also extract raw text streams (for some PDF formats)
+  if (text.length < 200) {
+    const raw = new TextDecoder('latin1').decode(bytes);
+    // Get text between stream/endstream
+    const streams = raw.match(/stream[
+]([\s\S]*?)endstream/g) || [];
+    for (const s of streams) {
+      const content = s.replace(/^stream[
+]/, '').replace(/endstream$/, '');
+      // Extract printable sequences
+      const printable = content.match(/[A-Za-z0-9\s.,\-+%$()\/]{4,}/g) || [];
+      text += ' ' + printable.join(' ');
+    }
+  }
+
+  return text;
+}
+
+function parseMTMText(text, filename) {
+  const data = {
+    periodo: filename ? filename.replace('.pdf','').replace('ResumoMTM','Resumo MTM') : '',
+    nav: 0, navAnterior: 0, variacao: 0, retornoPct: 0,
+    dividendos: 0, impostoRetido: 0, positions: []
+  };
+
+  // ── NAV ──────────────────────────────────────────────────
+  // "Total 376,957.06 399,324.38 0.00 399,324.38 22,367.32"
+  const navRE = [
+    /Total\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+0\.00\s+([\d,]+\.\d+)\s+(-?[\d,]+\.\d+)/,
+    /Valor final\s+([\d,]+\.\d+)/,
+    /NET ASSET VALUE\s+([\d,]+\.\d+)/,
+    /Total Net Value\s+([\d,]+\.\d+)/,
+  ];
+  for (const re of navRE) {
+    const m = text.match(re);
+    if (m) {
+      const v = pN(m[3] || m[2] || m[1]);
+      if (v > 1000) { data.nav = v; if (m[1] && m[3]) data.navAnterior = pN(m[1]); break; }
+    }
+  }
+
+  // ── RETORNO % ────────────────────────────────────────────
+  const retM = text.match(/Taxa de retorno[^%]*([\d.]+)%/)
+    || text.match(/Time.Weighted Return[^%]*([\d.]+)%/);
+  if (retM) data.retornoPct = parseFloat(retM[1]);
+
+  // ── DIVIDENDOS ───────────────────────────────────────────
+  const divM = text.match(/Dividendos\s+([\d,]+\.\d+)/);
+  if (divM) data.dividendos = pN(divM[1]);
+
+  // ── POSIÇÕES ─────────────────────────────────────────────
+  // Pattern: TICKER DESC QTY_PREV QTY_CURR PRICE_PREV PRICE_CURR VAL_PREV VAL_CURR PNL...
+  const seen = new Set();
+  const skip = new Set(['USD','GBP','EUR','Total','Símbolo','Ações','Bonds','Forex',
+    'Posição','Negociação','Anterior','Atual','Comprar','Vender']);
+
+  // Split into lines and process
+  const lines = text.split(/
+|
+|\s{3,}/);
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // Must start with 2-6 uppercase letters (ticker)
+    const tm = line.match(/^([A-Z][A-Z0-9]{1,5})\s+(.*)/);
+    if (!tm) continue;
+
+    const sym = tm[1];
+    if (seen.has(sym) || skip.has(sym)) continue;
+
+    // Combine with next line if it starts with lowercase (description wrap)
+    let rest = tm[2];
+    if (i+1 < lines.length) {
+      const next = lines[i+1].trim();
+      if (next && !/^[A-Z][A-Z0-9]{1,5}\s/.test(next) && /^[A-Z]/.test(next) && !/^\d/.test(next)) {
+        rest = rest + ' ' + next;
+        i++;
       }
     }
-    if (drop) drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)"><div style="font-size:24px;margin-bottom:8px">📖</div>Extraindo texto do PDF...</div>';
-    try {
-      const arrayBuf = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({data: new Uint8Array(arrayBuf)}).promise;
-      let fullText = '';
-      for (let p = 1; p <= pdf.numPages; p++) {
-        const page = await pdf.getPage(p);
-        const content = await page.getTextContent();
-        // Preserve spatial order for table parsing
-        const items = content.items;
-        // Sort by Y position (rows) then X (columns)
-        items.sort((a,b) => {
-          const dy = Math.round(b.transform[5]/5)*5 - Math.round(a.transform[5]/5)*5;
-          return dy !== 0 ? dy : a.transform[4] - b.transform[4];
-        });
-        fullText += items.map(i => i.str).join(' ') + '
-';
-      }
-      const data = extractMTMData(fullText, file.name);
-      showMTMResult(drop, result, data);
-    } catch(e) {
-      console.error('MTM parse error:', e);
-      if (drop) drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Erro ao ler PDF: ' + e.message + '<br><small style="font-size:11px;color:var(--muted)">Certifique-se de usar o <strong>Resumo MTM</strong> exportado da IBKR</small><br><button onclick="resetLancMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
+
+    // Extract 8+ numbers from the rest
+    const nums = rest.match(/-?[\d,]+\.\d{2}/g);
+    if (!nums || nums.length < 6) continue;
+
+    // Values: [qty_prev, qty_curr, price_prev, price_curr, val_prev, val_curr, pnl, ...]
+    // Or sometimes: [price_prev, price_curr, val_prev, val_curr, pnl...]
+    // We want val_curr (position 5 of 0-indexed) and pnl (position 6)
+    const values = nums.map(n => pN(n));
+
+    // Heuristic: val_curr is the largest reasonable value
+    // qty is small integer, price is medium, value is largest before pnl
+    let qty=0, price=0, value=0, pnl=0;
+
+    // Find qty (small number, likely integer-ish)
+    const qtyM = rest.match(/(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+[\d,]+\.\d{2}/);
+    if (qtyM) qty = parseFloat(qtyM[2]);
+
+    // Find price (medium number, $10-$10000 range)
+    for (let v of values) {
+      if (v > 1 && v < 10000 && !price) price = v;
     }
-  });
+
+    // Find value (largest, > price * 0.5)
+    const candidates = values.filter(v => v > 100 && v < 10000000);
+    if (candidates.length >= 2) {
+      value = candidates[candidates.length - 2] || candidates[candidates.length - 1];
+    } else if (candidates.length === 1) {
+      value = candidates[0];
+    }
+
+    // PNL is after value
+    const valueIdx = values.lastIndexOf(value);
+    if (valueIdx >= 0 && valueIdx + 1 < values.length) {
+      pnl = values[valueIdx + 1];
+    }
+
+    // Extract description (everything before first number sequence)
+    const descM = rest.match(/^([A-Za-z\s&\/'\-.]+?)(?:\s+\d)/);
+    const desc = descM ? descM[1].trim() : sym;
+
+    if (value > 0) {
+      seen.add(sym);
+      data.positions.push({ symbol: sym, desc: desc, qty: qty, price: price, value: value, pnl: pnl });
+    }
+  }
+
+  data.positions.sort((a, b) => b.value - a.value);
+  return data;
 }
 
 function showMTMResult(drop, result, data) {
-  // Fill form fields
+  // Fill form
   if (data.nav > 0) {
-    const navEl = document.getElementById('lanc-nav');
-    if (navEl) navEl.value = data.nav.toFixed(2);
+    const el = document.getElementById('lanc-nav');
+    if (el) el.value = data.nav.toFixed(2);
     setStatus('nav-status', '✓ MTM', 'var(--green)');
   }
   const retEl = document.getElementById('lanc-retorno');
@@ -1373,125 +1508,50 @@ function showMTMResult(drop, result, data) {
     result.style.display = 'block';
     const retColor = (data.retornoPct||0) >= 0 ? 'var(--green)' : 'var(--red)';
     const navOk = data.nav > 0;
+    const posOk = data.positions.length > 0;
+
     document.getElementById('lanc-mtm-summary').innerHTML =
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">'
-      + '<div><span style="color:var(--muted)">NAV Total:</span> <strong style="color:' + (navOk?'var(--white)':'var(--red)') + '">' + (navOk ? 'US$ ' + (data.nav||0).toLocaleString('en-US',{maximumFractionDigits:0}) : '⚠ não encontrado') + '</strong></div>'
-      + '<div><span style="color:var(--muted)">Retorno:</span> <strong style="color:' + retColor + '">' + ((data.retornoPct||0) >= 0 ? '+' : '') + (data.retornoPct||0).toFixed(2) + '%</strong></div>'
-      + '<div><span style="color:var(--muted)">Posições:</span> <strong style="color:var(--white)">' + data.positions.length + ' ativos</strong></div>'
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:10px">'
+      + '<div><span style="color:var(--muted)">NAV Total:</span> <strong style="color:' + (navOk?'var(--white)':'var(--red)') + '">'
+        + (navOk ? 'US$ ' + (data.nav).toLocaleString('en-US',{maximumFractionDigits:0}) : '⚠ preencha manualmente') + '</strong></div>'
+      + '<div><span style="color:var(--muted)">Retorno:</span> <strong style="color:' + retColor + '">'
+        + ((data.retornoPct||0)>=0?'+':'') + (data.retornoPct||0).toFixed(2) + '%</strong></div>'
+      + '<div><span style="color:var(--muted)">Posições:</span> <strong style="color:' + (posOk?'var(--white)':'var(--btc)') + '">'
+        + (posOk ? data.positions.length + ' ativos' : '⚠ não extraídas') + '</strong></div>'
       + '<div><span style="color:var(--muted)">Dividendos:</span> <strong style="color:var(--btc)">US$ ' + (data.dividendos||0).toFixed(2) + '</strong></div>'
       + '</div>'
-      + (!navOk ? '<div style="margin-top:8px;font-size:11px;color:var(--btc)">⚠ NAV não detectado automaticamente — preencha manualmente o campo acima.</div>' : '');
+      + (!navOk ? '<div style="font-size:11px;color:var(--btc);padding:6px;background:var(--btc-dim);border-radius:2px">⚠ Preencha o NAV manualmente acima.</div>' : '');
   }
-  showToast('✓ MTM processado: ' + data.positions.length + ' posições' + (data.nav > 0 ? ' · NAV US$ ' + Math.round(data.nav).toLocaleString('en-US') : ' · preencha o NAV manualmente'));
+
+  const msg = 'MTM processado'
+    + (data.nav > 0 ? ' · NAV US$ ' + Math.round(data.nav).toLocaleString('en-US') : '')
+    + (data.positions.length > 0 ? ' · ' + data.positions.length + ' posições' : '');
+  showToast('✓ ' + msg);
 }
 
 function resetLancMTM() {
   const drop = document.getElementById('lanc-drop');
   const result = document.getElementById('lanc-mtm-result');
-  if (drop) { drop.style.display = 'block'; drop.innerHTML = '<div style="font-size:28px;margin-bottom:8px">📑</div><div style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px">Arraste o Resumo MTM aqui</div><div style="font-size:11px;color:var(--muted)">ou clique para selecionar o PDF</div><input type="file" id="lanc-pdf" accept=".pdf,.txt,.csv" style="display:none" onchange="lancParseMTM(this.files[0]);this.value=''"><style>.lanc-drop-inner{cursor:pointer}</style>'; drop.onclick = () => document.getElementById('lanc-pdf').click(); }
+  if (drop) {
+    drop.style.display = 'block';
+    drop.innerHTML = '<div style="font-size:28px;margin-bottom:8px">📑</div>'
+      + '<div style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px">Arraste o Resumo MTM aqui</div>'
+      + '<div style="font-size:11px;color:var(--muted)">ou clique para selecionar o PDF</div>'
+      + '<input type="file" id="lanc-pdf" accept=".pdf,.txt,.csv,.html" style="display:none" onchange="lancParseMTM(this.files[0]);this.value=''">';
+    drop.onclick = function() {
+      const inp = document.getElementById('lanc-pdf');
+      if (inp) inp.click();
+    };
+  }
   if (result) result.style.display = 'none';
-  document.getElementById('lanc-nav').value = '';
-  document.getElementById('lanc-retorno').value = '';
+  const navEl = document.getElementById('lanc-nav');
+  const retEl = document.getElementById('lanc-retorno');
+  if (navEl) navEl.value = '';
+  if (retEl) retEl.value = '';
   setStatus('nav-status','','var(--green)');
   window._lancPositions = [];
 }
 
-function extractMTMData(text, filename) {
-  const data = { periodo:'', nav:0, navAnterior:0, variacao:0, retornoPct:0,
-    acoes:0, bonds:0, cashUsd:0, dividendos:0, impostoRetido:0, positions:[] };
-  if (filename) data.periodo = filename.replace('.pdf','').replace('ResumoMTM','');
-
-  // ── NAV TOTAL ──────────────────────────────────────────────
-  // IBKR format: "Total 376,957.06 399,324.38 0.00 399,324.38 22,367.32"
-  const navPatterns = [
-    /Total\s+([\d,]+\.?\d+)\s+([\d,]+\.?\d+)\s+0\.00\s+([\d,]+\.?\d+)\s+(-?[\d,]+\.?\d+)/,
-    /Total\s+([\d,]+\.?\d+)\s+([\d,]+\.?\d+)\s+([\d,]+\.?\d+)\s+(-?[\d,]+\.?\d+)/,
-    /Valor final\s+([\d,]+\.?\d+)/,
-  ];
-  for (const re of navPatterns) {
-    const m = text.match(re);
-    if (m) {
-      if (re.source.includes('Valor final')) { data.nav = pN(m[1]); }
-      else { data.navAnterior = pN(m[1]); data.nav = pN(m[3]||m[2]); data.variacao = pN(m[4]); }
-      if (data.nav > 1000) break;
-    }
-  }
-
-  // ── RETORNO % ──────────────────────────────────────────────
-  const retM = text.match(/Taxa de retorno ponderada pelo tempo\s+([\d.,]+)\s*%/)
-    || text.match(/Time-Weighted Return\s+([\d.,]+)\s*%/);
-  if (retM) data.retornoPct = parseFloat(retM[1].replace(',','.'));
-
-  // ── CATEGORIAS ──────────────────────────────────────────────
-  const acoesM = text.match(/Ações\s+[\d,]+\.?\d+\s+([\d,]+\.?\d+)/);
-  if (acoesM) data.acoes = pN(acoesM[1]);
-  const bondsM = text.match(/Bonds\s+[\d,]+\.?\d+\s+([\d,]+\.?\d+)/);
-  if (bondsM) data.bonds = pN(bondsM[1]);
-  const cashM = text.match(/Valor disponível\s+[\d,]+\.?\d+\s+([\d,]+\.?\d+)/);
-  if (cashM) data.cashUsd = pN(cashM[1]);
-  const divM = text.match(/Dividendos\s+([\d,]+\.?\d+)/);
-  if (divM) data.dividendos = pN(divM[1]);
-
-  // ── POSIÇÕES ──────────────────────────────────────────────
-  // The MTM format has lines like:
-  // "AAPL APPLE INC 100 100 170.77 189.95 17,077.00 18,995.00 1,918.00 0.00"
-  // sym  desc          qty qty  prev  curr  prev_val  curr_val  pnl_pos  pnl_trd
-  const seen = new Set();
-  const skipWords = new Set(['USD','GBP','EUR','THE','AND','FOR','LLC','COT','ALT','TAX','DIV','INT','NET','TOT','INV','COM','RES','SUB']);
-  
-  // Approach 1: line-by-line parsing
-  const lines = text.split(/
-|
-/);
-  let inStocks = false;
-  
-  for (const line of lines) {
-    const l = line.trim();
-    if (!l) continue;
-    if (/Ações|Stocks|Equities/i.test(l)) { inStocks = true; continue; }
-    if (/Forex|Bonds|Futuros|Total/i.test(l) && inStocks) { inStocks = false; }
-    
-    // Try to parse position line
-    // Pattern: TICKER DESC... QTY QTY PRICE PRICE VALUE VALUE PNL PNL
-    const posMatch = l.match(/^([A-Z][A-Z0-9.]{1,5})\s+([A-Z].{3,40?})\s+(\d[\d,.]*)\s+(\d[\d,.]*)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+(-?[\d,]+\.\d{2})/);
-    if (posMatch) {
-      const sym = posMatch[1];
-      if (seen.has(sym) || skipWords.has(sym)) continue;
-      const qty   = pN(posMatch[4]);
-      const price = pN(posMatch[6]);
-      const value = pN(posMatch[8]);
-      const pnl   = pN(posMatch[9]);
-      if (value > 0 && qty > 0 && qty < 1000000) {
-        seen.add(sym);
-        data.positions.push({ symbol: sym, desc: posMatch[2].trim(), qty, price, value, pnl });
-      }
-    }
-  }
-
-  // Approach 2: if few positions found, try broader regex on full text
-  if (data.positions.length < 3) {
-    const broadRE = /([A-Z]{2,6})\s+([A-Z][A-Z\s&'.\-\/]+?)\s+(\d{1,6}(?:\.\d+)?)\s+(\d{1,6}(?:\.\d+)?)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+(-?[\d,]+\.\d{2})/g;
-    let bm;
-    while ((bm = broadRE.exec(text)) !== null) {
-      const sym = bm[1];
-      if (seen.has(sym) || skipWords.has(sym)) continue;
-      const qty = pN(bm[4]), price = pN(bm[6]), value = pN(bm[8]), pnl = pN(bm[9]);
-      if (value > 0 && qty > 0 && qty < 1000000 && value < 10000000) {
-        seen.add(sym);
-        data.positions.push({ symbol: sym, desc: bm[2].trim().replace(/\s+/g,' '), qty, price, value, pnl });
-      }
-    }
-  }
-
-  data.positions.sort((a,b) => b.value - a.value);
-
-  // If NAV not found, sum positions + cash
-  if (data.nav === 0 && data.positions.length > 0) {
-    data.nav = data.positions.reduce((s,p) => s + p.value, 0) + data.cashUsd;
-  }
-
-  return data;
-}
 
 function pN(s) { return parseFloat(String(s||'').replace(/,/g,'')) || 0; }
 
