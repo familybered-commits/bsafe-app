@@ -1221,43 +1221,52 @@ function initDropZone() {
 
 function parseMTM(file) {
   const zone = document.getElementById('drop-zone');
-  if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">⏳ Carregando leitor de PDF...</div>';
-  loadPDFJS(err => {
-    if (err) { if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ ' + err.message + '</div>'; return; }
-    if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">📖 Extraindo dados do relatório...</div>';
-    const reader = new FileReader();
-    reader.onload = async e => {
-      try {
-        const pdf   = await pdfjsLib.getDocument({ data: new Uint8Array(e.target.result) }).promise;
-        const words = await extractWords(pdf);
-        const data  = parseMTMWords(words);
-        showMTMResult(data);
-      } catch(ex) {
-        console.error('MTM parse error:', ex);
-        if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Erro: ' + ex.message + '<br><button onclick="resetMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
-      }
+  if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">⏳ Carregando PDF.js...</div>';
+  
+  loadPDFJS(function(err) {
+    if (err) {
+      if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ ' + err.message + '<br><small>Verifique sua conexão com a internet.</small><br><button onclick="resetMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
+      return;
+    }
+    if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">📖 Lendo relatório...</div>';
+    
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      pdfjsLib.getDocument({ data: new Uint8Array(e.target.result) }).promise.then(function(pdf) {
+        extractAllWords(pdf).then(function(words) {
+          var data = parseMTMWords(words);
+          showMTMResult(data);
+        });
+      }).catch(function(ex) {
+        console.error('PDF.js error:', ex);
+        if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Erro ao ler PDF: ' + ex.message + '<br><button onclick="resetMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
+      });
     };
+    reader.onerror = function() { toast('Erro ao ler o arquivo', true); resetMTM(); };
     reader.readAsArrayBuffer(file);
   });
 }
 
 function loadPDFJS(cb) {
   if (window.pdfjsLib) { cb(); return; }
-  const cdns = [
-    ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
-     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'],
-    ['https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js',
-     'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js'],
-    ['https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
-     'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'],
+  var tried = 0;
+  var cdns = [
+    { lib: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+      worker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js' },
+    { lib: 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js',
+      worker: 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js' },
+    { lib: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
+      worker: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js' }
   ];
-  let idx = 0;
   function tryNext() {
-    if (idx >= cdns.length) { cb(new Error('Não foi possível carregar o leitor de PDF.')); return; }
-    const [lib, worker] = cdns[idx++];
-    const s = document.createElement('script');
-    s.src = lib;
-    s.onload = () => { try { pdfjsLib.GlobalWorkerOptions.workerSrc = worker; } catch {} cb(); };
+    if (tried >= cdns.length) { cb(new Error('Não foi possível carregar o leitor de PDF. Verifique sua conexão.')); return; }
+    var cdn = cdns[tried++];
+    var s = document.createElement('script');
+    s.src = cdn.lib;
+    s.onload = function() {
+      try { pdfjsLib.GlobalWorkerOptions.workerSrc = cdn.worker; } catch(e) {}
+      cb();
+    };
     s.onerror = tryNext;
     document.head.appendChild(s);
   }
@@ -1265,100 +1274,120 @@ function loadPDFJS(cb) {
 }
 
 // Extract all words with X/Y positions from all PDF pages
-async function extractWords(pdf) {
-  const allWords = [];
-  for (let p = 1; p <= pdf.numPages; p++) {
-    const page    = await pdf.getPage(p);
-    const vp      = page.getViewport({ scale: 1 });
-    const content = await page.getTextContent();
-    for (const item of content.items) {
-      if (!item.str || !item.str.trim()) continue;
-      const x = item.transform[4];
-      const y = vp.height - item.transform[5]; // flip Y (PDF coords from bottom)
-      allWords.push({ text: item.str.trim(), x, y, page: p });
-    }
+function extractAllWords(pdf) {
+  var allWords = [];
+  var pagePromises = [];
+  for (var p = 1; p <= pdf.numPages; p++) {
+    pagePromises.push(pdf.getPage(p).then(function(page) {
+      var vp = page.getViewport({ scale: 1 });
+      return page.getTextContent().then(function(content) {
+        content.items.forEach(function(item) {
+          if (!item.str || !item.str.trim()) return;
+          // PDF.js coords: origin bottom-left, Y increases upward
+          // We convert to top-down: top = height - y
+          var x   = item.transform[4];
+          var top = vp.height - item.transform[5];
+          allWords.push({ text: item.str.trim(), x: x, top: top });
+        });
+      });
+    }));
   }
-  return allWords;
+  return Promise.all(pagePromises).then(function() { return allWords; });
 }
 
-// Parse MTM data from positioned words
+// Parse MTM data using exact column X positions confirmed from PDF analysis
+// Column layout (pdfplumber verified):
+//   Ticker:    x ≈ 38      (exactly)
+//   Desc:      x ≈ 95–220
+//   Qty curr:  x ≈ 285–295
+//   Price curr:x ≈ 360–370
+//   Val prev:  x ≈ 410–420
+//   Val curr:  x ≈ 468–475  ← KEY
+//   PNL pos:   x ≈ 522–530
 function parseMTMWords(words) {
-  const data = { nav: 0, retornoPct: 0, dividendos: 0, positions: [] };
+  var data = { nav: 0, retornoPct: 0, dividendos: 0, positions: [] };
 
-  // ── Group into rows by Y coordinate ──────────────────────
-  const rows = {};
-  for (const w of words) {
-    const ry = Math.round(w.y * 2) / 2; // group within 0.5pt
+  // Group words into rows by top coordinate (Y)
+  var rows = {};
+  words.forEach(function(w) {
+    var ry = Math.round(w.top * 2) / 2; // group within 0.5pt
     if (!rows[ry]) rows[ry] = [];
     rows[ry].push(w);
-  }
+  });
 
-  // Sort each row by X
-  const sortedYs = Object.keys(rows).map(Number).sort((a, b) => a - b);
+  var sortedYs = Object.keys(rows).map(Number).sort(function(a,b){ return a-b; });
 
-  // ── Full text for NAV/retorno extraction ─────────────────
-  const fullText = sortedYs.map(y => rows[y].map(w => w.text).join(' ')).join(' ');
+  // Build full text for NAV/retorno extraction
+  var fullText = sortedYs.map(function(y) {
+    return rows[y].map(function(w) { return w.text; }).join(' ');
+  }).join(' ');
 
-  // NAV
-  const navM = fullText.match(/Total\s+[\d,]+\.\d+\s+[\d,]+\.\d+\s+0\.00\s+([\d,]+\.\d+)/);
-  if (navM) data.nav = pN(navM[1]);
+  // NAV: "Total X Y 0.00 Z W" — Z is nav_atual
+  var navM = fullText.match(/Total\s+[\d,]+\.\d+\s+([\d,]+\.\d+)\s+0\.00\s+([\d,]+\.\d+)/);
+  if (navM) data.nav = pN(navM[2]);
   if (!data.nav) {
-    const vfM = fullText.match(/Valor final\s+([\d,]+\.\d+)/);
+    var vfM = fullText.match(/Valor final\s+([\d,]+\.\d+)/);
     if (vfM) data.nav = pN(vfM[1]);
   }
 
   // Return %
-  const retM = fullText.match(/Taxa de retorno[^0-9]*(\d[\d.]+)%/);
+  var retM = fullText.match(/Taxa de retorno[^0-9]*(\d[\d.]+)%/);
   if (retM) data.retornoPct = parseFloat(retM[1]);
 
   // Dividendos
-  const divM = fullText.match(/Dividendos\s+([\d,]+\.\d+)/);
+  var divM = fullText.match(/Dividendos\s+([\d,]+\.\d+)/);
   if (divM) data.dividendos = pN(divM[1]);
 
-  // ── Extract positions using column positions ──────────────
-  // Column layout (X coordinates from analysis):
-  //   Ticker:    x ≈ 35-50
-  //   Desc:      x ≈ 90-220
-  //   Qty curr:  x ≈ 280-300
-  //   Price curr:x ≈ 360-380
-  //   Val prev:  x ≈ 410-430
-  //   Val curr:  x ≈ 468-490
-  //   PNL pos:   x ≈ 525-545
+  // Extract positions using X column positions
+  var SKIP = { 'USD':1,'GBP':1,'EUR':1,'Total':1,'Ações':1,'Bonds':1,'Forex':1,
+    'Símbolo':1,'Posição':1,'Negociação':1,'Anterior':1,'Atual':1,'Código':1,
+    'Valor':1,'Taxa':1,'Comprar':1,'Vender':1 };
+  var seen = {};
 
-  const SKIP = new Set(['USD','GBP','EUR','Total','Ações','Bonds','Forex','Símbolo',
-    'Posição','Negociação','Anterior','Atual','Código','Valor','Taxa']);
-  const seen = new Set();
+  sortedYs.forEach(function(y) {
+    var row = rows[y].slice().sort(function(a,b){ return a.x - b.x; });
+    if (!row.length) return;
 
-  for (const y of sortedYs) {
-    const row = rows[y].sort((a, b) => a.x - b.x);
+    // Ticker must be first word with x between 35 and 55
+    var first = row[0];
+    if (!first || first.x < 35 || first.x > 55) return;
+    var sym = first.text;
+    if (!/^[A-Z][A-Z0-9]{1,5}$/.test(sym) || SKIP[sym] || seen[sym]) return;
 
-    // First word must be a ticker (x < 60, 2-6 uppercase letters)
-    const first = row[0];
-    if (!first || first.x > 60) continue;
-    const sym = first.text;
-    if (!/^[A-Z][A-Z0-9]{1,5}$/.test(sym) || SKIP.has(sym) || seen.has(sym)) continue;
+    // Description: words with x between 85 and 240
+    var descWords = row.filter(function(w) { return w.x > 85 && w.x < 240; });
+    var desc = descWords.map(function(w) { return w.text; }).join(' ').trim() || sym;
 
-    // Collect description words (x between 60 and 235)
-    const descWords = row.filter(w => w.x > 60 && w.x < 235).map(w => w.text);
-    const desc = descWords.join(' ').trim() || sym;
+    // Helper: find word in X range that looks like a number
+    function getCol(x1, x2) {
+      var w = row.find(function(ww) {
+        return ww.x >= x1 && ww.x <= x2 && /^-?[\d,]+\.\d{2}$/.test(ww.text);
+      });
+      return w ? pN(w.text) : 0;
+    }
+    function getInt(x1, x2) {
+      var w = row.find(function(ww) {
+        return ww.x >= x1 && ww.x <= x2 && /^\d+$/.test(ww.text);
+      });
+      return w ? parseInt(w.text) : 0;
+    }
 
-    // Find numeric columns by X range
-    const inRange = (w, x1, x2) => w.x >= x1 && w.x <= x2 && /^-?[\d,]+\.\d{2}$/.test(w.text);
-    const getNum  = (x1, x2) => { const w = row.find(w2 => inRange(w2, x1, x2)); return w ? pN(w.text) : 0; };
-
-    const qty      = getNum(278, 310);   // qty_curr
-    const price    = getNum(355, 395);   // price_curr
-    const valCurr  = getNum(460, 510);   // val_curr  ← KEY COLUMN
-    const pnlPos   = row.find(w => w.x >= 520 && w.x <= 560 && /^-?[\d,]+\.\d{2}$/.test(w.text));
-    const pnl      = pnlPos ? pN(pnlPos.text) : 0;
+    // Qty current: x ≈ 283-300
+    var qty     = getInt(280, 305);
+    // Price current: x ≈ 358-380
+    var price   = getCol(355, 385);
+    // Val current: x ≈ 463-485 (THE KEY COLUMN)
+    var valCurr = getCol(460, 490);
+    // PNL position: x ≈ 518-545
+    var pnl     = getCol(515, 550);
 
     if (valCurr > 0) {
-      seen.add(sym);
-      data.positions.push({ symbol: sym, desc, qty, price, value: valCurr, pnl });
+      seen[sym] = 1;
+      data.positions.push({ symbol: sym, desc: desc, qty: qty, price: price, value: valCurr, pnl: pnl });
     }
-  }
+  });
 
-  data.positions.sort((a, b) => b.value - a.value);
+  data.positions.sort(function(a,b) { return b.value - a.value; });
   return data;
 }
 
