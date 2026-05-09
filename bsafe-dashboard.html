@@ -359,8 +359,9 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);
             <div id="drop-zone" class="drop-zone" style="margin-bottom:14px">
               <div style="font-size:28px;margin-bottom:8px">📑</div>
               <div style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px">Arraste o Resumo MTM aqui</div>
-              <div style="font-size:11px;color:var(--muted)">ou clique para selecionar (PDF)</div>
-              <input type="file" id="f-pdf" accept=".pdf">
+              <div style="font-size:11px;color:var(--muted)">ou clique para selecionar (<strong style="color:var(--orange)">PDF</strong> ou <strong style="color:var(--orange)">HTML</strong>)</div>
+              <div style="font-size:10px;color:var(--muted2);margin-top:4px">IBKR → Relatórios → Extratos → Resumo MTM</div>
+              <input type="file" id="f-pdf" accept=".pdf,.html,.htm">
             </div>
 
             <!-- MTM RESULT -->
@@ -1160,31 +1161,74 @@ function initXpub() {
 async function buscarBTC() {
   const xpub = localStorage.getItem(SK_XPUB);
   if (!xpub) return;
-  setSt('st-btc', '⏳', 'var(--muted)');
+  setSt('st-btc', '⏳ sincronizando...', 'var(--muted)');
   const bal = document.getElementById('xpub-bal');
   if (bal) bal.textContent = '⏳';
   const isAddr = xpub.startsWith('bc1') || xpub.startsWith('1') || xpub.startsWith('3');
-  const urls = isAddr
-    ? ['https://mempool.space/api/address/' + xpub, 'https://blockstream.info/api/address/' + xpub]
-    : ['https://mempool.space/api/v1/xpub/' + xpub, 'https://blockstream.info/api/xpub/' + xpub];
-  for (const url of urls) {
+
+  // Backends em ordem de preferência: Electrum Blockstream > blockstream.info > mempool
+  const backends = isAddr
+    ? [
+        { url: 'https://electrum.blockstream.info/api/address/' + xpub,  label: '✓ Blockstream' },
+        { url: 'https://blockstream.info/api/address/' + xpub,           label: '✓ Blockstream' },
+        { url: 'https://mempool.space/api/address/' + xpub,              label: '✓ mempool' }
+      ]
+    : [
+        { url: 'https://electrum.blockstream.info/api/xpub/' + xpub,    label: '✓ Blockstream' },
+        { url: 'https://blockstream.info/api/xpub/' + xpub,             label: '✓ Blockstream' },
+        { url: 'https://mempool.space/api/v1/xpub/' + xpub,             label: '✓ mempool' }
+      ];
+
+  for (const backend of backends) {
     try {
-      const r = await fetch(url, { headers: { Accept: 'application/json' } });
+      const r = await fetch(backend.url, { headers: { Accept: 'application/json' } });
       if (!r.ok) continue;
       const d = await r.json();
       let sats = 0;
-      if (typeof d.funded_txo_sum !== 'undefined') sats = (d.funded_txo_sum || 0) - (d.spent_txo_sum || 0);
-      else if (d.chain_stats) sats = (d.chain_stats.funded_txo_sum || 0) - (d.chain_stats.spent_txo_sum || 0);
+      if (typeof d.funded_txo_sum !== 'undefined') {
+        sats = (d.funded_txo_sum || 0) - (d.spent_txo_sum || 0);
+      } else if (d.chain_stats) {
+        sats = (d.chain_stats.funded_txo_sum || 0) - (d.chain_stats.spent_txo_sum || 0);
+      }
       const btcBal = sats / 1e8;
       setVal('f-btc', btcBal.toFixed(8));
       if (bal) bal.textContent = '₿ ' + btcBal.toFixed(6);
-      setSt('st-btc', '✓ mempool', 'var(--green)');
+      setSt('st-btc', backend.label, 'var(--green)');
       updateBTCPreview();
+      // Também tenta buscar histórico de transações para o badge de evolução
+      buscarHistoricoXpub(xpub, isAddr, backend.url);
       return;
     } catch {}
   }
   setSt('st-btc', '⚠ manual', 'var(--btc)');
   if (bal) bal.textContent = '—';
+}
+
+// Busca histórico de transações do xpub para exibir evolução do saldo BTC
+async function buscarHistoricoXpub(xpub, isAddr, successUrl) {
+  try {
+    // Detecta qual backend funcionou e monta URL de txs
+    const base = successUrl.replace(/\/(xpub|address)\/.*$/, '');
+    const txsUrl = isAddr
+      ? base + '/address/' + xpub + '/txs'
+      : null; // xpub não tem endpoint de txs direto no Electrum
+
+    if (!txsUrl) return; // só funciona para endereços individuais por ora
+
+    const r = await fetch(txsUrl, { headers: { Accept: 'application/json' } });
+    if (!r.ok) return;
+    const txs = await r.json();
+    if (!txs || !txs.length) return;
+
+    // Mostra qtd de transações no badge
+    const bal = document.getElementById('xpub-bal');
+    if (bal) {
+      const current = bal.textContent;
+      if (!current.includes('tx')) {
+        bal.title = txs.length + ' transações encontradas';
+      }
+    }
+  } catch {}
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1221,14 +1265,37 @@ function initDropZone() {
 
 function parseMTM(file) {
   const zone = document.getElementById('drop-zone');
+  const name = (file.name || '').toLowerCase();
+  const isHTML = name.endsWith('.html') || name.endsWith('.htm') ||
+                 file.type === 'text/html';
+
+  if (isHTML) {
+    // ── Parser HTML (sem dependência de PDF.js) ──────────────────────────
+    if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">📖 Lendo HTML do relatório...</div>';
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = parseMTMHTML(e.target.result);
+        showMTMResult(data);
+      } catch(ex) {
+        console.error('HTML MTM parse error:', ex);
+        if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Erro ao ler HTML: ' + ex.message + '<br><button onclick="resetMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
+      }
+    };
+    reader.onerror = function() { toast('Erro ao ler o arquivo', true); resetMTM(); };
+    reader.readAsText(file, 'utf-8');
+    return;
+  }
+
+  // ── Parser PDF (PDF.js) ───────────────────────────────────────────────
   if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">⏳ Carregando PDF.js...</div>';
   
   loadPDFJS(function(err) {
     if (err) {
-      if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ ' + err.message + '<br><small>Verifique sua conexão com a internet.</small><br><button onclick="resetMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
+      if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ ' + err.message + '<br><small>Verifique sua conexão com a internet.<br>Tente exportar como <strong>HTML</strong> na IBKR.</small><br><button onclick="resetMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
       return;
     }
-    if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">📖 Lendo relatório...</div>';
+    if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">📖 Lendo relatório PDF...</div>';
     
     var reader = new FileReader();
     reader.onload = function(e) {
@@ -1239,12 +1306,133 @@ function parseMTM(file) {
         });
       }).catch(function(ex) {
         console.error('PDF.js error:', ex);
-        if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Erro ao ler PDF: ' + ex.message + '<br><button onclick="resetMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
+        if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Erro ao ler PDF: ' + ex.message + '<br><small>Tente exportar o relatório como <strong>HTML</strong> na IBKR.</small><br><button onclick="resetMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
       });
     };
     reader.onerror = function() { toast('Erro ao ler o arquivo', true); resetMTM(); };
     reader.readAsArrayBuffer(file);
   });
+}
+
+// ─── HTML MTM PARSER ─────────────────────────────────────────────────────────
+// Parseia o Resumo MTM exportado pela IBKR em formato HTML.
+// O HTML da IBKR contém tabelas com classes e texto legível — muito mais fácil
+// de parsear do que o PDF.
+function parseMTMHTML(htmlText) {
+  var data = { nav: 0, retornoPct: 0, dividendos: 0, positions: [] };
+
+  // Cria um DOM temporário (não visível) para parsear o HTML
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(htmlText, 'text/html');
+
+  // ── Texto completo para extrair NAV, retorno e dividendos ────────────
+  var fullText = doc.body ? doc.body.innerText || doc.body.textContent : '';
+  fullText = fullText.replace(/\s+/g, ' ');
+
+  // NAV — busca "Valor Final" ou "Net Asset Value" ou padrão do MTM
+  var navPatterns = [
+    /Valor\s+[Ff]inal\s+([\d,]+\.?\d*)/,
+    /Net\s+Asset\s+Value\s+([\d,]+\.?\d*)/,
+    /Total\s+[\d,]+\.?\d*\s+([\d,]+\.?\d*)\s+0\.00\s+([\d,]+\.?\d*)/,
+    /NAV[^0-9]*([\d,]+\.?\d*)/
+  ];
+  for (var i = 0; i < navPatterns.length; i++) {
+    var m = fullText.match(navPatterns[i]);
+    if (m) {
+      // Se padrão "Total X Y 0.00 Z W", pega o último grupo
+      data.nav = pN(m[m.length - 1]);
+      if (data.nav > 0) break;
+    }
+  }
+
+  // Retorno %
+  var retM = fullText.match(/Taxa\s+de\s+[Rr]etorno[^0-9]*(-?[\d.]+)\s*%/);
+  if (!retM) retM = fullText.match(/[Rr]ate\s+of\s+[Rr]eturn[^0-9]*(-?[\d.]+)\s*%/);
+  if (retM) data.retornoPct = parseFloat(retM[1]);
+
+  // Dividendos
+  var divM = fullText.match(/Dividendos?\s+([\d,]+\.?\d*)/i);
+  if (divM) data.dividendos = pN(divM[1]);
+
+  // ── Extrai posições das tabelas ───────────────────────────────────────
+  var SKIP = { 'USD':1,'GBP':1,'EUR':1,'Total':1,'Ações':1,'Bonds':1,'Forex':1,
+    'Símbolo':1,'Posição':1,'Negociação':1,'Anterior':1,'Atual':1,'Código':1,
+    'Valor':1,'Taxa':1,'Comprar':1,'Vender':1,'Symbol':1,'Description':1,
+    'Quantity':1,'Price':1 };
+  var seen = {};
+
+  var tables = doc.querySelectorAll('table');
+  tables.forEach(function(tbl) {
+    var rows = tbl.querySelectorAll('tr');
+    rows.forEach(function(row) {
+      var cells = Array.from(row.querySelectorAll('td,th')).map(function(c) {
+        return (c.innerText || c.textContent || '').trim();
+      });
+      if (cells.length < 4) return;
+
+      var sym = cells[0];
+      if (!sym || !/^[A-Z][A-Z0-9]{1,5}$/.test(sym) || SKIP[sym] || seen[sym]) return;
+
+      // Tenta extrair números das células — encontra qty, price, value, pnl
+      var nums = [];
+      for (var ci = 1; ci < cells.length; ci++) {
+        var v = cells[ci].replace(/,/g, '').replace(/\s/g, '');
+        var n = parseFloat(v);
+        if (!isNaN(n)) nums.push({ idx: ci, val: n, raw: cells[ci] });
+      }
+
+      if (nums.length < 2) return;
+
+      // Heurística: o maior valor positivo é provavelmente o valor total da posição
+      var valueCandidates = nums.filter(function(n) { return n.val > 100; });
+      if (!valueCandidates.length) return;
+
+      // Valor da posição = maior candidato
+      var valEntry = valueCandidates.reduce(function(best, n) {
+        return n.val > best.val ? n : best;
+      }, valueCandidates[0]);
+
+      // Qty = primeiro inteiro
+      var qtyEntry = nums.find(function(n) { return Number.isInteger(n.val) && n.idx < valEntry.idx; });
+      // Price = número com casas decimais antes do valor total
+      var priceEntry = nums.find(function(n) {
+        return n.val > 0 && n.val < valEntry.val && n.idx < valEntry.idx && !Number.isInteger(n.val);
+      });
+      // P&L = último número (pode ser negativo)
+      var pnlEntry = nums[nums.length - 1];
+
+      var desc = cells[1] || sym;
+      var qty   = qtyEntry   ? qtyEntry.val   : 0;
+      var price = priceEntry ? priceEntry.val : 0;
+      var value = valEntry.val;
+      var pnl   = (pnlEntry && pnlEntry !== valEntry) ? pnlEntry.val : 0;
+
+      seen[sym] = 1;
+      data.positions.push({ symbol: sym, desc: desc, qty: qty, price: price, value: value, pnl: pnl });
+    });
+  });
+
+  // Se não achou posições em tabelas, tenta parsear linhas de texto
+  if (!data.positions.length) {
+    var lines = fullText.split(/[
+
+]+/);
+    lines.forEach(function(line) {
+      var parts = line.trim().split(/\s{2,}/);
+      if (parts.length < 3) return;
+      var sym = parts[0];
+      if (!sym || !/^[A-Z][A-Z0-9]{1,5}$/.test(sym) || SKIP[sym] || seen[sym]) return;
+      var nums = parts.slice(1).map(function(p) { return pN(p); }).filter(function(n) { return !isNaN(n) && n > 0; });
+      if (nums.length < 2) return;
+      var value = Math.max.apply(null, nums);
+      if (value < 100) return;
+      seen[sym] = 1;
+      data.positions.push({ symbol: sym, desc: parts[1] || sym, qty: nums[0] || 0, price: nums[1] || 0, value: value, pnl: 0 });
+    });
+  }
+
+  data.positions.sort(function(a, b) { return b.value - a.value; });
+  return data;
 }
 
 function loadPDFJS(cb) {
@@ -1422,8 +1610,9 @@ function resetMTM() {
     zone.style.display = 'block';
     zone.innerHTML = `<div style="font-size:28px;margin-bottom:8px">📑</div>
       <div style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px">Arraste o Resumo MTM aqui</div>
-      <div style="font-size:11px;color:var(--muted)">ou clique para selecionar (PDF)</div>
-      <input type="file" id="f-pdf" accept=".pdf">`;
+      <div style="font-size:11px;color:var(--muted)">ou clique para selecionar (<strong style="color:var(--orange)">PDF</strong> ou <strong style="color:var(--orange)">HTML</strong>)</div>
+      <div style="font-size:10px;color:var(--muted2);margin-top:4px">IBKR → Relatórios → Extratos → Resumo MTM</div>
+      <input type="file" id="f-pdf" accept=".pdf,.html,.htm">`;
     // Re-attach events
     const newInput = zone.querySelector('#f-pdf');
     if (newInput) newInput.addEventListener('change', e => { const f = e.target.files[0]; if (f) parseMTM(f); e.target.value=''; });
