@@ -7,7 +7,6 @@
 <title>Dashboard Pro — BSafe Invest</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="bsafe-theme.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -359,9 +358,8 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);
             <div id="drop-zone" class="drop-zone" style="margin-bottom:14px">
               <div style="font-size:28px;margin-bottom:8px">📑</div>
               <div style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px">Arraste o Resumo MTM aqui</div>
-              <div style="font-size:11px;color:var(--muted)">ou clique para selecionar (<strong style="color:var(--orange)">PDF</strong> ou <strong style="color:var(--orange)">HTML</strong>)</div>
-              <div style="font-size:10px;color:var(--muted2);margin-top:4px">IBKR → Relatórios → Extratos → Resumo MTM</div>
-              <input type="file" id="f-pdf" accept=".pdf,.html,.htm">
+              <div style="font-size:11px;color:var(--muted)">ou clique para selecionar (PDF)</div>
+              <input type="file" id="f-pdf" accept=".pdf">
             </div>
 
             <!-- MTM RESULT -->
@@ -594,9 +592,12 @@ async function sbSignUp(email, pass, nome) {
     method: 'POST',
     body: JSON.stringify({ email, password: pass, data: { nome } })
   });
-  if (r.ok && r.data && r.data.access_token) {
-    SESSION = r.data;
-    localStorage.setItem(SK_SESS, JSON.stringify(SESSION));
+  if (r.ok && r.data) {
+    const sess = r.data.access_token ? r.data : (r.data.session || null);
+    if (sess && sess.access_token) {
+      SESSION = sess;
+      localStorage.setItem(SK_SESS, JSON.stringify(SESSION));
+    }
   }
   return r;
 }
@@ -606,9 +607,13 @@ async function sbSignIn(email, pass) {
     method: 'POST',
     body: JSON.stringify({ email, password: pass })
   });
-  if (r.ok && r.data && r.data.access_token) {
-    SESSION = r.data;
-    localStorage.setItem(SK_SESS, JSON.stringify(SESSION));
+  if (r.ok && r.data) {
+    // Supabase v1: access_token direto. Supabase v2: dentro de .session
+    const sess = r.data.access_token ? r.data : (r.data.session || null);
+    if (sess && sess.access_token) {
+      SESSION = sess;
+      localStorage.setItem(SK_SESS, JSON.stringify(SESSION));
+    }
   }
   return r;
 }
@@ -625,21 +630,30 @@ async function sbLoadSession() {
   if (!raw) return false;
   try {
     const sess = JSON.parse(raw);
-    // Check expiry
+    if (!sess || !sess.access_token) { localStorage.removeItem(SK_SESS); return false; }
+
+    // Verifica expiração do JWT
     const payload = JSON.parse(atob(sess.access_token.split('.')[1]));
     if (payload.exp * 1000 > Date.now()) {
       SESSION = sess;
       return true;
     }
-    // Try refresh
-    const r = await sbReq('/auth/v1/token?grant_type=refresh_token', {
-      method: 'POST',
-      body: JSON.stringify({ refresh_token: sess.refresh_token })
-    });
-    if (r.ok && r.data && r.data.access_token) {
-      SESSION = r.data;
-      localStorage.setItem(SK_SESS, JSON.stringify(SESSION));
-      return true;
+
+    // Token expirado — tenta refresh
+    if (sess.refresh_token) {
+      const r = await sbReq('/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST',
+        body: JSON.stringify({ refresh_token: sess.refresh_token })
+      });
+      if (r.ok && r.data) {
+        // Normaliza v1 e v2
+        const newSess = r.data.access_token ? r.data : (r.data.session || null);
+        if (newSess && newSess.access_token) {
+          SESSION = newSess;
+          localStorage.setItem(SK_SESS, JSON.stringify(SESSION));
+          return true;
+        }
+      }
     }
   } catch (e) {}
   localStorage.removeItem(SK_SESS);
@@ -648,8 +662,22 @@ async function sbLoadSession() {
 
 async function sbGetProfile() {
   if (!SESSION) return null;
-  const r = await sbReq('/rest/v1/profiles?select=*', { headers: { Accept: 'application/json' } });
-  return r.ok && Array.isArray(r.data) && r.data.length > 0 ? r.data[0] : null;
+  try {
+    const r = await sbReq('/rest/v1/profiles?select=*', { headers: { Accept: 'application/json' } });
+    if (r.ok && Array.isArray(r.data) && r.data.length > 0) return r.data[0];
+    // Tabela profiles pode não existir ou RLS bloquear — monta perfil mínimo a partir do JWT
+    const payload = JSON.parse(atob(SESSION.access_token.split('.')[1]));
+    const meta = payload.user_metadata || {};
+    return {
+      nome: meta.nome || (SESSION.user && SESSION.user.email ? SESSION.user.email.split('@')[0] : '—'),
+      email: SESSION.user ? SESSION.user.email : '',
+      assinante: false,
+      trial_expira: new Date(Date.now() + 7 * 86400000).toISOString(),
+      _fallback: true
+    };
+  } catch (e) {
+    return null;
+  }
 }
 
 async function sbSaveLanc(l) {
@@ -682,11 +710,19 @@ async function initAuth() {
     const p = await sbGetProfile();
     if (p) {
       const dias = Math.max(0, Math.ceil((new Date(p.trial_expira) - new Date()) / 86400000));
-      if (!p.assinante && dias <= 0) { showExpired(); return; }
-      showDash(p, dias);
-      const lista = await sbGetLancs();
-      if (lista.length > 0) {
-        setLancs(lista);
+      if (!p.assinante && !p._fallback && dias <= 0) { showExpired(); return; }
+      const diasEfetivo = p._fallback ? 7 : dias;
+      showDash(p, diasEfetivo);
+      try {
+        const lista = await sbGetLancs();
+        if (lista.length > 0) {
+          setLancs(lista);
+          renderAll();
+        } else {
+          renderAll(); // ainda renderiza KPIs zerados
+        }
+      } catch (e) {
+        // lançamentos podem falhar, mas o dashboard ainda abre
         renderAll();
       }
       return;
@@ -755,21 +791,40 @@ async function doRegister() {
 
   try {
     const r = await sbSignUp(email, pass, nome);
-    if (r.data && r.data.access_token) {
+
+    // Supabase v1: access_token no nível raiz
+    // Supabase v2: pode estar em r.data.session.access_token ou exigir confirmação
+    const hasToken = r.data && (r.data.access_token || (r.data.session && r.data.session.access_token));
+
+    if (hasToken) {
+      // Normaliza SESSION para Supabase v2
+      if (!SESSION && r.data.session) {
+        SESSION = r.data.session;
+        localStorage.setItem(SK_SESS, JSON.stringify(SESSION));
+      }
       const p = await sbGetProfile();
       showDash(p || { nome, email, assinante: false, trial_expira: new Date(Date.now() + 7 * 86400000).toISOString() }, 7);
+      renderAll();
+      toast('✓ Conta criada! Bem-vindo ao BSafe Dashboard!');
       return;
     }
-    const msg = r.data && (r.data.error_description || r.data.msg || r.data.message || r.data.error) || '';
-    if (msg.toLowerCase().includes('already')) {
+
+    const errData = r.data || {};
+    const msg = errData.error_description || errData.msg || errData.message || errData.error || '';
+
+    if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('registered')) {
       err.textContent = 'E-mail já cadastrado. Faça login.';
       setTimeout(() => switchTab('login'), 1500);
-    } else if (r.data && r.data.user && !r.data.session) {
+    } else if (
+      // Supabase com confirmação de e-mail ativada retorna user sem session
+      (r.data && r.data.user && !r.data.session && !r.data.access_token) ||
+      msg.toLowerCase().includes('confirm')
+    ) {
       err.style.color = 'var(--green)';
-      err.textContent = '✓ Confirme seu e-mail e faça login.';
-      setTimeout(() => switchTab('login'), 2000);
+      err.textContent = '✓ Verifique seu e-mail e clique no link de confirmação.';
+      setTimeout(() => switchTab('login'), 3000);
     } else {
-      err.textContent = msg || 'Erro ' + r.status + '. Verifique o Supabase.';
+      err.textContent = msg || 'Erro ' + r.status + '. Tente novamente.';
     }
   } catch (e) {
     err.textContent = 'Erro: ' + e.message;
@@ -793,19 +848,56 @@ async function doLogin() {
 
   try {
     const r = await sbSignIn(email, pass);
-    if (r.data && r.data.access_token) {
+
+    // Supabase v2: token pode estar em r.data.access_token ou r.data.session.access_token
+    const hasToken = r.data && (r.data.access_token || (r.data.session && r.data.session.access_token));
+
+    if (hasToken) {
+      // Normaliza: garante que SESSION tem access_token no nível raiz
+      if (!SESSION && r.data.session) {
+        SESSION = r.data.session;
+        localStorage.setItem(SK_SESS, JSON.stringify(SESSION));
+      }
+
       const p = await sbGetProfile();
-      const dias = p ? Math.max(0, Math.ceil((new Date(p.trial_expira) - new Date()) / 86400000)) : 7;
-      showDash(p || { nome: email.split('@')[0], email, assinante: false, trial_expira: new Date(Date.now() + 7 * 86400000).toISOString() }, dias);
-      const lista = await sbGetLancs();
-      if (lista.length > 0) { setLancs(lista); renderAll(); }
+      const dias = p && !p._fallback
+        ? Math.max(0, Math.ceil((new Date(p.trial_expira) - new Date()) / 86400000))
+        : 7;
+      const perfil = p || { nome: email.split('@')[0], email, assinante: false, trial_expira: new Date(Date.now() + 7 * 86400000).toISOString() };
+
+      showDash(perfil, dias);
+
+      try {
+        const lista = await sbGetLancs();
+        if (lista.length > 0) {
+          // Mescla: lançamentos da nuvem têm prioridade sobre locais
+          const locais = getLancs();
+          const meses = new Set(lista.map(l => l.mes));
+          const extras = locais.filter(l => !meses.has(l.mes));
+          const merged = [...lista, ...extras].sort((a,b) => a.mes.localeCompare(b.mes));
+          setLancs(merged);
+        }
+      } catch (e) { /* sem lançamentos na nuvem é normal */ }
+
+      renderAll();
       toast('✓ Bem-vindo de volta!');
       return;
     }
-    const msg = r.data && (r.data.error_description || r.data.msg || r.data.message) || 'E-mail ou senha incorretos.';
-    err.textContent = msg.includes('Email not confirmed') ? 'Confirme seu e-mail antes de fazer login.' : msg;
+
+    // Interpreta erro do Supabase
+    const errData = r.data || {};
+    const msg = errData.error_description || errData.msg || errData.message || errData.error || '';
+    if (msg.toLowerCase().includes('email not confirmed') || msg.toLowerCase().includes('email_not_confirmed')) {
+      err.textContent = 'Confirme seu e-mail antes de fazer login. Verifique a caixa de entrada.';
+    } else if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('wrong') || r.status === 400 || r.status === 401) {
+      err.textContent = 'E-mail ou senha incorretos.';
+    } else if (r.status === 0) {
+      err.textContent = 'Sem conexão. Verifique sua internet.';
+    } else {
+      err.textContent = msg || 'Erro ao fazer login. Tente novamente.';
+    }
   } catch (e) {
-    err.textContent = 'Erro: ' + e.message;
+    err.textContent = 'Erro inesperado: ' + e.message;
   }
   btn.disabled = false;
   btn.textContent = 'Entrar →';
@@ -1161,42 +1253,26 @@ function initXpub() {
 async function buscarBTC() {
   const xpub = localStorage.getItem(SK_XPUB);
   if (!xpub) return;
-  setSt('st-btc', '⏳ sincronizando...', 'var(--muted)');
+  setSt('st-btc', '⏳', 'var(--muted)');
   const bal = document.getElementById('xpub-bal');
   if (bal) bal.textContent = '⏳';
   const isAddr = xpub.startsWith('bc1') || xpub.startsWith('1') || xpub.startsWith('3');
-
-  // Backends em ordem de preferência: Electrum Blockstream > blockstream.info > mempool
-  const backends = isAddr
-    ? [
-        { url: 'https://electrum.blockstream.info/api/address/' + xpub,  label: '✓ Blockstream' },
-        { url: 'https://blockstream.info/api/address/' + xpub,           label: '✓ Blockstream' },
-        { url: 'https://mempool.space/api/address/' + xpub,              label: '✓ mempool' }
-      ]
-    : [
-        { url: 'https://electrum.blockstream.info/api/xpub/' + xpub,    label: '✓ Blockstream' },
-        { url: 'https://blockstream.info/api/xpub/' + xpub,             label: '✓ Blockstream' },
-        { url: 'https://mempool.space/api/v1/xpub/' + xpub,             label: '✓ mempool' }
-      ];
-
-  for (const backend of backends) {
+  const urls = isAddr
+    ? ['https://mempool.space/api/address/' + xpub, 'https://blockstream.info/api/address/' + xpub]
+    : ['https://mempool.space/api/v1/xpub/' + xpub, 'https://blockstream.info/api/xpub/' + xpub];
+  for (const url of urls) {
     try {
-      const r = await fetch(backend.url, { headers: { Accept: 'application/json' } });
+      const r = await fetch(url, { headers: { Accept: 'application/json' } });
       if (!r.ok) continue;
       const d = await r.json();
       let sats = 0;
-      if (typeof d.funded_txo_sum !== 'undefined') {
-        sats = (d.funded_txo_sum || 0) - (d.spent_txo_sum || 0);
-      } else if (d.chain_stats) {
-        sats = (d.chain_stats.funded_txo_sum || 0) - (d.chain_stats.spent_txo_sum || 0);
-      }
+      if (typeof d.funded_txo_sum !== 'undefined') sats = (d.funded_txo_sum || 0) - (d.spent_txo_sum || 0);
+      else if (d.chain_stats) sats = (d.chain_stats.funded_txo_sum || 0) - (d.chain_stats.spent_txo_sum || 0);
       const btcBal = sats / 1e8;
       setVal('f-btc', btcBal.toFixed(8));
       if (bal) bal.textContent = '₿ ' + btcBal.toFixed(6);
-      setSt('st-btc', backend.label, 'var(--green)');
+      setSt('st-btc', '✓ mempool', 'var(--green)');
       updateBTCPreview();
-      // Também tenta buscar histórico de transações para o badge de evolução
-      buscarHistoricoXpub(xpub, isAddr, backend.url);
       return;
     } catch {}
   }
@@ -1204,58 +1280,38 @@ async function buscarBTC() {
   if (bal) bal.textContent = '—';
 }
 
-// Busca histórico de transações do xpub para exibir evolução do saldo BTC
-async function buscarHistoricoXpub(xpub, isAddr, successUrl) {
-  try {
-    // Detecta qual backend funcionou e monta URL de txs
-    const base = successUrl.replace(/\/(xpub|address)\/.*$/, '');
-    const txsUrl = isAddr
-      ? base + '/address/' + xpub + '/txs'
-      : null; // xpub não tem endpoint de txs direto no Electrum
-
-    if (!txsUrl) return; // só funciona para endereços individuais por ora
-
-    const r = await fetch(txsUrl, { headers: { Accept: 'application/json' } });
-    if (!r.ok) return;
-    const txs = await r.json();
-    if (!txs || !txs.length) return;
-
-    // Mostra qtd de transações no badge
-    const bal = document.getElementById('xpub-bal');
-    if (bal) {
-      const current = bal.textContent;
-      if (!current.includes('tx')) {
-        bal.title = txs.length + ' transações encontradas';
-      }
-    }
-  } catch {}
-}
-
 // ═══════════════════════════════════════════════════════
 // MTM PDF PARSER
 // ═══════════════════════════════════════════════════════
-// ─── DROP ZONE ───────────────────────────────────────────────────────────────
 function initDropZone() {
-  const zone  = document.getElementById('drop-zone');
+  const zone = document.getElementById('drop-zone');
   const input = document.getElementById('f-pdf');
   if (!zone || !input) return;
 
+  // Click to open file picker
   zone.addEventListener('click', () => input.click());
 
+  // Drag over
   zone.addEventListener('dragover', e => {
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
     zone.classList.add('drag');
   });
   zone.addEventListener('dragleave', e => {
     e.preventDefault();
     zone.classList.remove('drag');
   });
+
+  // Drop
   zone.addEventListener('drop', e => {
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
     zone.classList.remove('drag');
     const file = e.dataTransfer.files[0];
     if (file) parseMTM(file);
   });
+
+  // File input change
   input.addEventListener('change', e => {
     const file = e.target.files[0];
     if (file) parseMTM(file);
@@ -1265,317 +1321,190 @@ function initDropZone() {
 
 function parseMTM(file) {
   const zone = document.getElementById('drop-zone');
-  const name = (file.name || '').toLowerCase();
-  const isHTML = name.endsWith('.html') || name.endsWith('.htm') ||
-                 file.type === 'text/html';
+  if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">⏳ Lendo PDF...</div>';
 
-  if (isHTML) {
-    // ── Parser HTML (sem dependência de PDF.js) ──────────────────────────
-    if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">📖 Lendo HTML do relatório...</div>';
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        var data = parseMTMHTML(e.target.result);
-        showMTMResult(data);
-      } catch(ex) {
-        console.error('HTML MTM parse error:', ex);
-        if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Erro ao ler HTML: ' + ex.message + '<br><button onclick="resetMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
-      }
-    };
-    reader.onerror = function() { toast('Erro ao ler o arquivo', true); resetMTM(); };
-    reader.readAsText(file, 'utf-8');
-    return;
-  }
-
-  // ── Parser PDF (PDF.js) ───────────────────────────────────────────────
-  if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">⏳ Carregando PDF.js...</div>';
-  
-  loadPDFJS(function(err) {
-    if (err) {
-      if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ ' + err.message + '<br><small>Verifique sua conexão com a internet.<br>Tente exportar como <strong>HTML</strong> na IBKR.</small><br><button onclick="resetMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
-      return;
-    }
-    if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">📖 Lendo relatório PDF...</div>';
-    
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      pdfjsLib.getDocument({ data: new Uint8Array(e.target.result) }).promise.then(function(pdf) {
-        extractAllWords(pdf).then(function(words) {
-          var data = parseMTMWords(words);
-          showMTMResult(data);
-        });
-      }).catch(function(ex) {
-        console.error('PDF.js error:', ex);
-        if (zone) zone.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">❌ Erro ao ler PDF: ' + ex.message + '<br><small>Tente exportar o relatório como <strong>HTML</strong> na IBKR.</small><br><button onclick="resetMTM()" style="margin-top:10px;background:none;border:1px solid var(--border-dim);border-radius:2px;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer">↩ Tentar novamente</button></div>';
-      });
-    };
-    reader.onerror = function() { toast('Erro ao ler o arquivo', true); resetMTM(); };
-    reader.readAsArrayBuffer(file);
-  });
+  const reader = new FileReader();
+  reader.onload = e => {
+    const bytes = new Uint8Array(e.target.result);
+    const text  = extractPDFText(bytes);
+    const data  = parseMTMText(text, file.name);
+    showMTMResult(data);
+  };
+  reader.onerror = () => {
+    if (zone) resetMTMZone();
+    toast('Erro ao ler o arquivo', true);
+  };
+  reader.readAsArrayBuffer(file);
 }
 
-// ─── HTML MTM PARSER ─────────────────────────────────────────────────────────
-// Parseia o Resumo MTM exportado pela IBKR em formato HTML.
-// O HTML da IBKR contém tabelas com classes e texto legível — muito mais fácil
-// de parsear do que o PDF.
-function parseMTMHTML(htmlText) {
-  var data = { nav: 0, retornoPct: 0, dividendos: 0, positions: [] };
+function extractPDFText(bytes) {
+  // Extract text from PDF binary by finding parenthesized text strings
+  let result = [];
+  let i = 0;
+  const len = bytes.length;
 
-  // Cria um DOM temporário (não visível) para parsear o HTML
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(htmlText, 'text/html');
-
-  // ── Texto completo para extrair NAV, retorno e dividendos ────────────
-  var fullText = doc.body ? doc.body.innerText || doc.body.textContent : '';
-  fullText = fullText.replace(/\s+/g, ' ');
-
-  // NAV — busca "Valor Final" ou "Net Asset Value" ou padrão do MTM
-  var navPatterns = [
-    /Valor\s+[Ff]inal\s+([\d,]+\.?\d*)/,
-    /Net\s+Asset\s+Value\s+([\d,]+\.?\d*)/,
-    /Total\s+[\d,]+\.?\d*\s+([\d,]+\.?\d*)\s+0\.00\s+([\d,]+\.?\d*)/,
-    /NAV[^0-9]*([\d,]+\.?\d*)/
-  ];
-  for (var i = 0; i < navPatterns.length; i++) {
-    var m = fullText.match(navPatterns[i]);
-    if (m) {
-      // Se padrão "Total X Y 0.00 Z W", pega o último grupo
-      data.nav = pN(m[m.length - 1]);
-      if (data.nav > 0) break;
+  while (i < len) {
+    if (bytes[i] === 40) { // '('
+      let depth = 1;
+      let chunk = '';
+      i++;
+      while (i < len && depth > 0) {
+        const c = bytes[i];
+        if (c === 92 && i + 1 < len) { // backslash escape
+          i++;
+          const next = bytes[i];
+          if (next === 110) chunk += '\n';       // \n
+          else if (next === 114) chunk += '\r';   // \r
+          else if (next === 116) chunk += '\t';   // \t
+          else chunk += String.fromCharCode(next);
+        } else if (c === 40) {
+          depth++;
+          chunk += '(';
+        } else if (c === 41) {
+          depth--;
+          if (depth > 0) chunk += ')';
+        } else {
+          if (c >= 32 && c < 127) chunk += String.fromCharCode(c);
+          else if (c >= 160) chunk += String.fromCharCode(c); // Latin-1
+        }
+        i++;
+      }
+      if (chunk.trim().length > 0) result.push(chunk.trim());
+    } else {
+      i++;
     }
   }
-
-  // Retorno %
-  var retM = fullText.match(/Taxa\s+de\s+[Rr]etorno[^0-9]*(-?[\d.]+)\s*%/);
-  if (!retM) retM = fullText.match(/[Rr]ate\s+of\s+[Rr]eturn[^0-9]*(-?[\d.]+)\s*%/);
-  if (retM) data.retornoPct = parseFloat(retM[1]);
-
-  // Dividendos
-  var divM = fullText.match(/Dividendos?\s+([\d,]+\.?\d*)/i);
-  if (divM) data.dividendos = pN(divM[1]);
-
-  // ── Extrai posições das tabelas ───────────────────────────────────────
-  var SKIP = { 'USD':1,'GBP':1,'EUR':1,'Total':1,'Ações':1,'Bonds':1,'Forex':1,
-    'Símbolo':1,'Posição':1,'Negociação':1,'Anterior':1,'Atual':1,'Código':1,
-    'Valor':1,'Taxa':1,'Comprar':1,'Vender':1,'Symbol':1,'Description':1,
-    'Quantity':1,'Price':1 };
-  var seen = {};
-
-  var tables = doc.querySelectorAll('table');
-  tables.forEach(function(tbl) {
-    var rows = tbl.querySelectorAll('tr');
-    rows.forEach(function(row) {
-      var cells = Array.from(row.querySelectorAll('td,th')).map(function(c) {
-        return (c.innerText || c.textContent || '').trim();
-      });
-      if (cells.length < 4) return;
-
-      var sym = cells[0];
-      if (!sym || !/^[A-Z][A-Z0-9]{1,5}$/.test(sym) || SKIP[sym] || seen[sym]) return;
-
-      // Tenta extrair números das células — encontra qty, price, value, pnl
-      var nums = [];
-      for (var ci = 1; ci < cells.length; ci++) {
-        var v = cells[ci].replace(/,/g, '').replace(/\s/g, '');
-        var n = parseFloat(v);
-        if (!isNaN(n)) nums.push({ idx: ci, val: n, raw: cells[ci] });
-      }
-
-      if (nums.length < 2) return;
-
-      // Heurística: o maior valor positivo é provavelmente o valor total da posição
-      var valueCandidates = nums.filter(function(n) { return n.val > 100; });
-      if (!valueCandidates.length) return;
-
-      // Valor da posição = maior candidato
-      var valEntry = valueCandidates.reduce(function(best, n) {
-        return n.val > best.val ? n : best;
-      }, valueCandidates[0]);
-
-      // Qty = primeiro inteiro
-      var qtyEntry = nums.find(function(n) { return Number.isInteger(n.val) && n.idx < valEntry.idx; });
-      // Price = número com casas decimais antes do valor total
-      var priceEntry = nums.find(function(n) {
-        return n.val > 0 && n.val < valEntry.val && n.idx < valEntry.idx && !Number.isInteger(n.val);
-      });
-      // P&L = último número (pode ser negativo)
-      var pnlEntry = nums[nums.length - 1];
-
-      var desc = cells[1] || sym;
-      var qty   = qtyEntry   ? qtyEntry.val   : 0;
-      var price = priceEntry ? priceEntry.val : 0;
-      var value = valEntry.val;
-      var pnl   = (pnlEntry && pnlEntry !== valEntry) ? pnlEntry.val : 0;
-
-      seen[sym] = 1;
-      data.positions.push({ symbol: sym, desc: desc, qty: qty, price: price, value: value, pnl: pnl });
-    });
-  });
-
-  // Se não achou posições em tabelas, tenta parsear linhas de texto
-  if (!data.positions.length) {
-    var lines = fullText.split(/[
-
-]+/);
-    lines.forEach(function(line) {
-      var parts = line.trim().split(/\s{2,}/);
-      if (parts.length < 3) return;
-      var sym = parts[0];
-      if (!sym || !/^[A-Z][A-Z0-9]{1,5}$/.test(sym) || SKIP[sym] || seen[sym]) return;
-      var nums = parts.slice(1).map(function(p) { return pN(p); }).filter(function(n) { return !isNaN(n) && n > 0; });
-      if (nums.length < 2) return;
-      var value = Math.max.apply(null, nums);
-      if (value < 100) return;
-      seen[sym] = 1;
-      data.positions.push({ symbol: sym, desc: parts[1] || sym, qty: nums[0] || 0, price: nums[1] || 0, value: value, pnl: 0 });
-    });
-  }
-
-  data.positions.sort(function(a, b) { return b.value - a.value; });
-  return data;
+  return result.join(' ');
 }
 
-function loadPDFJS(cb) {
-  if (window.pdfjsLib) { cb(); return; }
-  var tried = 0;
-  var cdns = [
-    { lib: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
-      worker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js' },
-    { lib: 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js',
-      worker: 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js' },
-    { lib: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
-      worker: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js' }
-  ];
-  function tryNext() {
-    if (tried >= cdns.length) { cb(new Error('Não foi possível carregar o leitor de PDF. Verifique sua conexão.')); return; }
-    var cdn = cdns[tried++];
-    var s = document.createElement('script');
-    s.src = cdn.lib;
-    s.onload = function() {
-      try { pdfjsLib.GlobalWorkerOptions.workerSrc = cdn.worker; } catch(e) {}
-      cb();
-    };
-    s.onerror = tryNext;
-    document.head.appendChild(s);
-  }
-  tryNext();
-}
+function parseMTMText(text, filename) {
+  const data = { nav: 0, navAnterior: 0, retornoPct: 0, dividendos: 0, positions: [] };
 
-// Extract all words with X/Y positions from all PDF pages
-function extractAllWords(pdf) {
-  var allWords = [];
-  var pagePromises = [];
-  for (var p = 1; p <= pdf.numPages; p++) {
-    pagePromises.push(pdf.getPage(p).then(function(page) {
-      var vp = page.getViewport({ scale: 1 });
-      return page.getTextContent().then(function(content) {
-        content.items.forEach(function(item) {
-          if (!item.str || !item.str.trim()) return;
-          // PDF.js coords: origin bottom-left, Y increases upward
-          // We convert to top-down: top = height - y
-          var x   = item.transform[4];
-          var top = vp.height - item.transform[5];
-          allWords.push({ text: item.str.trim(), x: x, top: top });
-        });
-      });
-    }));
-  }
-  return Promise.all(pagePromises).then(function() { return allWords; });
-}
-
-// Parse MTM data using exact column X positions confirmed from PDF analysis
-// Column layout (pdfplumber verified):
-//   Ticker:    x ≈ 38      (exactly)
-//   Desc:      x ≈ 95–220
-//   Qty curr:  x ≈ 285–295
-//   Price curr:x ≈ 360–370
-//   Val prev:  x ≈ 410–420
-//   Val curr:  x ≈ 468–475  ← KEY
-//   PNL pos:   x ≈ 522–530
-function parseMTMWords(words) {
-  var data = { nav: 0, retornoPct: 0, dividendos: 0, positions: [] };
-
-  // Group words into rows by top coordinate (Y)
-  var rows = {};
-  words.forEach(function(w) {
-    var ry = Math.round(w.top * 2) / 2; // group within 0.5pt
-    if (!rows[ry]) rows[ry] = [];
-    rows[ry].push(w);
-  });
-
-  var sortedYs = Object.keys(rows).map(Number).sort(function(a,b){ return a-b; });
-
-  // Build full text for NAV/retorno extraction
-  var fullText = sortedYs.map(function(y) {
-    return rows[y].map(function(w) { return w.text; }).join(' ');
-  }).join(' ');
-
-  // NAV: "Total X Y 0.00 Z W" — Z is nav_atual
-  var navM = fullText.match(/Total\s+[\d,]+\.\d+\s+([\d,]+\.\d+)\s+0\.00\s+([\d,]+\.\d+)/);
-  if (navM) data.nav = pN(navM[2]);
+  // ── NAV e retorno ────────────────────────────────────
+  const vfM = text.match(/Valor\s+final\s+([\d,]+\.?\d*)/i);
+  if (vfM) data.nav = pN(vfM[1]);
   if (!data.nav) {
-    var vfM = fullText.match(/Valor final\s+([\d,]+\.\d+)/);
-    if (vfM) data.nav = pN(vfM[1]);
+    const navM = text.match(/Total\s+([\d,]+\.?\d*)\s+([\d,]+\.?\d*)\s+0\.00\s+([\d,]+\.?\d*)/);
+    if (navM) { data.navAnterior = pN(navM[1]); data.nav = pN(navM[3]); }
   }
-
-  // Return %
-  var retM = fullText.match(/Taxa de retorno[^0-9]*(\d[\d.]+)%/);
+  if (!data.navAnterior) {
+    const viM = text.match(/Valor\s+inicial\s+([\d,]+\.?\d*)/i);
+    if (viM) data.navAnterior = pN(viM[1]);
+  }
+  const retM = text.match(/Taxa de retorno[^0-9]*([\d.]+)\s*%/);
   if (retM) data.retornoPct = parseFloat(retM[1]);
-
-  // Dividendos
-  var divM = fullText.match(/Dividendos\s+([\d,]+\.\d+)/);
+  const divM = text.match(/Dividendos\s+([\d,]+\.?\d*)/);
   if (divM) data.dividendos = pN(divM[1]);
 
-  // Extract positions using X column positions
-  var SKIP = { 'USD':1,'GBP':1,'EUR':1,'Total':1,'Ações':1,'Bonds':1,'Forex':1,
-    'Símbolo':1,'Posição':1,'Negociação':1,'Anterior':1,'Atual':1,'Código':1,
-    'Valor':1,'Taxa':1,'Comprar':1,'Vender':1 };
-  var seen = {};
+  // ── Posições ─────────────────────────────────────────
+  // Formato IBKR MTM (Ações/USD):
+  // TICKER DESC... QTY_PREV QTY_CURR PRICE_PREV PRICE_CURR VAL_PREV VAL_CURR PNL_POS PNL_NEG
+  //
+  // Estratégia:
+  // 1. Tokenizar o texto
+  // 2. Identificar tokens que são tickers válidos (curtos, maiúsculos, não em skiplist)
+  // 3. Após o ticker vem a descrição (palavras maiúsculas sem números)
+  // 4. Após a descrição vem a sequência de 8+ números
+  // 5. Validar que os 2 primeiros números são inteiros iguais (qty_prev = qty_curr)
+  //    — isso distingue tickers reais de palavras da descrição
 
-  sortedYs.forEach(function(y) {
-    var row = rows[y].slice().sort(function(a,b){ return a.x - b.x; });
-    if (!row.length) return;
+  const skipSet = new Set([
+    'USD','GBP','EUR','BRL','CHF','JPY','GBP','HKD','AUD','CAD',
+    'Total','Valor','Bonds','Forex','Ações','Taxa','Juros','Lucros','Moeda',
+    'Símbolo','Posição','Negociação','Anterior','Atual','Long','Short','Venda',
+    'Comprar','Vender','Conversão','Resumo','Descrição','Quantidade','Preço',
+    'Mercado','Perdas','Marcação','Acumulados','Disponíveis','Ordinário',
+    'INC','ETF','CORP','LLC','LTD','AND','THE','FOR','COM','SER','DEV',
+    'REIT','BND','AGG','BOND','FUND','INTL','MGMT','TECH','GROUP','TRUST',
+    'MTM','NAV','PDF','BSafe','IBKR',
+    // Palavras comuns em nomes — não são tickers
+    'APPLE','AMAZON','GOOGLE','ALPHABET','MICROSOFT','NVIDIA','META',
+    'REALTY','INCOME','TOWER','AMERICAN','SCHWAB','ISHARES','VANGUARD',
+    'SPDR','PROSHARES','VANECK','GLOBAL','SONICSHARES','DISNEY','WALT',
+    'STARBUCKS','WALMART','ENERGY','TECHNOLOGY','SEMICONDUCTOR',
+    'FUNDAMENTAL','ENHANCED','INTERMEDIATE','DEVELOPED','INDUSTRIAL',
+    'STORAGE','STRATEGIC','INTERNATIONAL','HOSPITALITY','YIELD',
+    'SELECT','SECTOR','DIVIDEND','ARISTOCRATS','URANIUM','AGRIBUSINESS',
+    'WARNER','DISCOVERY','BROTHERS','WEYERHAEUSER','PFIZER','STAG',
+    'AGREE','WISDOMTREE','NETFLIX','PUBLIC','NIKE','HOME','DEPOT',
+    'TEXAS','INSTRUMENTS','ROSS','STORES','MCDONALDS',
+    'LARGE','SMALL','CORE','TOTAL','WORLD','STOCK','MARKET',
+    'REAL','ESTATE','GOVERNMENT','CREDIT','TREASURY','TIPS',
+    'TERM','INVESTMENT','GRADE','CORPORATE','AGGREGATE',
+    'EMERGING','MARKETS','QUALITY','WEIGHT','EQUAL','MINIMUM',
+    'MOMENTUM','VALUE','GROWTH','BLEND','INDEX','TRACKING',
+    'PASSIVE','ACTIVE','SERIES','CLASS','SHARES','HOLDINGS',
+    'ENHANCED','WEIGHTED','PORTFOLIO','OPPORTUNITIES'
+  ]);
 
-    // Ticker must be first word with x between 35 and 55
-    var first = row[0];
-    if (!first || first.x < 35 || first.x > 55) return;
-    var sym = first.text;
-    if (!/^[A-Z][A-Z0-9]{1,5}$/.test(sym) || SKIP[sym] || seen[sym]) return;
+  const tokens = text.split(/\s+/);
+  const positions = [];
+  const seenSymbols = new Set();
+  const seenValues  = new Set();
 
-    // Description: words with x between 85 and 240
-    var descWords = row.filter(function(w) { return w.x > 85 && w.x < 240; });
-    var desc = descWords.map(function(w) { return w.text; }).join(' ').trim() || sym;
+  for (let i = 0; i < tokens.length - 10; i++) {
+    const t = tokens[i];
 
-    // Helper: find word in X range that looks like a number
-    function getCol(x1, x2) {
-      var w = row.find(function(ww) {
-        return ww.x >= x1 && ww.x <= x2 && /^-?[\d,]+\.\d{2}$/.test(ww.text);
-      });
-      return w ? pN(w.text) : 0;
+    // Ticker: 1-6 chars, começa com letra maiúscula
+    if (!/^[A-Z][A-Z0-9]{0,5}$/.test(t)) continue;
+    if (skipSet.has(t) || seenSymbols.has(t)) continue;
+
+    // Coleta descrição
+    let descEnd = i + 1;
+    let desc = '';
+    while (descEnd < Math.min(i + 10, tokens.length)) {
+      const tok = tokens[descEnd];
+      if (/^-?\d/.test(tok)) break;
+      if (!/^[A-Z\/]/.test(tok) && tok !== '.') break;
+      desc += (desc ? ' ' : '') + tok;
+      descEnd++;
     }
-    function getInt(x1, x2) {
-      var w = row.find(function(ww) {
-        return ww.x >= x1 && ww.x <= x2 && /^\d+$/.test(ww.text);
-      });
-      return w ? parseInt(w.text) : 0;
-    }
 
-    // Qty current: x ≈ 283-300
-    var qty     = getInt(280, 305);
-    // Price current: x ≈ 358-380
-    var price   = getCol(355, 385);
-    // Val current: x ≈ 463-485 (THE KEY COLUMN)
-    var valCurr = getCol(460, 490);
-    // PNL position: x ≈ 518-545
-    var pnl     = getCol(515, 550);
+    // Coleta números após a descrição
+    const numSlice = tokens.slice(descEnd, descEnd + 16).join(' ');
+    const rawNums  = numSlice.match(/-?[\d,]+\.?\d*/g);
+    if (!rawNums || rawNums.length < 6) continue;
 
-    if (valCurr > 0) {
-      seen[sym] = 1;
-      data.positions.push({ symbol: sym, desc: desc, qty: qty, price: price, value: valCurr, pnl: pnl });
-    }
-  });
+    const nums = rawNums.map(n => pN(n));
+    const q1 = nums[0], q2 = nums[1];
 
-  data.positions.sort(function(a,b) { return b.value - a.value; });
+    // VALIDAÇÃO-CHAVE: qty_prev e qty_curr devem ser inteiros positivos e iguais (ou muito próximos)
+    // Isso filtra palavras da descrição que não são tickers de verdade
+    if (!Number.isInteger(q1) || !Number.isInteger(q2)) continue;
+    if (q1 <= 0 || q2 <= 0) continue;
+    // Quantidades devem ser razoáveis (< 1 milhão)
+    if (q2 > 1000000) continue;
+
+    const qty   = q2;
+    const price = nums.length > 3 ? nums[3] : (nums[2] || 0);
+    const value = nums.length > 5 ? nums[5] : (nums[4] || 0);
+    const pnl   = nums.length > 6 ? nums[6] : 0;
+
+    if (value <= 0 || value > 20000000) continue;
+    if (price < 0 || price > 100000) continue;
+
+    // Evita duplicatas pelo valor de mercado atual
+    const valKey = value.toFixed(2);
+    if (seenValues.has(valKey)) continue;
+
+    seenSymbols.add(t);
+    seenValues.add(valKey);
+
+    positions.push({
+      symbol: t,
+      desc:   (desc.trim() || t).slice(0, 40),
+      qty:    qty,
+      price:  Math.abs(price),
+      value:  Math.abs(value),
+      pnl:    pnl
+    });
+  }
+
+  data.positions = positions
+    .filter(p => p.value > 0 && p.qty > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 100);
+
   return data;
 }
 
@@ -1585,22 +1514,36 @@ function showMTMResult(data) {
   if (data.retornoPct) setVal('f-retorno', data.retornoPct.toFixed(2));
   _positions = data.positions;
 
-  const zone   = document.getElementById('drop-zone');
-  const result = document.getElementById('mtm-result');
+  const zone    = document.getElementById('drop-zone');
+  const result  = document.getElementById('mtm-result');
   const summary = document.getElementById('mtm-summary');
   if (zone)   zone.style.display   = 'none';
   if (result) result.style.display = 'block';
+
   if (summary) {
     const navOk = data.nav > 0;
     const rc    = data.retornoPct >= 0 ? 'var(--green)' : 'var(--red)';
-    summary.innerHTML =
-      `<div><span style="color:var(--muted)">NAV:</span> <strong style="color:${navOk?'var(--white)':'var(--red)'}">${navOk ? 'US$ ' + data.nav.toLocaleString('en-US',{maximumFractionDigits:0}) : '⚠ preencha manualmente'}</strong></div>`
-    + `<div><span style="color:var(--muted)">Retorno:</span> <strong style="color:${rc}">${data.retornoPct>=0?'+':''}${data.retornoPct.toFixed(2)}%</strong></div>`
-    + `<div><span style="color:var(--muted)">Posições:</span> <strong style="color:var(--white)">${data.positions.length} ativos</strong></div>`
+    const varM  = data.navAnterior > 0 && data.nav > 0 ? data.nav - data.navAnterior : 0;
+    const varC  = varM >= 0 ? 'var(--green)' : 'var(--red)';
+
+    let html =
+      `<div><span style="color:var(--muted)">NAV atual:</span> <strong style="color:${navOk?'var(--white)':'var(--red)'}">${navOk ? 'US$ ' + data.nav.toLocaleString('en-US',{maximumFractionDigits:0}) : '⚠ preencha manualmente'}</strong></div>`;
+    if (data.navAnterior > 0)
+      html += `<div><span style="color:var(--muted)">NAV anterior:</span> <strong style="color:var(--muted)">US$ ${data.navAnterior.toLocaleString('en-US',{maximumFractionDigits:0})}</strong></div>`;
+    if (varM !== 0)
+      html += `<div><span style="color:var(--muted)">Variação:</span> <strong style="color:${varC}">${varM>=0?'+':''}US$ ${Math.abs(varM).toLocaleString('en-US',{maximumFractionDigits:0})}</strong></div>`;
+    html +=
+      `<div><span style="color:var(--muted)">Retorno:</span> <strong style="color:${rc}">${data.retornoPct>=0?'+':''}${data.retornoPct.toFixed(2)}%</strong></div>`
+    + `<div><span style="color:var(--muted)">Posições:</span> <strong style="color:${data.positions.length>0?'var(--white)':'var(--red)'}">${data.positions.length > 0 ? data.positions.length + ' ativos' : '⚠ não detectadas (verifique NAV)'}</strong></div>`
     + `<div><span style="color:var(--muted)">Dividendos:</span> <strong style="color:var(--btc)">US$ ${data.dividendos.toFixed(2)}</strong></div>`;
+
+    summary.innerHTML = html;
   }
+
   const n = data.positions.length;
-  toast('✓ MTM: ' + (data.nav > 0 ? 'NAV US$ ' + Math.round(data.nav).toLocaleString('en-US') + ' · ' : '') + n + ' posições');
+  const navStr = data.nav > 0 ? 'NAV US$ ' + Math.round(data.nav).toLocaleString('en-US') + ' · ' : '';
+  const posStr = n > 0 ? n + ' posições detectadas' : '0 posições — confira o NAV manual';
+  toast('✓ MTM: ' + navStr + posStr, n === 0);
 }
 
 function resetMTM() {
@@ -1610,9 +1553,8 @@ function resetMTM() {
     zone.style.display = 'block';
     zone.innerHTML = `<div style="font-size:28px;margin-bottom:8px">📑</div>
       <div style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px">Arraste o Resumo MTM aqui</div>
-      <div style="font-size:11px;color:var(--muted)">ou clique para selecionar (<strong style="color:var(--orange)">PDF</strong> ou <strong style="color:var(--orange)">HTML</strong>)</div>
-      <div style="font-size:10px;color:var(--muted2);margin-top:4px">IBKR → Relatórios → Extratos → Resumo MTM</div>
-      <input type="file" id="f-pdf" accept=".pdf,.html,.htm">`;
+      <div style="font-size:11px;color:var(--muted)">ou clique para selecionar (PDF)</div>
+      <input type="file" id="f-pdf" accept=".pdf">`;
     // Re-attach events
     const newInput = zone.querySelector('#f-pdf');
     if (newInput) newInput.addEventListener('change', e => { const f = e.target.files[0]; if (f) parseMTM(f); e.target.value=''; });
@@ -1755,7 +1697,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initXpub();
 
   // Start auth flow
-  initAuth();
+  initAuth().catch(() => showAuth()); // fallback se initAuth lançar exceção inesperada
 
   // Fetch live prices
   fetchPrecos();
