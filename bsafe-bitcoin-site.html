@@ -367,7 +367,7 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
     <li><a href="#bitcoin">O que é Bitcoin</a></li>
     <li><a href="#tese">Por que Bitcoin</a></li>
     <li><a href="#custodia">Custódia</a></li>
-    <li><a href="#dashboard">Dashboard</a></li>
+    <li><a href="dashboard.html">Dashboard ↗</a></li>
     <li><a href="#planos">Planos</a></li>
     <li><a href="#faq">FAQ</a></li>
     <li><a href="#sobre">Sobre</a></li>
@@ -384,7 +384,7 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
   <a href="#bitcoin" onclick="cm()">O que é Bitcoin</a>
   <a href="#tese" onclick="cm()">Por que Bitcoin</a>
   <a href="#custodia" onclick="cm()">Custódia Própria</a>
-  <a href="#dashboard" onclick="cm()">Dashboard</a>
+  <a href="dashboard.html" onclick="cm()">Dashboard ↗</a>
   <a href="#planos" onclick="cm()">Planos</a>
   <a href="#faq" onclick="cm()">FAQ</a>
   <a href="#sobre" onclick="cm()">Sobre</a>
@@ -513,33 +513,6 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
     <div class="warn rev">
       <div class="wi">⚠️</div>
       <div class="wt"><strong>Atenção:</strong> Qualquer pessoa que solicitar sua seed phrase está tentando roubar seu Bitcoin. Nenhum suporte legítimo — incluindo o BSafe — jamais pedirá suas 24 palavras. Se alguém pedir, é golpe. Encerre o contato imediatamente e não compartilhe nada.</div>
-    </div>
-  </div>
-</section>
-
-<!-- DASHBOARD -->
-<section id="dashboard">
-  <div class="wrap">
-    <div class="stag rev">DADOS AO VIVO</div>
-    <h2 class="stitle rev rd1">Dashboard Bitcoin</h2>
-    <p class="slead rev rd2">Preço em tempo real, variação 24h e contexto histórico dos halvings — direto da API pública do CoinGecko e Mempool.</p>
-    <div class="dash-cards">
-      <div class="dc rev"><div class="dc-l">BTC / USD</div><div class="dc-v" id="d-usd">—</div><div class="dc-c" id="d-uch">carregando...</div></div>
-      <div class="dc rev rd1"><div class="dc-l">BTC / BRL</div><div class="dc-v" id="d-brl">—</div><div class="dc-c" id="d-bch">—</div></div>
-      <div class="dc rev rd2"><div class="dc-l">BLOCO ATUAL</div><div class="dc-v" id="d-blk">—</div><div class="dc-c" id="d-bsub" style="color:var(--muted)">—</div></div>
-    </div>
-    <div class="chart-box rev">
-      <div class="chart-head">
-        <span>BTC/USD — HISTÓRICO DE PREÇO (TEMPO REAL)</span>
-        <span class="live-dot">AO VIVO</span>
-      </div>
-      <canvas id="btcChart"></canvas>
-    </div>
-    <div class="halvings">
-      <div class="hcard rev"><div class="hy">2012</div><div class="hp">$12 → $1.150</div><div class="hl">1º HALVING</div></div>
-      <div class="hcard rev rd1"><div class="hy">2016</div><div class="hp">$650 → $20k</div><div class="hl">2º HALVING</div></div>
-      <div class="hcard rev rd2"><div class="hy">2020</div><div class="hp">$8k → $69k</div><div class="hl">3º HALVING</div></div>
-      <div class="hcard rev rd3"><div class="hy">2024</div><div class="hp" id="h24p">Em andamento</div><div class="hl">4º HALVING</div></div>
     </div>
   </div>
 </section>

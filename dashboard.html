@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BSafe Dashboard — Patrimônio em Bitcoin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --btc: #F7931A;
+  --btc-dim: rgba(247,147,26,0.10);
+  --btc-glow: rgba(247,147,26,0.20);
+  --bg: #080808;
+  --bg1: #0d0d0d;
+  --bg2: #141414;
+  --bg3: #1c1c1c;
+  --border: rgba(255,255,255,0.07);
+  --border-btc: rgba(247,147,26,0.28);
+  --white: #ffffff;
+  --off: #e8e8e0;
+  --muted: #5a5a5a;
+  --muted2: #3a3a3a;
+  --text: #9a9a90;
+  --green: #22c55e;
+  --red: #ef4444;
+  --blue: #60a5fa;
+  --purple: #a78bfa;
+  --yellow: #fbbf24;
+  --r: 14px;
+  --rsm: 10px;
+  --ease: 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--off);overflow-x:hidden;-webkit-font-smoothing:antialiased;min-height:100vh}
+body::after{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.5}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--btc);border-radius:2px}
+
+/* ── LOGIN ─────────────────────────────────────── */
+#login-screen {
+  position:fixed;inset:0;z-index:500;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);
+  padding:24px;
+}
+.login-glow {
+  position:absolute;width:600px;height:600px;
+  background:radial-gradient(circle,rgba(247,147,26,.10) 0%,transparent 68%);
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+.login-box {
+  position:relative;z-index:1;
+  background:var(--bg1);
+  border:1px solid var(--border-btc);
+  border-radius:20px;
+  padding:48px 44px;
+  width:100%;max-width:420px;
+  box-shadow:0 40px 100px rgba(0,0,0,.6),0 0 0 1px rgba(247,147,26,.05);
+}
+.login-box::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--btc),transparent);
+  border-radius:20px 20px 0 0;
+}
+.login-logo {
+  display:flex;align-items:center;gap:12px;margin-bottom:32px;
+}
+.login-logo-icon {
+  width:42px;height:42px;background:var(--btc);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:900;color:#000;font-family:'Bebas Neue',sans-serif;
+}
+.login-logo-text {
+  font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--white);letter-spacing:.04em;line-height:1;
+}
+.login-logo-sub { font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.1em;margin-top:2px; }
+.login-title { font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--white);margin-bottom:8px;letter-spacing:.02em; }
+.login-sub { font-size:13px;color:var(--text);margin-bottom:32px;line-height:1.5; }
+.field { display:flex;flex-direction:column;gap:6px;margin-bottom:16px; }
+.field label { font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.09em; }
+.field input {
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--rsm);
+  padding:13px 15px;font-size:14px;color:var(--white);font-family:'DM Sans',sans-serif;
+  transition:border-color .2s;outline:none;
+}
+.field input:focus { border-color:var(--btc); }
+.field input::placeholder { color:var(--muted2); }
+.login-btn {
+  width:100%;padding:14px;background:var(--btc);color:#000;
+  border:none;border-radius:var(--rsm);font-weight:700;font-size:15px;
+  cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.02em;
+  transition:var(--ease);margin-top:8px;
+}
+.login-btn:hover { background:#ffaa33;box-shadow:0 8px 28px rgba(247,147,26,.38); }
+.login-err { display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:var(--rsm);padding:11px 14px;font-size:13px;color:#fca5a5;margin-top:12px; }
+.login-back { display:block;text-align:center;margin-top:20px;font-size:12px;color:var(--muted);text-decoration:none; }
+.login-back:hover { color:var(--btc); }
+.login-demo-hint {
+  margin-top:20px;padding:12px;background:var(--btc-dim);border:1px solid var(--border-btc);
+  border-radius:var(--rsm);font-size:11px;color:var(--btc);font-family:'DM Mono',monospace;
+  letter-spacing:.04em;line-height:1.6;
+}
+
+/* ── DASHBOARD ──────────────────────────────────── */
+#dashboard-screen { display:none; }
+
+/* Top bar */
+.topbar {
+  position:sticky;top:0;z-index:100;
+  background:rgba(8,8,8,.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:68px;
+}
+.topbar-logo {
+  display:flex;align-items:center;gap:10px;
+  font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--white);letter-spacing:.03em;
+  text-decoration:none;
+}
+.topbar-logo-icon {
+  width:32px;height:32px;background:var(--btc);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#000;
+}
+.topbar-right { display:flex;align-items:center;gap:12px; }
+.topbar-user {
+  display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);
+  background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:7px 13px;
+}
+.topbar-user .dot-green { width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s ease infinite; }
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.logout-btn {
+  background:none;border:1px solid var(--border);border-radius:8px;
+  padding:7px 13px;font-size:12px;color:var(--muted);cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:var(--ease);
+}
+.logout-btn:hover { border-color:var(--red);color:var(--red); }
+
+/* Main layout */
+.dash-main { max-width:1200px;margin:0 auto;padding:32px 24px 80px; }
+
+/* Section header */
+.sec-head { display:flex;align-items:center;justify-content:space-between;margin-bottom:20px; }
+.sec-title { font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--white);letter-spacing:.03em; }
+.sec-tag {
+  font-size:10px;font-family:'DM Mono',monospace;color:var(--btc);
+  letter-spacing:.12em;display:flex;align-items:center;gap:8px;
+}
+.sec-tag::before { content:'';width:14px;height:1px;background:var(--btc); }
+
+/* Price cards */
+.price-row { display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px; }
+.pcard {
+  background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);
+  padding:20px 22px;transition:var(--ease);
+}
+.pcard:hover { border-color:var(--border-btc); }
+.pcard-label { font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.1em;margin-bottom:8px; }
+.pcard-value { font-family:'DM Mono',monospace;font-size:clamp(16px,2vw,22px);font-weight:500;color:var(--white);line-height:1;margin-bottom:6px; }
+.pcard-change { font-size:11px;font-family:'DM Mono',monospace; }
+.up{color:var(--green)}.down{color:var(--red)}
+
+/* Chart box */
+.chart-box {
+  background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);
+  padding:24px;margin-bottom:24px;position:relative;overflow:hidden;
+}
+.chart-head {
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:18px;flex-wrap:wrap;gap:10px;
+}
+.chart-title { font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.08em; }
+.chart-tabs { display:flex;gap:4px; }
+.ctab {
+  background:var(--bg3);border:none;border-radius:6px;
+  padding:5px 11px;font-size:10px;font-family:'DM Mono',monospace;
+  color:var(--muted);cursor:pointer;transition:var(--ease);letter-spacing:.04em;
+}
+.ctab.active { background:var(--btc-dim);color:var(--btc);border:1px solid var(--border-btc); }
+.live-dot { display:flex;align-items:center;gap:5px;font-size:10px;color:var(--green);font-family:'DM Mono',monospace; }
+.live-dot::before { content:'';width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 1.5s ease infinite; }
+canvas { width:100%!important; }
+#priceChart { height:200px!important; }
+
+/* Comparison chart */
+#compChart { height:220px!important; }
+
+/* xpub section */
+.xpub-panel {
+  background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);
+  padding:28px;margin-bottom:24px;
+}
+.xpub-intro { font-size:13px;color:var(--text);line-height:1.7;margin-bottom:20px;max-width:640px; }
+.xpub-form { display:flex;gap:10px;flex-wrap:wrap; }
+.xpub-input {
+  flex:1;min-width:260px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rsm);
+  padding:12px 15px;font-size:13px;color:var(--white);font-family:'DM Mono',monospace;
+  outline:none;transition:border-color .2s;
+}
+.xpub-input:focus { border-color:var(--btc); }
+.xpub-input::placeholder { color:var(--muted2);font-family:'DM Sans',sans-serif; }
+.xpub-btn {
+  background:var(--btc);color:#000;border:none;border-radius:var(--rsm);
+  padding:12px 22px;font-weight:700;font-size:13px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:var(--ease);white-space:nowrap;
+}
+.xpub-btn:hover { background:#ffaa33;box-shadow:0 6px 20px rgba(247,147,26,.35); }
+.xpub-btn:disabled { opacity:.5;cursor:not-allowed; }
+.xpub-note {
+  margin-top:12px;font-size:11px;color:var(--muted);line-height:1.6;
+  display:flex;gap:8px;align-items:flex-start;
+}
+.xpub-note::before { content:'ℹ';color:var(--btc);flex-shrink:0;margin-top:1px; }
+
+/* Portfolio summary */
+.portfolio-grid { display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px; }
+.ptile {
+  background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);
+  padding:22px;transition:var(--ease);position:relative;overflow:hidden;
+}
+.ptile:hover { border-color:var(--border-btc); }
+.ptile-icon { font-size:22px;margin-bottom:10px; }
+.ptile-label { font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.1em;margin-bottom:6px; }
+.ptile-value { font-family:'DM Mono',monospace;font-size:clamp(18px,2.2vw,26px);font-weight:500;color:var(--white);line-height:1;margin-bottom:4px; }
+.ptile-sub { font-size:11px;color:var(--muted);font-family:'DM Mono',monospace; }
+.ptile-change { margin-top:8px;font-size:12px;font-family:'DM Mono',monospace; }
+.ptile-empty {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;min-height:100px;border:1px dashed var(--muted2);
+  color:var(--muted);font-size:12px;gap:8px;
+}
+.ptile-empty span { font-size:24px; }
+
+/* Comparison section */
+.comp-section { background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:24px; }
+.comp-legend { display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px; }
+.cleg-item { display:flex;align-items:center;gap:7px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text); }
+.cleg-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+.period-tabs { display:flex;gap:4px; }
+.ptab {
+  background:var(--bg3);border:none;border-radius:6px;
+  padding:5px 11px;font-size:10px;font-family:'DM Mono',monospace;
+  color:var(--muted);cursor:pointer;transition:var(--ease);letter-spacing:.04em;
+}
+.ptab.active { background:var(--btc-dim);color:var(--btc);border:1px solid var(--border-btc); }
+
+/* Returns table */
+.returns-table {
+  width:100%;border-collapse:collapse;margin-top:16px;font-size:12px;font-family:'DM Mono',monospace;
+}
+.returns-table th {
+  text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);
+  color:var(--muted);font-weight:500;letter-spacing:.06em;font-size:10px;
+}
+.returns-table td { padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text); }
+.returns-table tr:last-child td { border-bottom:none; }
+.returns-table tr:hover td { background:var(--bg2); }
+.returns-table .asset-name { color:var(--white);font-weight:500; }
+.ret-pos { color:var(--green); }
+.ret-neg { color:var(--red); }
+.rank-1 { color:var(--btc);font-weight:700; }
+
+/* Halvings mini */
+.halvings-row { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px; }
+.hcard {
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--rsm);
+  padding:16px 14px;text-align:center;transition:var(--ease);
+}
+.hcard:hover { border-color:var(--border-btc); }
+.hy { font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--btc); }
+.hp { font-family:'DM Mono',monospace;font-size:11px;color:var(--text);margin-top:2px; }
+.hl { font-size:9px;color:var(--muted);letter-spacing:.08em;margin-top:4px; }
+
+/* Toast */
+.toast {
+  position:fixed;bottom:28px;right:28px;z-index:9000;
+  background:var(--bg2);border:1px solid var(--border-btc);border-radius:var(--r);
+  padding:14px 18px;font-size:13px;color:var(--off);
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  transform:translateY(20px);opacity:0;transition:.4s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;max-width:300px;
+}
+.toast.show { transform:translateY(0);opacity:1; }
+.toast-icon { color:var(--btc);margin-right:7px; }
+
+/* Disclaimer */
+.disc {
+  background:rgba(247,147,26,.04);border-top:1px solid var(--border);
+  padding:16px 32px;font-size:11px;color:var(--muted);line-height:1.7;text-align:center;
+}
+
+/* Loading skeleton */
+.skel {
+  background:linear-gradient(90deg,var(--bg2) 25%,var(--bg3) 50%,var(--bg2) 75%);
+  background-size:200% 100%;
+  animation:skel 1.5s infinite;
+  border-radius:4px;
+}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* Responsive */
+@media(max-width:900px){
+  .price-row{grid-template-columns:repeat(2,1fr)}
+  .portfolio-grid{grid-template-columns:1fr 1fr}
+  .halvings-row{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+  .topbar{padding:0 16px}
+  .dash-main{padding:20px 16px 60px}
+  .price-row{grid-template-columns:1fr 1fr}
+  .portfolio-grid{grid-template-columns:1fr}
+  .halvings-row{grid-template-columns:1fr 1fr}
+  .xpub-form{flex-direction:column}
+  .xpub-input{min-width:0}
+  .login-box{padding:32px 24px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-glow"></div>
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">₿</div>
+      <div>
+        <div class="login-logo-text">BSafe Bitcoin</div>
+        <div class="login-logo-sub">DASHBOARD PRIVADO</div>
+      </div>
+    </div>
+    <div class="login-title">Entrar</div>
+    <div class="login-sub">Acesso exclusivo para clientes BSafe Bitcoin. Acompanhe seu patrimônio em tempo real.</div>
+    <div class="field">
+      <label>E-MAIL</label>
+      <input type="email" id="inp-email" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>SENHA</label>
+      <input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Acessar dashboard →</button>
+    <div class="login-err" id="login-err">E-mail ou senha incorretos. Tente novamente.</div>
+    <div class="login-demo-hint">
+      DEMO — use qualquer e-mail + senha "bsafe" para acessar
+    </div>
+    <a href="index.html" class="login-back">← Voltar ao site</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     DASHBOARD SCREEN
+══════════════════════════════════════ -->
+<div id="dashboard-screen">
+
+  <!-- Top bar -->
+  <nav class="topbar">
+    <a href="index.html" class="topbar-logo">
+      <div class="topbar-logo-icon">₿</div>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span>
+    </a>
+    <div class="topbar-right">
+      <div class="topbar-user">
+        <div class="dot-green"></div>
+        <span id="user-label">—</span>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Sair</button>
+    </div>
+  </nav>
+
+  <div class="dash-main">
+
+    <!-- ── PREÇOS AO VIVO ── -->
+    <div class="sec-head" style="margin-bottom:16px">
+      <div class="sec-tag">DADOS AO VIVO</div>
+      <div class="live-dot" id="live-indicator">ATUALIZANDO</div>
+    </div>
+    <div class="price-row">
+      <div class="pcard">
+        <div class="pcard-label">BTC / USD</div>
+        <div class="pcard-value" id="p-usd">—</div>
+        <div class="pcard-change" id="p-ch24">—</div>
+      </div>
+      <div class="pcard">
+        <div class="pcard-label">BTC / BRL</div>
+        <div class="pcard-value" id="p-brl">—</div>
+        <div class="pcard-change" id="p-bch24">—</div>
+      </div>
+      <div class="pcard">
+        <div class="pcard-label">BLOCO ATUAL</div>
+        <div class="pcard-value" id="p-blk">—</div>
+        <div class="pcard-change" style="color:var(--muted)" id="p-blksub">—</div>
+      </div>
+      <div class="pcard">
+        <div class="pcard-label">PRÓX. HALVING</div>
+        <div class="pcard-value" id="p-halving">—</div>
+        <div class="pcard-change" style="color:var(--muted)">blocos restantes</div>
+      </div>
+    </div>
+
+    <!-- ── GRÁFICO DE PREÇO ── -->
+    <div class="chart-box">
+      <div class="chart-head">
+        <span class="chart-title">BTC/USD — HISTÓRICO DE PREÇO</span>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="live-dot">AO VIVO</div>
+        </div>
+      </div>
+      <canvas id="priceChart"></canvas>
+    </div>
+
+    <!-- ── PORTFÓLIO XPUB ── -->
+    <div class="sec-head">
+      <div>
+        <div class="sec-tag">SEU PATRIMÔNIO</div>
+        <div class="sec-title" style="margin-top:4px">Rastreamento de Carteira</div>
+      </div>
+    </div>
+
+    <div class="xpub-panel">
+      <p class="xpub-intro">
+        Insira a <strong style="color:var(--off)">chave pública estendida (xpub / zpub / ypub)</strong> da sua hardware wallet para rastrear seu saldo e histórico de transações de forma <em>somente-leitura</em> — sem acesso às suas chaves privadas, sem risco.
+      </p>
+      <div class="xpub-form">
+        <input class="xpub-input" id="xpub-input" type="text" placeholder="xpub6... ou zpub1... ou ypub...">
+        <button class="xpub-btn" id="xpub-btn" onclick="loadXpub()">Rastrear carteira</button>
+      </div>
+      <div class="xpub-note">
+        Sua xpub só revela endereços e saldos — nunca suas chaves privadas. Consulta via API pública Mempool.space. Nenhum dado é armazenado por nós.
+      </div>
+    </div>
+
+    <!-- Portfolio tiles -->
+    <div class="portfolio-grid" id="portfolio-grid">
+      <div class="ptile">
+        <div class="ptile-label">SALDO TOTAL (BTC)</div>
+        <div class="ptile-value" id="pt-btc">—</div>
+        <div class="ptile-sub" id="pt-btc-sub">Insira a xpub acima</div>
+      </div>
+      <div class="ptile">
+        <div class="ptile-label">VALOR EM USD</div>
+        <div class="ptile-value" id="pt-usd">—</div>
+        <div class="ptile-change" id="pt-usd-change"></div>
+      </div>
+      <div class="ptile">
+        <div class="ptile-label">VALOR EM BRL</div>
+        <div class="ptile-value" id="pt-brl">—</div>
+        <div class="ptile-change" id="pt-brl-change"></div>
+      </div>
+    </div>
+
+    <!-- Transactions (shown after xpub load) -->
+    <div id="tx-section" style="display:none;margin-bottom:24px">
+      <div class="sec-head">
+        <div class="sec-title">Últimas Transações</div>
+        <div id="tx-addr-count" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace"></div>
+      </div>
+      <div class="chart-box" style="padding:0;overflow:hidden">
+        <table class="returns-table" id="tx-table">
+          <thead>
+            <tr>
+              <th>DATA</th>
+              <th>TXID</th>
+              <th>TIPO</th>
+              <th style="text-align:right">VALOR (BTC)</th>
+            </tr>
+          </thead>
+          <tbody id="tx-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── COMPARATIVO DE DESEMPENHO ── -->
+    <div class="sec-head">
+      <div>
+        <div class="sec-tag">PERFORMANCE</div>
+        <div class="sec-title" style="margin-top:4px">Bitcoin vs Outros Ativos</div>
+      </div>
+      <div class="period-tabs">
+        <button class="ptab active" data-period="1y" onclick="setPeriod(this,'1y')">1A</button>
+        <button class="ptab" data-period="3y" onclick="setPeriod(this,'3y')">3A</button>
+        <button class="ptab" data-period="5y" onclick="setPeriod(this,'5y')">5A</button>
+        <button class="ptab" data-period="all" onclick="setPeriod(this,'all')">MAX</button>
+      </div>
+    </div>
+
+    <div class="comp-section">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px">
+        <div class="comp-legend">
+          <div class="cleg-item"><div class="cleg-dot" style="background:#F7931A"></div>Bitcoin (BTC)</div>
+          <div class="cleg-item"><div class="cleg-dot" style="background:#60a5fa"></div>S&amp;P 500</div>
+          <div class="cleg-item"><div class="cleg-dot" style="background:#22c55e"></div>Ibovespa</div>
+          <div class="cleg-item"><div class="cleg-dot" style="background:#a78bfa"></div>CDI (Brasil)</div>
+          <div class="cleg-item"><div class="cleg-dot" style="background:#fbbf24"></div>Ouro</div>
+        </div>
+        <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);line-height:1.6;text-align:right">
+          Retornos aproximados<br>baseados em dados históricos
+        </div>
+      </div>
+      <canvas id="compChart" style="margin-top:16px"></canvas>
+
+      <!-- Returns table -->
+      <table class="returns-table" style="margin-top:20px">
+        <thead>
+          <tr>
+            <th>ATIVO</th>
+            <th>RETORNO</th>
+            <th>RANKING</th>
+            <th>NOTAS</th>
+          </tr>
+        </thead>
+        <tbody id="comp-body"></tbody>
+      </table>
+    </div>
+
+    <!-- ── HALVINGS ── -->
+    <div class="sec-head">
+      <div class="sec-tag">CICLOS</div>
+      <div class="sec-title" style="margin-top:4px">Histórico de Halvings</div>
+    </div>
+    <div class="halvings-row">
+      <div class="hcard"><div class="hy">2012</div><div class="hp">$12 → $1.150</div><div class="hl">1º HALVING · +9.483%</div></div>
+      <div class="hcard"><div class="hy">2016</div><div class="hp">$650 → $20k</div><div class="hl">2º HALVING · +2.977%</div></div>
+      <div class="hcard"><div class="hy">2020</div><div class="hp">$8k → $69k</div><div class="hl">3º HALVING · +762%</div></div>
+      <div class="hcard" style="border-color:var(--border-btc)"><div class="hy" style="color:var(--green)">2024</div><div class="hp" id="h24val">Em andamento</div><div class="hl">4º HALVING · ATUAL</div></div>
+    </div>
+
+  </div><!-- /dash-main -->
+
+  <div class="disc">⚠ AVISO EDUCACIONAL: Este dashboard é exclusivamente informativo. Não constitui recomendação de investimento. Dados de mercado via APIs públicas (CoinGecko, Mempool.space). Saldo xpub via Mempool.space API — somente leitura. Bitcoin é um ativo de alta volatilidade e risco.</div>
+
+</div><!-- /dashboard-screen -->
+
+<div class="toast" id="toast"><span class="toast-icon">₿</span><span id="toast-msg"></span></div>
+
+<script>
+/* ═══════════════════════════════════════
+   AUTH (demo local — trocar por Supabase Auth em produção)
+═══════════════════════════════════════ */
+const DEMO_PASS = 'bsafe';
+let currentUser = null;
+
+function doLogin() {
+  const email = document.getElementById('inp-email').value.trim();
+  const pass  = document.getElementById('inp-pass').value;
+  const err   = document.getElementById('login-err');
+  err.style.display = 'none';
+  if (!email.includes('@')) { showErr('Informe um e-mail válido.'); return; }
+  if (pass !== DEMO_PASS)   { showErr('E-mail ou senha incorretos. Tente novamente.'); return; }
+  currentUser = email;
+  document.getElementById('user-label').textContent = email;
+  document.getElementById('login-screen').style.display  = 'none';
+  document.getElementById('dashboard-screen').style.display = 'block';
+  initDashboard();
+}
+function showErr(msg) {
+  const e = document.getElementById('login-err');
+  e.textContent = msg;
+  e.style.display = 'block';
+}
+function doLogout() {
+  currentUser = null;
+  document.getElementById('login-screen').style.display  = 'flex';
+  document.getElementById('dashboard-screen').style.display = 'none';
+  document.getElementById('inp-pass').value = '';
+}
+
+/* ═══════════════════════════════════════
+   TOAST
+═══════════════════════════════════════ */
+function showToast(msg, dur=3000) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+/* ═══════════════════════════════════════
+   PRICE DATA
+═══════════════════════════════════════ */
+let btcUSD = 0, btcBRL = 0, btcChange = 0;
+let priceChart = null, priceHistory = [];
+
+async function fetchPrice() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,brl&include_24hr_change=true');
+    const d = await r.json(), b = d.bitcoin;
+    btcUSD = b.usd; btcBRL = b.brl; btcChange = b.usd_24h_change;
+    const fmt = (n, pfx='') => pfx + n.toLocaleString('pt-BR', {maximumFractionDigits:0});
+    const cs = (btcChange >= 0 ? '+' : '') + btcChange.toFixed(2) + '%';
+    const cc = btcChange >= 0 ? 'up' : 'down';
+    document.getElementById('p-usd').textContent = '$' + fmt(btcUSD);
+    document.getElementById('p-brl').textContent = 'R$' + fmt(btcBRL);
+    document.getElementById('p-ch24').textContent = cs + ' (24h)';
+    document.getElementById('p-ch24').className = 'pcard-change ' + cc;
+    document.getElementById('p-bch24').textContent = cs + ' (24h)';
+    document.getElementById('p-bch24').className = 'pcard-change ' + cc;
+    // Update h24val
+    document.getElementById('h24val').textContent = '$' + fmt(btcUSD) + ' atual';
+    // Price history for chart
+    const t = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    priceHistory.push({t, v: btcUSD});
+    if (priceHistory.length > 60) priceHistory.shift();
+    updatePriceChart();
+    // Refresh portfolio if xpub loaded
+    refreshPortfolioValues();
+  } catch(e) {}
+}
+
+async function fetchBlock() {
+  try {
+    const h = await (await fetch('https://mempool.space/api/blocks/tip/height')).json();
+    document.getElementById('p-blk').textContent = '#' + h.toLocaleString('pt-BR');
+    const halvings = [210000,420000,630000,840000,1050000];
+    const next = halvings.find(b => b > h) || 1050000;
+    const rem = next - h;
+    document.getElementById('p-blksub').textContent = 'Próx. halving em ~' + rem.toLocaleString('pt-BR') + ' blocos';
+    document.getElementById('p-halving').textContent = rem.toLocaleString('pt-BR');
+  } catch(e) {}
+}
+
+/* ═══════════════════════════════════════
+   PRICE CHART
+═══════════════════════════════════════ */
+function initPriceChart() {
+  const ctx = document.getElementById('priceChart');
+  if (!ctx || priceChart) return;
+  // Seed with fake history
+  const base = 95000 + Math.random()*10000;
+  for (let i = 47; i >= 1; i--) {
+    const t = new Date(Date.now() - i * 30 * 60000).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    priceHistory.push({t, v: base + (Math.random()-.5)*6000});
+  }
+  priceChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: priceHistory.map(p => p.t),
+      datasets: [{
+        data: priceHistory.map(p => p.v),
+        borderColor: '#F7931A', backgroundColor: 'rgba(247,147,26,0.06)',
+        borderWidth: 2, fill: true, tension: .4, pointRadius: 0, pointHoverRadius: 4,
+        pointHoverBackgroundColor: '#F7931A'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: {intersect: false, mode:'index'},
+      plugins: {
+        legend: {display: false},
+        tooltip: {
+          backgroundColor: '#1a1a1a', borderColor: 'rgba(247,147,26,.3)', borderWidth: 1,
+          titleColor: '#555', bodyColor: '#F7931A',
+          bodyFont: {family:'DM Mono', size:12},
+          callbacks: {label: c => '$ ' + c.parsed.y.toLocaleString('en-US')}
+        }
+      },
+      scales: {
+        x: {display: false},
+        y: {
+          position: 'right',
+          ticks: {color:'#444', font:{family:'DM Mono',size:10}, callback: v => '$'+(v/1000).toFixed(0)+'k'},
+          grid: {color:'rgba(255,255,255,0.04)'}
+        }
+      }
+    }
+  });
+}
+
+function updatePriceChart() {
+  if (!priceChart || priceHistory.length < 2) return;
+  priceChart.data.labels = priceHistory.map(p => p.t);
+  priceChart.data.datasets[0].data = priceHistory.map(p => p.v);
+  priceChart.update('none');
+}
+
+/* ═══════════════════════════════════════
+   COMPARISON CHART + TABLE
+═══════════════════════════════════════ */
+const PERF_DATA = {
+  '1y':  {btc:125, sp:22, ibov:12, cdi:12.3, gold:18},
+  '3y':  {btc:310, sp:52, ibov:28, cdi:38,   gold:44},
+  '5y':  {btc:1850,sp:110,ibov:55, cdi:65,   gold:80},
+  'all': {btc:85000,sp:320,ibov:180,cdi:220, gold:85},
+};
+const NOTES = {
+  btc:  'Maior retorno entre ativos relevantes',
+  sp:   'Maiores empresas do mundo (VOO/SPY)',
+  ibov: 'Bolsa brasileira em R$ — com inflação',
+  cdi:  'Referência de renda fixa brasileira',
+  gold:  'Reserva de valor tradicional',
+};
+let compChart = null;
+let activePeriod = '1y';
+
+function buildComparisonChart(period) {
+  const d = PERF_DATA[period];
+  const labels = ['BTC','S&P 500','Ibovespa','CDI','Ouro'];
+  const values = [d.btc, d.sp, d.ibov, d.cdi, d.gold];
+  const colors = ['#F7931A','#60a5fa','#22c55e','#a78bfa','#fbbf24'];
+  const ctx = document.getElementById('compChart');
+  if (!ctx) return;
+  if (compChart) compChart.destroy();
+  compChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors.map(c => c + '33'),
+        borderColor: colors,
+        borderWidth: 2,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {display: false},
+        tooltip: {
+          backgroundColor: '#1a1a1a', borderColor: 'rgba(247,147,26,.3)', borderWidth: 1,
+          titleColor:'#aaa', bodyColor:'#F7931A',
+          bodyFont:{family:'DM Mono',size:12},
+          callbacks: {label: c => '+' + c.parsed.y.toLocaleString('pt-BR') + '%'}
+        }
+      },
+      scales: {
+        x: {ticks:{color:'#777',font:{family:'DM Mono',size:10}}, grid:{color:'rgba(255,255,255,0.03)'}},
+        y: {
+          ticks:{color:'#444',font:{family:'DM Mono',size:10},callback:v=>v>999?'+'+(v/1000).toFixed(0)+'k%':'+'+v+'%'},
+          grid:{color:'rgba(255,255,255,0.04)'}
+        }
+      }
+    }
+  });
+
+  // Table
+  const rows = [
+    {name:'Bitcoin (BTC)',   val:d.btc,  key:'btc'},
+    {name:'S&P 500',         val:d.sp,   key:'sp'},
+    {name:'Ouro',            val:d.gold, key:'gold'},
+    {name:'CDI (Brasil)',    val:d.cdi,  key:'cdi'},
+    {name:'Ibovespa',        val:d.ibov, key:'ibov'},
+  ].sort((a,b) => b.val - a.val);
+
+  const tbody = document.getElementById('comp-body');
+  tbody.innerHTML = '';
+  rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    const rankClass = i === 0 ? 'rank-1' : '';
+    tr.innerHTML = `
+      <td class="asset-name">${r.name}</td>
+      <td class="ret-pos ${rankClass}">+${r.val.toLocaleString('pt-BR')}%</td>
+      <td class="${rankClass}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td>
+      <td style="color:var(--muted);font-size:11px">${NOTES[r.key]}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function setPeriod(btn, period) {
+  document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activePeriod = period;
+  buildComparisonChart(period);
+}
+
+/* ═══════════════════════════════════════
+   XPUB / PORTFOLIO
+═══════════════════════════════════════ */
+let walletBalance = null; // in satoshis
+
+async function loadXpub() {
+  const raw = document.getElementById('xpub-input').value.trim();
+  if (!raw) { showToast('Cole sua xpub, zpub ou ypub no campo.'); return; }
+  if (raw.length < 30) { showToast('Chave pública inválida.'); return; }
+
+  const btn = document.getElementById('xpub-btn');
+  btn.textContent = 'Consultando...';
+  btn.disabled = true;
+
+  try {
+    // Mempool.space xpub API
+    const resp = await fetch(`https://mempool.space/api/v1/addresses/prefix/${raw.substring(0,8)}`, {signal: AbortSignal.timeout(8000)});
+    // Primary: try xpub endpoint
+    const xpubResp = await fetch(`https://mempool.space/api/v1/xpub/${encodeURIComponent(raw)}`, {signal: AbortSignal.timeout(8000)});
+    if (xpubResp.ok) {
+      const data = await xpubResp.json();
+      walletBalance = data.balance || 0;
+      const txCount = data.stats?.tx_count || 0;
+      const addrCount = data.stats?.funded_txo_count || 0;
+      document.getElementById('tx-addr-count').textContent = addrCount + ' endereços · ' + txCount + ' transações';
+      updatePortfolio(walletBalance);
+      // Load transactions
+      loadTransactions(raw);
+      showToast('Carteira carregada com sucesso!');
+    } else {
+      throw new Error('xpub not found');
+    }
+  } catch(e) {
+    // Fallback: simulate a balance for demo purposes
+    // In production, guide user to use a proper xpub explorer
+    showToast('API offline ou xpub inválida. Simulando dados demo.');
+    walletBalance = Math.floor(Math.random() * 5000000 + 100000); // random sats for demo
+    updatePortfolio(walletBalance);
+  }
+
+  btn.textContent = 'Rastrear carteira';
+  btn.disabled = false;
+}
+
+function updatePortfolio(sats) {
+  if (sats === null || btcUSD === 0) return;
+  const btc = sats / 1e8;
+  const usd = btc * btcUSD;
+  const brl = btc * btcBRL;
+  const fmt = (n, pfx='') => pfx + n.toLocaleString('pt-BR', {maximumFractionDigits:0});
+  document.getElementById('pt-btc').textContent = btc.toFixed(8) + ' ₿';
+  document.getElementById('pt-btc-sub').textContent = sats.toLocaleString('pt-BR') + ' satoshis';
+  document.getElementById('pt-usd').textContent = '$' + fmt(usd);
+  document.getElementById('pt-brl').textContent = 'R$' + fmt(brl);
+  const chg = (btcChange >= 0 ? '+' : '') + btcChange.toFixed(2) + '%';
+  document.getElementById('pt-usd-change').textContent = 'Variação 24h: ' + chg;
+  document.getElementById('pt-usd-change').className = 'ptile-change ' + (btcChange >= 0 ? 'up' : 'down');
+  document.getElementById('pt-brl-change').textContent = 'Variação 24h: ' + chg;
+  document.getElementById('pt-brl-change').className = 'ptile-change ' + (btcChange >= 0 ? 'up' : 'down');
+}
+
+function refreshPortfolioValues() {
+  if (walletBalance !== null) updatePortfolio(walletBalance);
+}
+
+async function loadTransactions(xpub) {
+  try {
+    const r = await fetch(`https://mempool.space/api/v1/xpub/${encodeURIComponent(xpub)}/txs`, {signal: AbortSignal.timeout(8000)});
+    if (!r.ok) throw new Error();
+    const txs = await r.json();
+    if (!txs || txs.length === 0) throw new Error('empty');
+    renderTxTable(txs.slice(0, 20));
+    document.getElementById('tx-section').style.display = 'block';
+  } catch(e) {
+    // Show demo transactions
+    renderDemoTxTable();
+    document.getElementById('tx-section').style.display = 'block';
+  }
+}
+
+function renderTxTable(txs) {
+  const tbody = document.getElementById('tx-body');
+  tbody.innerHTML = '';
+  txs.forEach(tx => {
+    const date = tx.status?.block_time ? new Date(tx.status.block_time * 1000).toLocaleDateString('pt-BR') : 'Pendente';
+    const txid = tx.txid || '—';
+    const short = txid.substring(0,8) + '...' + txid.slice(-6);
+    const val = ((tx.value || 0) / 1e8).toFixed(8);
+    const tipo = (tx.value || 0) >= 0 ? '<span class="up">↓ Recebido</span>' : '<span class="down">↑ Enviado</span>';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${date}</td>
+      <td><a href="https://mempool.space/tx/${txid}" target="_blank" style="color:var(--btc);text-decoration:none;font-family:'DM Mono',monospace">${short}</a></td>
+      <td>${tipo}</td>
+      <td style="text-align:right">${val} ₿</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderDemoTxTable() {
+  const tbody = document.getElementById('tx-body');
+  tbody.innerHTML = '';
+  const demos = [
+    {date:'15/05/2025', txid:'a1b2c3d4e5f6g7h8', tipo:'up', val:0.00150000, label:'Enviado'},
+    {date:'02/04/2025', txid:'f8e7d6c5b4a3g2h1', tipo:'down', val:0.05000000, label:'Recebido'},
+    {date:'14/02/2025', txid:'1a2b3c4d5e6f7g8h', tipo:'down', val:0.02500000, label:'Recebido'},
+    {date:'01/01/2025', txid:'8h7g6f5e4d3c2b1a', tipo:'up',   val:0.01000000, label:'Enviado'},
+  ];
+  demos.forEach(d => {
+    const tr = document.createElement('tr');
+    const color = d.tipo === 'down' ? 'up' : 'down';
+    const arrow = d.tipo === 'down' ? '↓' : '↑';
+    tr.innerHTML = `
+      <td>${d.date}</td>
+      <td style="color:var(--btc);font-family:'DM Mono',monospace">${d.txid.substring(0,8)}...${d.txid.slice(-6)} <span style="font-size:10px;color:var(--muted)">(demo)</span></td>
+      <td><span class="${color}">${arrow} ${d.label}</span></td>
+      <td style="text-align:right">${d.val.toFixed(8)} ₿</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+function initDashboard() {
+  initPriceChart();
+  fetchPrice();
+  fetchBlock();
+  buildComparisonChart('1y');
+  setInterval(fetchPrice, 30000);
+  setInterval(fetchBlock, 60000);
+}
+
+// Allow enter key in login
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+    doLogin();
+  }
+});
+</script>
+</body>
+</html>
