@@ -432,7 +432,7 @@ canvas { width:100%!important; }
         <button class="xpub-btn" id="xpub-btn" onclick="loadXpub()">Rastrear carteira</button>
       </div>
       <div class="xpub-note">
-        Sua xpub só revela endereços e saldos — nunca suas chaves privadas. Consulta via API pública Mempool.space. Nenhum dado é armazenado por nós.
+        Sua xpub revela apenas endereços e saldos — nunca suas chaves privadas. Os dados são consultados via Blockchain.com (API pública) e abertos no explorador para verificação. Nenhum dado é armazenado pela BSafe.
       </div>
     </div>
 
@@ -771,47 +771,127 @@ function setPeriod(btn, period) {
 }
 
 /* ═══════════════════════════════════════
-   XPUB / PORTFOLIO
+   XPUB / PORTFOLIO — via Blockchain.com API
 ═══════════════════════════════════════ */
 let walletBalance = null; // in satoshis
+let currentXpub = '';
 
 async function loadXpub() {
   const raw = document.getElementById('xpub-input').value.trim();
   if (!raw) { showToast('Cole sua xpub, zpub ou ypub no campo.'); return; }
-  if (raw.length < 30) { showToast('Chave pública inválida.'); return; }
+  if (raw.length < 30) { showToast('Chave pública inválida — verifique e tente novamente.'); return; }
 
   const btn = document.getElementById('xpub-btn');
   btn.textContent = 'Consultando...';
   btn.disabled = true;
 
+  currentXpub = raw;
+
   try {
-    // Mempool.space xpub API
-    const resp = await fetch(`https://mempool.space/api/v1/addresses/prefix/${raw.substring(0,8)}`, {signal: AbortSignal.timeout(8000)});
-    // Primary: try xpub endpoint
-    const xpubResp = await fetch(`https://mempool.space/api/v1/xpub/${encodeURIComponent(raw)}`, {signal: AbortSignal.timeout(8000)});
-    if (xpubResp.ok) {
-      const data = await xpubResp.json();
-      walletBalance = data.balance || 0;
-      const txCount = data.stats?.tx_count || 0;
-      const addrCount = data.stats?.funded_txo_count || 0;
-      document.getElementById('tx-addr-count').textContent = addrCount + ' endereços · ' + txCount + ' transações';
-      updatePortfolio(walletBalance);
-      // Load transactions
-      loadTransactions(raw);
-      showToast('Carteira carregada com sucesso!');
-    } else {
-      throw new Error('xpub not found');
-    }
-  } catch(e) {
-    // Fallback: simulate a balance for demo purposes
-    // In production, guide user to use a proper xpub explorer
-    showToast('API offline ou xpub inválida. Simulando dados demo.');
-    walletBalance = Math.floor(Math.random() * 5000000 + 100000); // random sats for demo
+    // Blockchain.com xpub API — suporta xpub/ypub/zpub
+    const url = `https://blockchain.info/multiaddr?active=${encodeURIComponent(raw)}&n=20&cors=true`;
+    const resp = await fetch(url, { signal: AbortSignal.timeout(12000) });
+
+    if (!resp.ok) throw new Error('blockchain_api_error');
+
+    const data = await resp.json();
+    const wallet = data.wallet;
+    const txs = data.txs || [];
+
+    walletBalance = wallet.final_balance || 0; // satoshis
+    const txCount = wallet.n_tx || txs.length;
+
+    document.getElementById('tx-addr-count').textContent =
+      txCount + ' transações · saldo confirmado';
+
     updatePortfolio(walletBalance);
+    renderBlockchainTxTable(txs, raw);
+    document.getElementById('tx-section').style.display = 'block';
+    showToast('✓ Carteira carregada via Blockchain.com');
+
+  } catch(e) {
+    console.warn('Blockchain.com xpub error:', e);
+    // Fallback: abre o explorador Blockchain.com para verificação manual
+    // e exibe botão para abrir no explorador
+    showToast('Não foi possível carregar via API. Abrindo explorador externo...');
+    document.getElementById('tx-addr-count').textContent = 'Verificação via explorador externo';
+    renderExplorerFallback(raw);
+    document.getElementById('tx-section').style.display = 'block';
   }
 
   btn.textContent = 'Rastrear carteira';
   btn.disabled = false;
+}
+
+function renderBlockchainTxTable(txs, xpub) {
+  const tbody = document.getElementById('tx-body');
+  tbody.innerHTML = '';
+
+  if (!txs || txs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Nenhuma transação encontrada neste endereço.</td></tr>';
+    return;
+  }
+
+  txs.slice(0, 20).forEach(tx => {
+    const date = tx.time
+      ? new Date(tx.time * 1000).toLocaleDateString('pt-BR')
+      : 'Pendente';
+    const txid = tx.hash || '—';
+    const short = txid.length > 14 ? txid.substring(0,8) + '...' + txid.slice(-6) : txid;
+
+    // Calcula valor líquido: saídas para endereços externos menos entradas
+    // result positivo = recebido, negativo = enviado
+    const result = tx.result !== undefined ? tx.result : 0;
+    const btcVal = Math.abs(result) / 1e8;
+    const tipo = result >= 0
+      ? '<span class="up">↓ Recebido</span>'
+      : '<span class="down">↑ Enviado</span>';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${date}</td>
+      <td><a href="https://www.blockchain.com/btc/tx/${txid}" target="_blank"
+          style="color:var(--btc);text-decoration:none;font-family:'DM Mono',monospace;font-size:12px">${short} ↗</a></td>
+      <td>${tipo}</td>
+      <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${btcVal.toFixed(8)} ₿</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Adiciona link para ver carteira completa no Blockchain.com
+  const tfooter = document.createElement('tr');
+  tfooter.innerHTML = `
+    <td colspan="4" style="text-align:center;padding:14px">
+      <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}" target="_blank"
+         style="color:var(--btc);font-size:12px;font-family:'DM Mono',monospace;text-decoration:none">
+        Ver carteira completa no Blockchain.com ↗
+      </a>
+    </td>
+  `;
+  tbody.appendChild(tfooter);
+}
+
+function renderExplorerFallback(xpub) {
+  const tbody = document.getElementById('tx-body');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="4" style="text-align:center;padding:28px 20px">
+        <div style="margin-bottom:14px;font-size:13px;color:var(--text)">
+          Consulte sua carteira diretamente no explorador:
+        </div>
+        <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}"
+           target="_blank"
+           style="display:inline-flex;align-items:center;gap:8px;background:var(--btc);color:#000;
+                  font-weight:700;font-size:13px;padding:12px 22px;border-radius:10px;
+                  text-decoration:none;font-family:'DM Sans',sans-serif">
+          Abrir no Blockchain.com ↗
+        </a>
+        <div style="margin-top:12px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">
+          Somente leitura — suas chaves privadas estão seguras
+        </div>
+      </td>
+    </tr>
+  `;
 }
 
 function updatePortfolio(sats) {
@@ -819,7 +899,7 @@ function updatePortfolio(sats) {
   const btc = sats / 1e8;
   const usd = btc * btcUSD;
   const brl = btc * btcBRL;
-  const fmt = (n, pfx='') => pfx + n.toLocaleString('pt-BR', {maximumFractionDigits:0});
+  const fmt = (n) => n.toLocaleString('pt-BR', {maximumFractionDigits:0});
   document.getElementById('pt-btc').textContent = btc.toFixed(8) + ' ₿';
   document.getElementById('pt-btc-sub').textContent = sats.toLocaleString('pt-BR') + ' satoshis';
   document.getElementById('pt-usd').textContent = '$' + fmt(usd);
@@ -833,64 +913,6 @@ function updatePortfolio(sats) {
 
 function refreshPortfolioValues() {
   if (walletBalance !== null) updatePortfolio(walletBalance);
-}
-
-async function loadTransactions(xpub) {
-  try {
-    const r = await fetch(`https://mempool.space/api/v1/xpub/${encodeURIComponent(xpub)}/txs`, {signal: AbortSignal.timeout(8000)});
-    if (!r.ok) throw new Error();
-    const txs = await r.json();
-    if (!txs || txs.length === 0) throw new Error('empty');
-    renderTxTable(txs.slice(0, 20));
-    document.getElementById('tx-section').style.display = 'block';
-  } catch(e) {
-    // Show demo transactions
-    renderDemoTxTable();
-    document.getElementById('tx-section').style.display = 'block';
-  }
-}
-
-function renderTxTable(txs) {
-  const tbody = document.getElementById('tx-body');
-  tbody.innerHTML = '';
-  txs.forEach(tx => {
-    const date = tx.status?.block_time ? new Date(tx.status.block_time * 1000).toLocaleDateString('pt-BR') : 'Pendente';
-    const txid = tx.txid || '—';
-    const short = txid.substring(0,8) + '...' + txid.slice(-6);
-    const val = ((tx.value || 0) / 1e8).toFixed(8);
-    const tipo = (tx.value || 0) >= 0 ? '<span class="up">↓ Recebido</span>' : '<span class="down">↑ Enviado</span>';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${date}</td>
-      <td><a href="https://mempool.space/tx/${txid}" target="_blank" style="color:var(--btc);text-decoration:none;font-family:'DM Mono',monospace">${short}</a></td>
-      <td>${tipo}</td>
-      <td style="text-align:right">${val} ₿</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function renderDemoTxTable() {
-  const tbody = document.getElementById('tx-body');
-  tbody.innerHTML = '';
-  const demos = [
-    {date:'15/05/2025', txid:'a1b2c3d4e5f6g7h8', tipo:'up', val:0.00150000, label:'Enviado'},
-    {date:'02/04/2025', txid:'f8e7d6c5b4a3g2h1', tipo:'down', val:0.05000000, label:'Recebido'},
-    {date:'14/02/2025', txid:'1a2b3c4d5e6f7g8h', tipo:'down', val:0.02500000, label:'Recebido'},
-    {date:'01/01/2025', txid:'8h7g6f5e4d3c2b1a', tipo:'up',   val:0.01000000, label:'Enviado'},
-  ];
-  demos.forEach(d => {
-    const tr = document.createElement('tr');
-    const color = d.tipo === 'down' ? 'up' : 'down';
-    const arrow = d.tipo === 'down' ? '↓' : '↑';
-    tr.innerHTML = `
-      <td>${d.date}</td>
-      <td style="color:var(--btc);font-family:'DM Mono',monospace">${d.txid.substring(0,8)}...${d.txid.slice(-6)} <span style="font-size:10px;color:var(--muted)">(demo)</span></td>
-      <td><span class="${color}">${arrow} ${d.label}</span></td>
-      <td style="text-align:right">${d.val.toFixed(8)} ₿</td>
-    `;
-    tbody.appendChild(tr);
-  });
 }
 
 /* ═══════════════════════════════════════
