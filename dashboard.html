@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>BSafe Dashboard — Patrimônio em Bitcoin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -363,7 +366,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v5</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -432,7 +435,7 @@ canvas { width:100%!important; }
         <button class="xpub-btn" id="xpub-btn" onclick="loadXpub()">Rastrear carteira</button>
       </div>
       <div class="xpub-note">
-        Sua xpub revela apenas endereços e saldos — nunca chaves privadas. A BSafe tenta 3 estratégias em sequência: xpub direto → Blockchair → derivação de 120 endereços. Nenhum dado é armazenado.
+        Sua xpub revela apenas endereços e saldos — nunca chaves privadas. A BSafe consulta diretamente via Mempool.space (endpoint xpub nativo). Nenhuma derivação local. Nenhum dado é armazenado.
       </div>
       <div id="xpub-log" style="display:none;margin-top:14px;background:var(--bg);
         border:1px solid var(--border);border-radius:8px;padding:12px 14px;
