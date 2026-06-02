@@ -777,10 +777,9 @@ function setPeriod(btn, period) {
 
 /* ═══════════════════════════════════════════════════════
    XPUB / PORTFOLIO
-   Estratégia: derivar endereços do xpub localmente
-   usando WebCrypto (nativo no browser, sem CDN),
-   depois consultar blockchain.info/multiaddr com os
-   endereços individuais — API pública, CORS liberado.
+   Derivação via @scure/bip32 (biblioteca auditada, usada
+   pelo MetaMask). Carregada como ES module via esm.sh.
+   Consulta: blockchain.info/multiaddr (endereços individuais)
 ═══════════════════════════════════════════════════════ */
 let walletBalance = null;
 let currentXpub   = '';
@@ -798,299 +797,123 @@ function showTxLoading(msg) {
   document.getElementById('tx-body').innerHTML = `
     <tr><td colspan="4" style="text-align:center;padding:28px;color:var(--muted);
         font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.06em">
-      ⏳ ${msg || 'Consultando blockchain…'}
+      ⏳ ${msg || 'Consultando…'}
     </td></tr>`;
+}
+function log(msg, ok) {
+  const el = document.getElementById('xpub-log');
+  if (!el) return;
+  const line = document.createElement('div');
+  line.style.cssText = `padding:2px 0;font-size:11px;font-family:'DM Mono',monospace;
+    color:${ok===true?'#22c55e':ok===false?'#ef4444':'#9a9a90'};`;
+  line.textContent = (ok===true?'✓ ':ok===false?'✗ ':'  ') + msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
 }
 
 /* ══════════════════════════════════════
-   BASE58 / BASE58CHECK (sem dependência)
+   BASE58CHECK (para P2PKH address)
 ══════════════════════════════════════ */
-const B58_ALPHA = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-function b58decode(str) {
-  let n = 0n;
-  for (const c of str) {
-    const d = B58_ALPHA.indexOf(c);
-    if (d < 0) throw new Error('bad base58 char: ' + c);
-    n = n * 58n + BigInt(d);
-  }
-  // convert bigint to bytes
-  const hex = n.toString(16).padStart(2, '0');
-  const bytes = new Uint8Array(Math.ceil(hex.length / 2));
-  for (let i = 0; i < bytes.length; i++)
-    bytes[i] = parseInt(hex.slice(i*2, i*2+2) || '00', 16);
-  // leading zeros
-  let zeros = 0;
-  for (const c of str) { if (c === '1') zeros++; else break; }
-  const result = new Uint8Array(zeros + bytes.length);
-  result.set(bytes, zeros);
-  return result;
-}
+const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function b58encode(bytes) {
   let n = 0n;
   for (const b of bytes) n = n * 256n + BigInt(b);
-  let str = '';
-  while (n > 0n) { str = B58_ALPHA[Number(n % 58n)] + str; n /= 58n; }
-  for (const b of bytes) { if (b === 0) str = '1' + str; else break; }
-  return str;
+  let s = '';
+  while (n > 0n) { s = B58[Number(n % 58n)] + s; n /= 58n; }
+  for (const b of bytes) { if (b !== 0) break; s = '1' + s; }
+  return s;
 }
-
-/* ══════════════════════════════════════
-   SHA256 / HASH160 via WebCrypto
-══════════════════════════════════════ */
 async function sha256(data) {
   return new Uint8Array(await crypto.subtle.digest('SHA-256', data));
 }
-async function ripemd160(data) {
-  // WebCrypto não suporta RIPEMD-160 diretamente.
-  // Usamos uma implementação pura JS (compacta).
-  return rmd160(data);
-}
-async function hash160(data) {
-  const s = await sha256(data);
-  return rmd160(s);
-}
-async function hash256(data) {
-  return sha256(await sha256(data));
-}
-
-/* RIPEMD-160 puro JS (implementação compacta) */
-function rmd160(data) {
-  const msg = Array.from(data);
-  // padding
-  const len = msg.length;
-  msg.push(0x80);
-  while ((msg.length % 64) !== 56) msg.push(0);
-  const bits = len * 8;
-  for (let i = 0; i < 8; i++) msg.push((bits / Math.pow(256, i)) & 0xff);
-
-  const K  = [0x00000000,0x5A827999,0x6ED9EBA1,0x8F1BBCDC,0xA953FD4E];
-  const KK = [0x50A28BE6,0x5C4DD124,0x6D703EF3,0x7A6D76E9,0x00000000];
-  const r  = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,7,4,13,1,10,6,15,3,12,0,9,5,2,14,11,8,3,10,14,4,9,15,8,1,2,7,0,6,13,11,5,12,1,9,11,10,0,8,12,4,13,3,7,15,14,5,6,2,4,0,5,9,7,12,2,10,14,1,3,8,11,6,15,13];
-  const rr = [5,14,7,0,9,2,11,4,13,6,15,8,1,10,3,12,6,11,3,7,0,13,5,10,14,15,8,12,4,9,1,2,15,5,1,3,7,14,6,9,11,8,12,2,10,0,4,13,8,6,4,1,3,11,15,0,5,12,2,13,9,7,10,14,12,15,10,4,1,5,8,7,6,2,13,14,0,3,9,11];
-  const s  = [11,14,15,12,5,8,7,9,11,13,14,15,6,7,9,8,7,6,8,13,11,9,7,15,7,12,15,9,11,7,13,12,11,13,6,7,14,9,13,15,14,8,13,6,5,12,7,5,11,12,14,15,14,15,9,8,9,14,5,6,8,6,5,12,9,15,5,11,6,8,13,12,5,12,13,14,11,8,5,6];
-  const ss = [8,9,9,11,13,15,15,5,7,7,8,11,14,14,12,6,9,13,15,7,12,8,9,11,7,7,12,7,6,15,13,11,9,7,15,11,8,6,6,14,12,13,5,14,13,13,7,5,15,5,8,11,14,14,6,14,6,9,12,9,12,5,15,8,8,5,12,9,12,5,14,6,8,13,6,5,15,13,11,11];
-
-  let h0=0x67452301, h1=0xEFCDAB89, h2=0x98BADCFE, h3=0x10325476, h4=0xC3D2E1F0;
-
-  for (let i = 0; i < msg.length; i += 64) {
-    const X = [];
-    for (let j = 0; j < 16; j++) {
-      X[j] = (msg[i+j*4]|0) | ((msg[i+j*4+1]|0)<<8) | ((msg[i+j*4+2]|0)<<16) | ((msg[i+j*4+3]|0)<<24);
-    }
-    let a=h0,b=h1,c=h2,d=h3,e=h4,aa=h0,bb=h1,cc=h2,dd=h3,ee=h4,T;
-    for (let j = 0; j < 80; j++) {
-      const ro = j<16?0:j<32?1:j<48?2:j<64?3:4;
-      const f  = ro===0?(b^c^d):ro===1?((b&c)|(~b&d)):ro===2?((b|~c)^d):ro===3?((b&d)|(c&~d)):(b^(c|~d));
-      const ff = 4-ro===0?(bb^cc^dd):4-ro===1?((bb&cc)|(~bb&dd)):4-ro===2?((bb|~cc)^dd):4-ro===3?((bb&dd)|(cc&~dd)):(bb^(cc|~dd));
-      T = rotl32(a + f  + X[r[j]]  + K[ro]  + s[j],  e);  a=e; e=d; d=rotl32(c,10); c=b; b=T;
-      T = rotl32(aa+ff + X[rr[j]] + KK[4-ro]+ ss[j], ee); aa=ee;ee=dd;dd=rotl32(cc,10);cc=bb;bb=T;
-    }
-    T=h1+c+dd; h1=h2+d+ee; h2=h3+e+aa; h3=h4+a+bb; h4=h0+b+cc; h0=T;
-  }
-  const out = new Uint8Array(20);
-  [h0,h1,h2,h3,h4].forEach((v,i)=>{ out[i*4]=v&0xff; out[i*4+1]=(v>>8)&0xff; out[i*4+2]=(v>>16)&0xff; out[i*4+3]=(v>>24)&0xff; });
-  return out;
-}
-function rotl32(x, n) { return ((x << n) | (x >>> (32 - n))) >>> 0; }
+async function hash256(data) { return sha256(await sha256(data)); }
 
 /* ══════════════════════════════════════
-   PARSE XPUB → {pubkey, chaincode}
+   DERIVAÇÃO VIA @scure/bip32 (ES module)
+   Carregado dinamicamente via import()
 ══════════════════════════════════════ */
-function parseXpub(xpubStr) {
-  const raw = b58decode(xpubStr);
-  if (raw.length < 78) throw new Error('xpub muito curta');
-  // bytes 13..44: chaincode, bytes 45..77: pubkey
-  return {
-    depth:      raw[4],
-    chaincode:  raw.slice(13, 45),
-    pubkey:     raw.slice(45, 78),
-  };
+let _HDKey = null;
+let _ripemd160 = null;
+
+async function loadBip32Lib() {
+  if (_HDKey) return _HDKey;
+  try {
+    // @scure/bip32 — biblioteca auditada, zero deps extras via esm.sh
+    const mod = await import('https://esm.sh/@scure/bip32@1.4.0');
+    _HDKey = mod.HDKey;
+    log('Biblioteca BIP32 carregada (esm.sh)', true);
+    return _HDKey;
+  } catch(e) {
+    log('esm.sh falhou: ' + e.message, false);
+    throw new Error('Não foi possível carregar biblioteca BIP32: ' + e.message);
+  }
 }
 
-/* ══════════════════════════════════════
-   DERIVAR ENDEREÇO FILHO (BIP32 hardened=false)
-══════════════════════════════════════ */
-async function deriveChildPubkey(parentPubkey, parentChaincode, index) {
-  const indexBuf = new Uint8Array(4);
-  new DataView(indexBuf.buffer).setUint32(0, index, false);
-  const data = new Uint8Array(37);
-  data.set(parentPubkey, 0);
-  data.set(indexBuf, 33);
-
-  const key = await crypto.subtle.importKey('raw', parentChaincode,
-    { name: 'HMAC', hash: 'SHA-512' }, false, ['sign']);
-  const hmac = new Uint8Array(await crypto.subtle.sign('HMAC', key, data));
-
-  const IL = hmac.slice(0, 32);
-  const IR = hmac.slice(32, 64);
-
-  // child pubkey = point(IL) + parentPubkey (secp256k1 point addition)
-  // We do this using the subtle secp256k1 trick via ECDSA key import
-  const childPubkey = await addPoints(IL, parentPubkey);
-  return { pubkey: childPubkey, chaincode: IR };
-}
-
-/* point addition on secp256k1 using ECDSA key import trick */
-async function addPoints(scalar, pubkeyBytes) {
-  // Import scalar as private key, get its public point
-  const scalarKey = await crypto.subtle.importKey(
-    'pkcs8', buildPkcs8(scalar),
-    { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']
-  ).catch(() => null);
-
-  // Fallback: if browser ECDSA trick doesn't work for secp256k1,
-  // use a pure-JS approach with precomputed tables
-  // For simplicity, use the addPointsJS implementation
-  return addPointsSecp256k1(scalar, pubkeyBytes);
-}
-
-/* Pure JS secp256k1 point addition (compact implementation) */
-function addPointsSecp256k1(il, parentPub) {
-  const P  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn;
-  const Gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n;
-  const Gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8n;
-  const N  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n;
-
-  function modp(x) { return ((x % P) + P) % P; }
-  function inv(x)  { return modpow(x, P - 2n, P); }
-  function modpow(base, exp, mod) {
-    let r = 1n; base %= mod;
-    while (exp > 0n) { if (exp & 1n) r = r * base % mod; exp >>= 1n; base = base * base % mod; }
-    return r;
-  }
-  function pointAdd(P1, P2) {
-    if (!P1) return P2; if (!P2) return P1;
-    if (P1[0] === P2[0]) {
-      if (P1[1] !== P2[1]) return null;
-      const lam = modp(3n * P1[0] * P1[0] * inv(2n * P1[1]));
-      const x = modp(lam * lam - 2n * P1[0]);
-      return [x, modp(lam * (P1[0] - x) - P1[1])];
-    }
-    const lam = modp((P2[1] - P1[1]) * inv(P2[0] - P1[0]));
-    const x = modp(lam * lam - P1[0] - P2[0]);
-    return [x, modp(lam * (P1[0] - x) - P1[1])];
-  }
-  function scalarMul(k, point) {
-    let r = null, q = point;
-    while (k > 0n) { if (k & 1n) r = pointAdd(r, q); q = pointAdd(q, q); k >>= 1n; }
-    return r;
-  }
-  function decompressPub(bytes) {
-    const x = BigInt('0x' + Array.from(bytes.slice(1)).map(b => b.toString(16).padStart(2,'0')).join(''));
-    const y2 = modp(x * x * x + 7n);
-    let y = modpow(y2, (P + 1n) / 4n, P);
-    if ((y & 1n) !== BigInt(bytes[0] & 1)) y = P - y;
-    return [x, y];
-  }
-  function compressPub(point) {
-    const x = point[0].toString(16).padStart(64, '0');
-    const prefix = (point[1] & 1n) ? '03' : '02';
-    return new Uint8Array((prefix + x).match(/.{2}/g).map(b => parseInt(b, 16)));
-  }
-
-  const ilBig = BigInt('0x' + Array.from(il).map(b => b.toString(16).padStart(2,'0')).join(''));
-  if (ilBig >= N) throw new Error('IL >= N, skip index');
-
-  const ilPoint  = scalarMul(ilBig, [Gx, Gy]);
-  const parPoint = decompressPub(parentPub);
-  const child    = pointAdd(ilPoint, parPoint);
-  if (!child) throw new Error('point at infinity');
-  return compressPub(child);
-}
-function buildPkcs8(scalar) { return new Uint8Array([]); } // unused
-
-/* ══════════════════════════════════════
-   PUBKEY → ENDEREÇO BITCOIN (P2PKH)
-══════════════════════════════════════ */
-async function pubkeyToAddress(pubkeyBytes) {
-  const h160 = await hash160(pubkeyBytes);
+/* Converte pubkey comprimida (33 bytes) → endereço P2PKH via hash160 */
+async function pubkeyToP2PKH(pubkeyBytes) {
+  // SHA256
+  const sha = await sha256(pubkeyBytes);
+  // RIPEMD160 via @noble/hashes (já incluído como dep do @scure/bip32)
+  const { ripemd160 } = await import('https://esm.sh/@noble/hashes@1.7.2/ripemd160');
+  const h160 = ripemd160(sha);
+  // Versioned payload: 0x00 + hash160
   const versioned = new Uint8Array(21);
-  versioned[0] = 0x00; // mainnet P2PKH
+  versioned[0] = 0x00;
   versioned.set(h160, 1);
+  // Checksum
   const checksum = (await hash256(versioned)).slice(0, 4);
-  const final = new Uint8Array(25);
-  final.set(versioned); final.set(checksum, 21);
-  return b58encode(final);
+  const payload = new Uint8Array(25);
+  payload.set(versioned);
+  payload.set(checksum, 21);
+  return b58encode(payload);
 }
 
-/* ══════════════════════════════════════
-   DERIVAR N ENDEREÇOS DO XPUB
-   chain=0: endereços externos (recebimento)
-   chain=1: endereços de troco (change)
-══════════════════════════════════════ */
-async function deriveAddresses(xpubStr, chain, count) {
-  const { pubkey, chaincode } = parseXpub(xpubStr);
-
-  // Derive m/chain
-  const chainChild = await deriveChildPubkey(pubkey, chaincode, chain);
+/* Deriva n endereços externos (chain=0) ou de troco (chain=1) */
+async function deriveAddressesScure(xpubStr, chain, count) {
+  const HDKey = await loadBip32Lib();
+  const master = HDKey.fromExtendedKey(xpubStr);
+  const chainNode = master.deriveChild(chain);
   const addresses = [];
   for (let i = 0; i < count; i++) {
-    const child = await deriveChildPubkey(chainChild.pubkey, chainChild.chaincode, i);
-    const addr  = await pubkeyToAddress(child.pubkey);
+    const child = chainNode.deriveChild(i);
+    const addr = await pubkeyToP2PKH(child.publicKey);
     addresses.push(addr);
   }
   return addresses;
 }
 
 /* ══════════════════════════════════════
-   CONSULTAR BLOCKCHAIN.INFO COM ENDEREÇOS
-   multiaddr aceita endereços individuais
-   separados por | e tem CORS habilitado
+   CONSULTA blockchain.info/multiaddr
+   Aceita endereços individuais separados por |
 ══════════════════════════════════════ */
-/* Consulta blockchain.info/multiaddr com lista de endereços (separados por |) */
-async function queryAddresses(addresses) {
-  // blockchain.info aceita até ~100 endereços por chamada separados por |
-  // NÃO encode o | — a API espera pipe literal
-  const active = addresses.join('|');
-  const url = `https://blockchain.info/multiaddr?active=${active}&n=50&cors=true`;
-  const r = await fetch(url, {
-    signal: AbortSignal.timeout(20000),
-    headers: { 'Accept': 'application/json' }
-  });
-  if (!r.ok) throw new Error(`blockchain.info ${r.status}`);
+async function queryBatch(addresses) {
+  const url = `https://blockchain.info/multiaddr?active=${addresses.join('|')}&n=20&cors=true`;
+  const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  if (!r.ok) throw new Error(`blockchain.info HTTP ${r.status}`);
   return r.json();
 }
 
-/* Consulta direto com xpub (pode funcionar em alguns browsers) */
-async function queryXpubDirect(xpub) {
-  const url = `https://blockchain.info/multiaddr?active=${xpub}&n=50&cors=true`;
-  const r = await fetch(url, {
-    signal: AbortSignal.timeout(20000),
-    headers: { 'Accept': 'application/json' }
-  });
-  if (!r.ok) throw new Error(`blockchain.info xpub direct ${r.status}`);
-  const d = await r.json();
-  // Verifica se realmente retornou dados do xpub (não só endereços vazios)
-  const bal = d.wallet?.final_balance ?? 0;
-  const txs = d.wallet?.n_tx ?? 0;
-  if (bal === 0 && txs === 0 && (d.addresses || []).every(a => a.n_tx === 0)) {
-    throw new Error('xpub direct returned empty — fallback to address derivation');
-  }
-  return d;
-}
-
 /* ══════════════════════════════════════
-   RENDERIZAÇÃO
+   RENDERIZAÇÃO DE TRANSAÇÕES
 ══════════════════════════════════════ */
-function renderTxRows(txs, addresses) {
+function renderTxRows(txs, addrSet) {
   const tbody = document.getElementById('tx-body');
   tbody.innerHTML = '';
   if (!txs || txs.length === 0) {
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;font-size:13px">Nenhuma transação encontrada.</td></tr>';
     return;
   }
-  const addrSet = new Set(addresses);
+  const myAddrs = new Set(addrSet);
   txs.forEach(tx => {
-    const tr = document.createElement('tr');
-    // Calcula valor líquido relativo às nossas carteiras
-    let received = 0, sent = 0;
-    (tx.out || []).forEach(o => { if (addrSet.has(o.addr)) received += o.value; });
-    (tx.inputs || []).forEach(inp => { if (inp.prev_out && addrSet.has(inp.prev_out.addr)) sent += inp.prev_out.value; });
-    const net = received - sent;
+    let received = 0, spent = 0;
+    (tx.out    || []).forEach(o   => { if (myAddrs.has(o.addr))               received += (o.value || 0); });
+    (tx.inputs || []).forEach(inp => { if (myAddrs.has(inp.prev_out?.addr))   spent    += (inp.prev_out?.value || 0); });
+    const net  = received - spent;
     const tipo = net >= 0
       ? '<span class="up">↓ Recebido</span>'
       : '<span class="down">↑ Enviado</span>';
     const txid = tx.hash || '—';
+    const tr   = document.createElement('tr');
     tr.innerHTML = `
       <td style="color:var(--muted);font-size:12px">${fmtDate(tx.time)}</td>
       <td><a href="https://www.blockchain.com/btc/tx/${txid}" target="_blank"
@@ -1108,16 +931,12 @@ function appendExplorerLinks(xpub) {
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td colspan="4" style="text-align:center;padding:14px;border-top:1px solid var(--border)">
-      <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}"
-         target="_blank" style="color:var(--btc);font-size:11px;margin-right:16px;
-         font-family:'DM Mono',monospace;text-decoration:none;letter-spacing:.04em">
-        Ver no Blockchain.com ↗
-      </a>
-      <a href="https://mempool.space/xpub/${encodeURIComponent(xpub)}"
-         target="_blank" style="color:var(--muted);font-size:11px;
-         font-family:'DM Mono',monospace;text-decoration:none;letter-spacing:.04em">
-        Ver no Mempool.space ↗
-      </a>
+      <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}" target="_blank"
+         style="color:var(--btc);font-size:11px;margin-right:16px;font-family:'DM Mono',monospace;text-decoration:none">
+        Ver no Blockchain.com ↗</a>
+      <a href="https://mempool.space/xpub/${encodeURIComponent(xpub)}" target="_blank"
+         style="color:var(--muted);font-size:11px;font-family:'DM Mono',monospace;text-decoration:none">
+        Ver no Mempool.space ↗</a>
     </td>`;
   tbody.appendChild(tr);
 }
@@ -1127,24 +946,18 @@ function renderExplorerFallback(xpub) {
   document.getElementById('tx-body').innerHTML = `
     <tr><td colspan="4" style="text-align:center;padding:32px 20px">
       <div style="font-size:13px;color:var(--text);margin-bottom:18px;line-height:1.6">
-        Não foi possível consultar a API automaticamente.<br>
-        Verifique sua carteira diretamente:
+        Não foi possível consultar automaticamente.<br>Acesse diretamente:
       </div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-        <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}"
-           target="_blank" style="display:inline-flex;align-items:center;gap:7px;
-           background:var(--btc);color:#000;font-weight:700;font-size:13px;
-           padding:11px 20px;border-radius:10px;text-decoration:none;
-           font-family:'DM Sans',sans-serif">
-          Blockchain.com ↗
-        </a>
-        <a href="https://mempool.space/xpub/${encodeURIComponent(xpub)}"
-           target="_blank" style="display:inline-flex;align-items:center;gap:7px;
-           background:var(--bg2);color:var(--off);border:1px solid var(--border);
-           font-weight:600;font-size:13px;padding:11px 20px;border-radius:10px;
-           text-decoration:none;font-family:'DM Sans',sans-serif">
-          Mempool.space ↗
-        </a>
+        <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}" target="_blank"
+           style="display:inline-flex;align-items:center;gap:7px;background:var(--btc);color:#000;
+                  font-weight:700;font-size:13px;padding:11px 20px;border-radius:10px;text-decoration:none">
+          Blockchain.com ↗</a>
+        <a href="https://mempool.space/xpub/${encodeURIComponent(xpub)}" target="_blank"
+           style="display:inline-flex;align-items:center;gap:7px;background:var(--bg2);color:var(--off);
+                  border:1px solid var(--border);font-weight:600;font-size:13px;padding:11px 20px;
+                  border-radius:10px;text-decoration:none">
+          Mempool.space ↗</a>
       </div>
     </td></tr>`;
 }
@@ -1162,172 +975,74 @@ async function loadXpub() {
   btn.disabled = true;
   currentXpub = raw;
 
-  // ── Log visual na tela (para diagnóstico sem DevTools) ──
   const logEl = document.getElementById('xpub-log');
-  if (logEl) logEl.style.display = 'block';
-  function log(msg, ok) {
-    if (!logEl) return;
-    const line = document.createElement('div');
-    line.style.cssText = `padding:3px 0;font-size:11px;font-family:'DM Mono',monospace;
-      color:${ok===true?'#22c55e':ok===false?'#ef4444':'#9a9a90'};`;
-    line.textContent = (ok===true?'✓ ':ok===false?'✗ ':'  ') + msg;
-    logEl.appendChild(line);
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-  if (logEl) logEl.innerHTML = '';
-  log('xpub: ' + raw.slice(0,12) + '…' + raw.slice(-8));
-
-  showTxLoading('Iniciando…');
+  if (logEl) { logEl.innerHTML = ''; logEl.style.display = 'block'; }
+  log('xpub: ' + raw.slice(0,16) + '…' + raw.slice(-8));
+  showTxLoading('Carregando biblioteca BIP32…');
 
   try {
-    let data = null;
+    // ── Carrega @scure/bip32 ─────────────────────────────────────────
+    await loadBip32Lib();
 
-    // ══ ESTRATÉGIA A: xpub direto na blockchain.info ══════════════════
-    // A blockchain.com usa esta API internamente. Funciona quando o browser
-    // não bloqueia a requisição cross-origin.
-    log('A) blockchain.info/multiaddr?active=xpub (direto)');
-    try {
-      const url = `https://blockchain.info/multiaddr?active=${raw}&n=50&cors=true`;
-      showTxLoading('A) blockchain.info xpub direto…');
-      const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
-      log(`   status: ${r.status}`, r.ok);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const d = await r.json();
-      const bal = d.wallet?.final_balance ?? 0;
-      const ntx = d.wallet?.n_tx ?? 0;
-      log(`   balance: ${bal} sats, n_tx: ${ntx}`, bal > 0 || ntx > 0);
-      if (bal > 0 || ntx > 0) {
-        data = d;
-        log('   ✓ Dados encontrados via estratégia A', true);
-      } else {
-        log('   balance=0 e n_tx=0 — tentando próxima estratégia');
+    // ── Deriva endereços com gap limit de 100 externos + 20 change ───
+    showTxLoading('Derivando endereços…');
+    log('Derivando 100 externos (m/0/0..99)…');
+    const extAddrs = await deriveAddressesScure(raw, 0, 100);
+    log(`Ex: m/0/0 = ${extAddrs[0]}`, true);
+    log(`Ex: m/0/1 = ${extAddrs[1]}`, true);
+
+    log('Derivando 20 change (m/1/0..19)…');
+    const chgAddrs = await deriveAddressesScure(raw, 1, 20);
+    log(`Ex: m/1/0 = ${chgAddrs[0]}`, true);
+
+    const allAddrs = [...extAddrs, ...chgAddrs];
+    log(`Total: ${allAddrs.length} endereços derivados`);
+
+    // ── Consulta blockchain.info em lotes de 50 ──────────────────────
+    let allApiAddresses = [];
+    let allTxs = [];
+    const LOTE = 50;
+    const totalLotes = Math.ceil(allAddrs.length / LOTE);
+
+    for (let i = 0; i < allAddrs.length; i += LOTE) {
+      const lote = allAddrs.slice(i, i + LOTE);
+      const num  = Math.floor(i / LOTE) + 1;
+      showTxLoading(`Consultando lote ${num}/${totalLotes}…`);
+      log(`Lote ${num}/${totalLotes}: ${lote.length} endereços`);
+      try {
+        const d = await queryBatch(lote);
+        const loteBal = (d.addresses || []).reduce((s,a) => s + (a.final_balance || 0), 0);
+        const loteTx  = (d.txs || []).length;
+        allApiAddresses.push(...(d.addresses || []));
+        allTxs.push(...(d.txs || []));
+        log(`  → ${loteBal} sats, ${loteTx} txs`, loteBal >= 0);
+      } catch(eLote) {
+        log(`  → falhou: ${eLote.message}`, false);
       }
-    } catch(eA) { log(`   falhou: ${eA.message}`, false); }
-
-    // ══ ESTRATÉGIA B: Blockchair xpub API ════════════════════════════
-    if (!data) {
-      log('B) api.blockchair.com/bitcoin/dashboards/xpub');
-      try {
-        const url = `https://api.blockchair.com/bitcoin/dashboards/xpub/${raw}?transaction_details=true&limit=20`;
-        showTxLoading('B) Blockchair xpub…');
-        const r = await fetch(url, { signal: AbortSignal.timeout(15000) });
-        log(`   status: ${r.status}`, r.ok);
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const d = await r.json();
-        const xd = d.data?.[raw];
-        const bal = xd?.xpub?.balance ?? 0;
-        const ntx = xd?.xpub?.transaction_count ?? 0;
-        log(`   balance: ${bal} sats, transactions: ${ntx}`, bal > 0 || ntx > 0);
-        if (xd && (bal > 0 || ntx > 0)) {
-          // Normaliza para formato interno
-          const txs = (xd.transactions || []).slice(0,20).map(tx => ({
-            hash: tx.hash,
-            time: tx.time ? Math.floor(new Date(tx.time+'Z').getTime()/1000) : null,
-            result: tx.balance_change ?? 0,
-            out: [], inputs: []
-          }));
-          data = {
-            wallet: { final_balance: bal, n_tx: ntx },
-            addresses: [],
-            txs,
-            _allAddrs: []
-          };
-          log('   ✓ Dados encontrados via estratégia B', true);
-        } else {
-          log('   sem dados úteis');
-        }
-      } catch(eB) { log(`   falhou: ${eB.message}`, false); }
+      if (num < totalLotes) await new Promise(r => setTimeout(r, 400));
     }
 
-    // ══ ESTRATÉGIA C: derivar 120 endereços + consultar em lotes ═════
-    if (!data) {
-      log('C) Derivando 120 endereços + blockchain.info/multiaddr');
-      try {
-        showTxLoading('C) Derivando endereços externos…');
-        log('   derivando 100 externos…');
-        const extAddrs = await deriveAddresses(raw, 0, 100);
-        log(`   ${extAddrs.length} externos OK — ex: ${extAddrs[0]}`);
+    // ── Deduplica txs e soma saldo ───────────────────────────────────
+    const txSeen  = new Set();
+    const uniqTxs = allTxs.filter(t => { if (txSeen.has(t.hash)) return false; txSeen.add(t.hash); return true; });
+    const totalSats = allApiAddresses.reduce((s,a) => s + (a.final_balance || 0), 0);
+    const txCount   = uniqTxs.length;
 
-        showTxLoading('C) Derivando endereços de troco…');
-        log('   derivando 20 change…');
-        const chgAddrs = await deriveAddresses(raw, 1, 20);
-        log(`   ${chgAddrs.length} change OK`);
+    log(`TOTAL: ${totalSats} sats (${(totalSats/1e8).toFixed(8)} BTC), ${txCount} txs`, totalSats >= 0);
 
-        const allAddrs = [...extAddrs, ...chgAddrs];
-
-        // Consulta em lotes de 50 (limite seguro da blockchain.info)
-        let allApiAddresses = [];
-        let allTxs = [];
-        const LOTE = 50;
-        for (let i = 0; i < allAddrs.length; i += LOTE) {
-          const lote = allAddrs.slice(i, i + LOTE);
-          const loteNum = Math.floor(i/LOTE) + 1;
-          const totalLotes = Math.ceil(allAddrs.length/LOTE);
-          showTxLoading(`C) Consultando lote ${loteNum}/${totalLotes}…`);
-          log(`   lote ${loteNum}/${totalLotes}: ${lote.length} endereços`);
-          try {
-            const url = `https://blockchain.info/multiaddr?active=${lote.join('|')}&n=20&cors=true`;
-            const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
-            log(`   lote ${loteNum} status: ${r.status}`, r.ok);
-            if (!r.ok) throw new Error(`HTTP ${r.status}`);
-            const d = await r.json();
-            allApiAddresses.push(...(d.addresses || []));
-            allTxs.push(...(d.txs || []));
-            const loteBal = (d.addresses||[]).reduce((s,a)=>s+(a.final_balance||0),0);
-            log(`   lote ${loteNum}: ${loteBal} sats, ${(d.txs||[]).length} txs`);
-          } catch(eLote) {
-            log(`   lote ${loteNum} falhou: ${eLote.message}`, false);
-          }
-          // Pausa pequena para não rate-limit
-          await new Promise(r => setTimeout(r, 300));
-        }
-
-        // Deduplica txs
-        const txSeen = new Set();
-        const uniqueTxs = allTxs.filter(t => {
-          if (txSeen.has(t.hash)) return false;
-          txSeen.add(t.hash); return true;
-        });
-
-        const totalBal = allApiAddresses.reduce((s,a)=>s+(a.final_balance||0),0);
-        const totalTx  = uniqueTxs.length;
-        log(`   TOTAL: ${totalBal} sats, ${totalTx} txs únicas`, totalBal >= 0);
-
-        data = {
-          wallet: { final_balance: totalBal, n_tx: totalTx },
-          addresses: allApiAddresses,
-          txs: uniqueTxs,
-          _allAddrs: allAddrs
-        };
-        log('   ✓ Estratégia C concluída', true);
-      } catch(eC) { log(`   falhou: ${eC.message}`, false); }
-    }
-
-    // ══ Processa resultado ════════════════════════════════════════════
-    if (data) {
-      const totalSats = data.wallet?.final_balance ?? 0;
-      const txCount   = data.wallet?.n_tx ?? 0;
-      const addrList  = data._allAddrs || [];
-
-      walletBalance = totalSats;
-      updatePortfolio(totalSats);
-      setStatus(`${txCount} transações · ${totalSats} sats`);
-      renderTxRows(data.txs || [], addrList);
-      appendExplorerLinks(raw);
-      document.getElementById('tx-section').style.display = 'block';
-      log(`RESULTADO FINAL: ${totalSats} sats (${(totalSats/1e8).toFixed(8)} BTC)`, totalSats > 0);
-      showToast(totalSats > 0 ? `✓ ${fmtSats(totalSats)}` : 'Carregado — saldo zerado');
-    } else {
-      log('Todas as estratégias falharam — usando links externos', false);
-      setStatus('APIs indisponíveis');
-      renderExplorerFallback(raw);
-      showToast('APIs bloqueadas. Use os links abaixo.');
-    }
+    walletBalance = totalSats;
+    updatePortfolio(totalSats);
+    setStatus(`${txCount} transações · ${(totalSats/1e8).toFixed(8)} BTC`);
+    renderTxRows(uniqTxs, allAddrs);
+    appendExplorerLinks(raw);
+    document.getElementById('tx-section').style.display = 'block';
+    showToast(totalSats > 0 ? `✓ ${fmtSats(totalSats)}` : 'Saldo zero — verifique os endereços no log');
 
   } catch(e) {
-    log('ERRO GERAL: ' + e.message, false);
+    log('ERRO: ' + e.message, false);
+    setStatus('Erro — use os links abaixo');
     renderExplorerFallback(raw);
-    showToast('Erro: ' + e.message.slice(0,60));
+    showToast('Erro: ' + e.message.slice(0, 80));
   }
 
   btn.textContent = 'Rastrear carteira';
@@ -1336,14 +1051,12 @@ async function loadXpub() {
 
 function updatePortfolio(sats) {
   if (sats === null || btcUSD === 0) return;
-  const btc  = sats / 1e8;
-  const usd  = btc * btcUSD;
-  const brl  = btc * btcBRL;
-  const fmt  = n => n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+  const btc = sats / 1e8;
+  const fmt = n => n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
   document.getElementById('pt-btc').textContent     = btc.toFixed(8) + ' ₿';
   document.getElementById('pt-btc-sub').textContent = sats.toLocaleString('pt-BR') + ' satoshis';
-  document.getElementById('pt-usd').textContent     = '$'  + fmt(usd);
-  document.getElementById('pt-brl').textContent     = 'R$' + fmt(brl);
+  document.getElementById('pt-usd').textContent     = '$'  + fmt(btc * btcUSD);
+  document.getElementById('pt-brl').textContent     = 'R$' + fmt(btc * btcBRL);
   const chg = (btcChange >= 0 ? '+' : '') + btcChange.toFixed(2) + '%';
   document.getElementById('pt-usd-change').textContent = 'Variação 24h: ' + chg;
   document.getElementById('pt-usd-change').className   = 'ptile-change ' + (btcChange >= 0 ? 'up' : 'down');
@@ -1354,6 +1067,7 @@ function updatePortfolio(sats) {
 function refreshPortfolioValues() {
   if (walletBalance !== null) updatePortfolio(walletBalance);
 }
+
 
 
 
