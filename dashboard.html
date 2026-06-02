@@ -367,7 +367,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v8</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v9</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -780,11 +780,9 @@ function setPeriod(btn, period) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   XPUB / PORTFOLIO  v8 — Proxy Netlify
-   
-   Chama /api/xpub?xpub=... (Netlify Function)
-   que faz a consulta servidor→servidor ao Trezor Blockbook.
-   Sem CORS, sem bloqueios.
+   XPUB / PORTFOLIO  v9
+   5 estratégias independentes, sem servidor, sem derivação.
+   Qualquer uma que responder primeiro vence.
 ═══════════════════════════════════════════════════════ */
 let walletBalance = null;
 let currentXpub   = '';
@@ -799,10 +797,9 @@ function setStatus(msg) {
 }
 function showTxLoading(msg) {
   document.getElementById('tx-section').style.display = 'block';
-  document.getElementById('tx-body').innerHTML = `
-    <tr><td colspan="4" style="text-align:center;padding:24px;
-        color:var(--muted);font-family:'DM Mono',monospace;font-size:12px">
-        ⏳ ${msg}</td></tr>`;
+  document.getElementById('tx-body').innerHTML = `<tr><td colspan="4"
+    style="text-align:center;padding:24px;color:var(--muted);
+    font-family:'DM Mono',monospace;font-size:12px">⏳ ${msg}</td></tr>`;
 }
 function log(msg, ok) {
   const el = document.getElementById('xpub-log');
@@ -814,68 +811,109 @@ function log(msg, ok) {
   el.appendChild(d); el.scrollTop = el.scrollHeight;
 }
 
-/* ══════════════════════════════════════════════════
-   PROXY LOCAL — chama a Netlify Function
-   /api/xpub?xpub=XPUB&type=info
-   /api/xpub?xpub=XPUB&type=txs
-══════════════════════════════════════════════════ */
-async function queryProxy(xpub, type = 'info') {
-  const url = `/api/xpub?xpub=${encodeURIComponent(xpub)}&type=${type}`;
-  let r;
-  try {
-    r = await fetch(url, { headers: { Accept: 'application/json' } });
-  } catch(fetchErr) {
-    throw new Error('Função /api/xpub não encontrada — verifique o deploy do Netlify. ' + fetchErr.message);
-  }
-  if (!r.ok) {
-    let errMsg = `HTTP ${r.status}`;
-    try {
-      const err = await r.json();
-      errMsg = err.error || (err.details && err.details[0]) || errMsg;
-    } catch(e) {}
-    throw new Error(errMsg);
-  }
+async function get(url, timeout=12000) {
+  const r = await fetch(url, {
+    signal: AbortSignal.timeout(timeout),
+    headers: { Accept: 'application/json' }
+  });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 }
 
-/* ══════════════════════════════════════════════════
-   NORMALIZA RESPOSTA DO TREZOR BLOCKBOOK
-══════════════════════════════════════════════════ */
-function parseTrezorResponse(data, withTxs) {
-  const sats    = parseInt(data.balance || '0');
-  const txCount = data.txs || 0;
-
-  const txs = withTxs ? (data.transactions || []).slice(0, 20).map(tx => {
-    // Trezor marca inputs/outputs com isOwn quando pertencem à carteira
-    const myOut = (tx.vout || []).filter(o => o.isOwn);
-    const myIn  = (tx.vin  || []).filter(i => i.isOwn);
-    const rcv   = myOut.reduce((s, o) => s + parseInt(o.value || '0'), 0);
-    const snt   = myIn.reduce( (s, i) => s + parseInt(i.value || '0'), 0);
-    const net   = rcv - snt;
-    return {
-      hash:     tx.txid,
-      time:     tx.blockTime || null,
-      value:    net,
-      received: net >= 0,
-    };
-  }) : [];
-
-  return { sats, txCount, txs };
+/* ── 1. Netlify proxy (se deployado) ──────────────────── */
+async function tryNetlifyProxy(xpub) {
+  const info = await get(`/api/xpub?xpub=${encodeURIComponent(xpub)}&type=info`);
+  const sats = parseInt(info.balance || '0');
+  const txCount = info.txs || 0;
+  // busca txs separadamente
+  let txs = [];
+  try {
+    const txData = await get(`/api/xpub?xpub=${encodeURIComponent(xpub)}&type=txs`);
+    txs = normTrezorTxs(txData.transactions || []);
+  } catch(e) {}
+  return { sats, txCount, txs, source: 'Proxy (Trezor)' };
 }
 
-/* ══════════════════════════════════════════════════
-   RENDERIZAÇÃO DE TRANSAÇÕES
-══════════════════════════════════════════════════ */
+/* ── 2. Trezor Blockbook direto (funciona em https://) ── */
+async function tryTrezorDirect(xpub) {
+  for (const node of ['btc1.trezor.io','btc2.trezor.io','btc3.trezor.io']) {
+    try {
+      const d = await get(`https://${node}/api/v2/xpub/${xpub}?details=txs&pageSize=20`);
+      const sats = parseInt(d.balance || '0');
+      return { sats, txCount: d.txs||0, txs: normTrezorTxs(d.transactions||[]), source: node };
+    } catch(e) { log(`  ${node}: ${e.message}`, false); }
+  }
+  throw new Error('Trezor: todos os nós falharam');
+}
+
+/* ── 3. corsproxy.io + Haskoin (blockchain.com backend) ─ */
+async function tryHaskoinProxy(xpub) {
+  const base = encodeURIComponent(`https://api.blockchain.info/haskoin-store/btc`);
+  const balUrl = `https://corsproxy.io/?${base}/xpub/${encodeURIComponent(xpub)}/balance`;
+  const bal = await get(balUrl);
+  const sats = bal.confirmed || 0;
+
+  let txs = [];
+  try {
+    const txUrl = `https://corsproxy.io/?${base}/xpub/${encodeURIComponent(xpub)}/transactions/full?limit=20`;
+    const txData = await get(txUrl, 20000);
+    txs = (txData||[]).slice(0,20).map(tx => ({
+      hash: tx.txid, time: tx.time||null, value: 0, received: true
+    }));
+  } catch(e) {}
+  return { sats, txCount: bal.txs||0, txs, source: 'Haskoin (blockchain.com)' };
+}
+
+/* ── 4. corsproxy.io + Mempool.space xpub ─────────────── */
+async function tryMempoolProxy(xpub) {
+  const target = encodeURIComponent(`https://mempool.space/api/v1/xpub/${xpub}`);
+  const info = await get(`https://corsproxy.io/?${target}`);
+  const sats = info.balance || 0;
+  let txs = [];
+  try {
+    const txTarget = encodeURIComponent(`https://mempool.space/api/v1/xpub/${xpub}/txs`);
+    const txData = await get(`https://corsproxy.io/?${txTarget}`, 20000);
+    txs = normMempoolTxs(txData||[]);
+  } catch(e) {}
+  return { sats, txCount: info.tx_count||0, txs, source: 'Mempool.space' };
+}
+
+/* ── 5. allorigins.win + Haskoin ──────────────────────── */
+async function tryAllOrigins(xpub) {
+  const target = `https://api.blockchain.info/haskoin-store/btc/xpub/${xpub}/balance`;
+  const url = `https://api.allorigins.win/get?url=${encodeURIComponent(target)}`;
+  const wrapper = await get(url);
+  const bal = JSON.parse(wrapper.contents || '{}');
+  const sats = bal.confirmed || 0;
+  return { sats, txCount: bal.txs||0, txs: [], source: 'Haskoin/allorigins' };
+}
+
+/* ── Normalização de transações ───────────────────────── */
+function normTrezorTxs(txs) {
+  return txs.map(tx => {
+    const rcv = (tx.vout||[]).filter(o=>o.isOwn).reduce((s,o)=>s+parseInt(o.value||0),0);
+    const snt = (tx.vin ||[]).filter(i=>i.isOwn).reduce((s,i)=>s+parseInt(i.value||0),0);
+    return { hash:tx.txid, time:tx.blockTime||null, value:rcv-snt, received:rcv>=snt };
+  });
+}
+function normMempoolTxs(txs) {
+  return txs.map(tx => ({
+    hash: tx.txid, time: tx.status?.block_time||null,
+    value: (tx.vout||[]).reduce((s,o)=>s+(o.value||0),0), received: true
+  }));
+}
+
+/* ── Renderização ─────────────────────────────────────── */
 function renderTxs(txs) {
   const tbody = document.getElementById('tx-body');
   tbody.innerHTML = '';
-  if (!txs || txs.length === 0) {
+  if (!txs || !txs.length) {
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;
       color:var(--muted);padding:20px;font-size:13px">
       Nenhuma transação encontrada.</td></tr>`;
     return;
   }
-  txs.forEach(tx => {
+  txs.slice(0,20).forEach(tx => {
     const tipo = tx.received !== false
       ? '<span class="up">↓ Recebido</span>'
       : '<span class="down">↑ Enviado</span>';
@@ -887,26 +925,23 @@ function renderTxs(txs) {
           ${shortTx(tx.hash)} ↗</a></td>
       <td>${tipo}</td>
       <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">
-          ${fmtSats(Math.abs(tx.value || 0))}</td>`;
+          ${fmtSats(Math.abs(tx.value||0))}</td>`;
     tbody.appendChild(tr);
   });
 }
-
 function appendExplorerLinks(xpub) {
   const tbody = document.getElementById('tx-body');
   const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td colspan="4" style="text-align:center;padding:14px;border-top:1px solid var(--border)">
-      <a href="https://mempool.space/xpub/${encodeURIComponent(xpub)}" target="_blank"
-         style="color:var(--btc);font-size:11px;margin-right:16px;
-         font-family:'DM Mono',monospace;text-decoration:none">Mempool.space ↗</a>
-      <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}" target="_blank"
-         style="color:var(--muted);font-size:11px;
-         font-family:'DM Mono',monospace;text-decoration:none">Blockchain.com ↗</a>
-    </td>`;
+  tr.innerHTML = `<td colspan="4" style="text-align:center;padding:14px;border-top:1px solid var(--border)">
+    <a href="https://mempool.space/xpub/${encodeURIComponent(xpub)}" target="_blank"
+       style="color:var(--btc);font-size:11px;margin-right:16px;font-family:'DM Mono',monospace;text-decoration:none">
+       Mempool.space ↗</a>
+    <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}" target="_blank"
+       style="color:var(--muted);font-size:11px;font-family:'DM Mono',monospace;text-decoration:none">
+       Blockchain.com ↗</a>
+  </td>`;
   tbody.appendChild(tr);
 }
-
 function renderFallback(xpub) {
   document.getElementById('tx-section').style.display = 'block';
   document.getElementById('tx-body').innerHTML = `
@@ -916,21 +951,18 @@ function renderFallback(xpub) {
       </div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <a href="https://mempool.space/xpub/${encodeURIComponent(xpub)}" target="_blank"
-           style="display:inline-flex;align-items:center;gap:7px;background:var(--btc);color:#000;
+           style="display:inline-flex;align-items:center;background:var(--btc);color:#000;
                   font-weight:700;font-size:13px;padding:11px 20px;border-radius:10px;text-decoration:none">
           Mempool.space ↗</a>
         <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}" target="_blank"
-           style="display:inline-flex;align-items:center;gap:7px;background:var(--bg2);color:var(--off);
-                  border:1px solid var(--border);font-size:13px;padding:11px 20px;
-                  border-radius:10px;text-decoration:none">
+           style="display:inline-flex;align-items:center;background:var(--bg2);color:var(--off);
+                  border:1px solid var(--border);font-size:13px;padding:11px 20px;border-radius:10px;text-decoration:none">
           Blockchain.com ↗</a>
       </div>
     </td></tr>`;
 }
 
-/* ══════════════════════════════════════════════════
-   ORQUESTRADOR
-══════════════════════════════════════════════════ */
+/* ── Orquestrador ─────────────────────────────────────── */
 async function loadXpub() {
   const raw = document.getElementById('xpub-input').value.trim();
   if (!raw) { showToast('Cole sua xpub no campo.'); return; }
@@ -942,45 +974,41 @@ async function loadXpub() {
 
   const logEl = document.getElementById('xpub-log');
   if (logEl) { logEl.innerHTML = ''; logEl.style.display = 'block'; }
-  log('xpub: ' + raw.slice(0, 14) + '…' + raw.slice(-6));
-  showTxLoading('Consultando…');
+  log('xpub: ' + raw.slice(0,14) + '…' + raw.slice(-6));
 
-  try {
-    // Passo 1: busca info básica (rápido)
-    log('Buscando saldo via proxy…');
-    const infoData = await queryProxy(raw, 'info');
-    const { sats, txCount } = parseTrezorResponse(infoData, false);
-    log(`Saldo: ${sats} sats (${(sats/1e8).toFixed(8)} BTC)`, true);
-    log(`Transações: ${txCount}`, true);
-    log(`Fonte: ${infoData._source || 'Trezor Blockbook'}`, true);
+  const strategies = [
+    { name: 'Proxy Netlify',        fn: () => tryNetlifyProxy(raw)   },
+    { name: 'Trezor (direto)',       fn: () => tryTrezorDirect(raw)   },
+    { name: 'Haskoin + corsproxy',   fn: () => tryHaskoinProxy(raw)   },
+    { name: 'Mempool + corsproxy',   fn: () => tryMempoolProxy(raw)   },
+    { name: 'Haskoin + allorigins',  fn: () => tryAllOrigins(raw)     },
+  ];
 
-    walletBalance = sats;
-    updatePortfolio(sats);
-
-    // Passo 2: busca transações
-    showTxLoading('Carregando transações…');
-    log('Buscando transações…');
+  let result = null;
+  for (const s of strategies) {
+    showTxLoading(`Tentando ${s.name}…`);
+    log(`→ ${s.name}`);
     try {
-      const txData = await queryProxy(raw, 'txs');
-      const { txs } = parseTrezorResponse(txData, true);
-      log(`${txs.length} transações carregadas`, true);
-      setStatus(`${txCount} transações · ${(sats/1e8).toFixed(8)} BTC`);
-      renderTxs(txs);
-    } catch(eTx) {
-      log(`Transações: ${eTx.message}`, false);
-      setStatus(`${txCount} transações · ${(sats/1e8).toFixed(8)} BTC`);
-      renderTxs([]);
+      result = await s.fn();
+      log(`✓ ${s.name}: ${result.sats} sats`, true);
+      break;
+    } catch(e) {
+      log(`✗ ${s.name}: ${e.message}`, false);
     }
+  }
 
+  if (result) {
+    walletBalance = result.sats;
+    updatePortfolio(result.sats);
+    setStatus(`${result.txCount} transações · ${(result.sats/1e8).toFixed(8)} BTC · ${result.source}`);
+    renderTxs(result.txs);
     appendExplorerLinks(raw);
     document.getElementById('tx-section').style.display = 'block';
-    showToast(sats > 0 ? `✓ ${fmtSats(sats)}` : 'Carteira carregada — saldo zero');
-
-  } catch(e) {
-    log('ERRO: ' + e.message, false);
-    setStatus('Erro na consulta');
+    showToast(result.sats > 0 ? `✓ ${fmtSats(result.sats)}` : 'Carregado — saldo zero');
+  } else {
+    setStatus('Todas as APIs falharam');
     renderFallback(raw);
-    showToast('Erro: ' + (e.message || String(e)).slice(0, 80));
+    showToast('Nenhuma API disponível. Use os links abaixo.');
   }
 
   btn.textContent = 'Rastrear carteira'; btn.disabled = false;
@@ -1004,6 +1032,7 @@ function updatePortfolio(sats) {
 function refreshPortfolioValues() {
   if (walletBalance !== null) updatePortfolio(walletBalance);
 }
+
 
 
 
