@@ -367,7 +367,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v5</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v7</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -436,7 +436,7 @@ canvas { width:100%!important; }
         <button class="xpub-btn" id="xpub-btn" onclick="loadXpub()">Rastrear carteira</button>
       </div>
       <div class="xpub-note">
-        Sua xpub revela apenas endereços e saldos — nunca chaves privadas. A BSafe consulta diretamente via Mempool.space (endpoint xpub nativo). Nenhuma derivação local. Nenhum dado é armazenado.
+        Sua xpub revela apenas endereços e saldos — nunca chaves privadas. A BSafe tenta Trezor Blockbook → Haskoin → Blockchain.info em sequência. Funciona em https:// (não em arquivo local).
       </div>
       <div id="xpub-log" style="display:none;margin-top:14px;background:var(--bg);
         border:1px solid var(--border);border-radius:8px;padding:12px 14px;
@@ -780,15 +780,15 @@ function setPeriod(btn, period) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   XPUB / PORTFOLIO  v6
-   Abordagem: testa TODAS as APIs disponíveis em sequência.
-   Usa a primeira que responder com dados reais.
-   APIs tentadas:
-   1. mempool.space /api/v1/xpub/{xpub}
-   2. blockstream.info /api/xpub/{xpub}  
-   3. blockchain.info /multiaddr?active={addr1}|{addr2}...
-      (com endereços corretos via @scure/bip32)
-   4. walletexplorer.com /api/1/address (por endereço)
+   XPUB / PORTFOLIO  v7 — Trezor Blockbook
+   
+   API primária: btc1.trezor.io/api/v2/xpub/{xpub}
+   - Suporte xpub nativo, CORS habilitado para https://
+   - Usada pelo Trezor Suite e milhares de carteiras
+   - Retorna balance, txs, utxos diretamente
+   
+   Fallback: blockchain.info/multiaddr com endereços
+   derivados via @scure/bip32
 ═══════════════════════════════════════════════════════ */
 let walletBalance = null;
 let currentXpub   = '';
@@ -804,8 +804,9 @@ function setStatus(msg) {
 function showTxLoading(msg) {
   document.getElementById('tx-section').style.display = 'block';
   document.getElementById('tx-body').innerHTML = `
-    <tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);
-        font-family:'DM Mono',monospace;font-size:12px">⏳ ${msg}</td></tr>`;
+    <tr><td colspan="4" style="text-align:center;padding:24px;
+        color:var(--muted);font-family:'DM Mono',monospace;font-size:12px">
+        ⏳ ${msg}</td></tr>`;
 }
 function log(msg, ok) {
   const el = document.getElementById('xpub-log');
@@ -814,70 +815,93 @@ function log(msg, ok) {
   d.style.cssText = `padding:2px 0;font-size:11px;font-family:'DM Mono',monospace;
     color:${ok===true?'#22c55e':ok===false?'#ef4444':'#9a9a90'};`;
   d.textContent = (ok===true?'✓ ':ok===false?'✗ ':'  ') + msg;
-  el.appendChild(d);
-  el.scrollTop = el.scrollHeight;
+  el.appendChild(d); el.scrollTop = el.scrollHeight;
 }
 
-/* ══ FETCH com timeout e log ══════════════════════════ */
-async function tryFetch(url, timeout=12000) {
-  const r = await fetch(url, {
-    signal: AbortSignal.timeout(timeout),
-    headers: { 'Accept': 'application/json' }
+/* ══════════════════════════════════════════════════
+   TREZOR BLOCKBOOK — API primária
+   btc1.trezor.io/api/v2/xpub/{xpub}
+   CORS habilitado para https:// (não funciona em file://)
+══════════════════════════════════════════════════ */
+async function tryTrezor(xpub) {
+  const nodes = ['btc1.trezor.io', 'btc2.trezor.io', 'btc3.trezor.io'];
+  let lastErr = '';
+  for (const node of nodes) {
+    try {
+      const url = `https://${node}/api/v2/xpub/${xpub}?details=txs&pageSize=20`;
+      const r = await fetch(url, { signal: AbortSignal.timeout(15000) });
+      if (!r.ok) { lastErr = `${node}: HTTP ${r.status}`; continue; }
+      const d = await r.json();
+      // Trezor balance is a string in satoshis
+      const sats = parseInt(d.balance || '0');
+      const txCount = d.txs || 0;
+      // Normalize transactions
+      const txs = (d.transactions || []).slice(0, 20).map(tx => {
+        // Find net value for this xpub
+        const received = (tx.vout || []).reduce((s, o) =>
+          s + ((o.isOwn || o.isAddress) ? parseInt(o.value || '0') : 0), 0);
+        const sent = (tx.vin || []).reduce((s, i) =>
+          s + ((i.isOwn || i.isAddress) ? parseInt(i.value || '0') : 0), 0);
+        const net = received - sent;
+        return {
+          hash: tx.txid,
+          time: tx.blockTime || null,
+          value: net,
+          received: net >= 0
+        };
+      });
+      log(`${node}: ${sats} sats, ${txCount} txs`, true);
+      return { sats, txCount, txs, source: `Trezor (${node})` };
+    } catch(e) {
+      lastErr = `${node}: ${e.message}`;
+      log(`${node}: ${e.message}`, false);
+    }
+  }
+  throw new Error('Trezor Blockbook: ' + lastErr);
+}
+
+/* ══════════════════════════════════════════════════
+   BLOCKCHAIN.INFO HASKOIN — fallback A
+   api.blockchain.info/haskoin-store/btc/xpub/{xpub}
+══════════════════════════════════════════════════ */
+async function tryHaskoin(xpub) {
+  const base = 'https://api.blockchain.info/haskoin-store/btc';
+  const info = await fetch(`${base}/xpub/${xpub}/balance`, {
+    signal: AbortSignal.timeout(12000)
   });
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
-}
+  if (!info.ok) throw new Error(`Haskoin balance: HTTP ${info.status}`);
+  const bal = await info.json();
+  const sats = bal.confirmed || 0;
 
-/* ══ 1. MEMPOOL.SPACE — xpub nativo ══════════════════ */
-async function tryMempool(xpub) {
-  log('1) mempool.space/api/v1/xpub/…');
-  const info = await tryFetch(`https://mempool.space/api/v1/xpub/${xpub}`);
-  const txs  = await tryFetch(`https://mempool.space/api/v1/xpub/${xpub}/txs`).catch(() => []);
-  log(`   balance: ${info.balance} sats, txs: ${info.tx_count}`, true);
-  return {
-    sats: info.balance ?? 0,
-    txCount: info.tx_count ?? 0,
-    txs: normalizeMempoolTxs(txs),
-    source: 'Mempool.space'
-  };
-}
-
-function normalizeMempoolTxs(txs) {
-  return (txs || []).map(tx => ({
-    hash: tx.txid,
-    time: tx.status?.block_time ?? null,
-    value: (tx.vout||[]).reduce((s,o)=>s+(o.value||0),0),
-    received: true
-  }));
-}
-
-/* ══ 2. BLOCKSTREAM ESPLORA — xpub nativo ════════════ */
-async function tryBlockstream(xpub) {
-  log('2) blockstream.info/api/xpub/…');
-  const info = await tryFetch(`https://blockstream.info/api/xpub/${xpub}`);
-  const txs  = await tryFetch(`https://blockstream.info/api/xpub/${xpub}/txs`).catch(() => []);
-  log(`   balance: ${info.balance} sats, tx_count: ${info.tx_count}`, true);
-  return {
-    sats: info.balance ?? 0,
-    txCount: info.tx_count ?? 0,
-    txs: normalizeMempoolTxs(txs),
-    source: 'Blockstream'
-  };
-}
-
-/* ══ 3. BLOCKCHAIN.INFO — endereços individuais ══════ */
-// Usa @scure/bip32 (biblioteca auditada) para derivar endereços corretos
-async function tryBlockchainInfo(xpub) {
-  log('3) Derivando endereços via @scure/bip32…');
+  // Fetch transactions
+  const txResp = await fetch(`${base}/xpub/${xpub}/transactions/full?limit=20`, {
+    signal: AbortSignal.timeout(15000)
+  }).catch(() => null);
   
-  // Carrega biblioteca
+  const txs = [];
+  if (txResp && txResp.ok) {
+    const txData = await txResp.json();
+    (txData || []).forEach(tx => {
+      txs.push({ hash: tx.txid, time: tx.time || null, value: 0, received: true });
+    });
+  }
+  
+  log(`Haskoin: ${sats} sats`, true);
+  return { sats, txCount: bal.txs || txs.length, txs, source: 'Blockchain.com Haskoin' };
+}
+
+/* ══════════════════════════════════════════════════
+   BLOCKCHAIN.INFO multiaddr — fallback B
+   Deriva endereços com @scure/bip32, consulta em lotes
+══════════════════════════════════════════════════ */
+async function tryBlockchainWithScure(xpub) {
+  // Carrega @scure/bip32
   const { HDKey } = await import('https://esm.sh/@scure/bip32@1.4.0');
   const { ripemd160 } = await import('https://esm.sh/@noble/hashes@1.7.2/ripemd160');
   
   const hd = HDKey.fromExtendedKey(xpub);
-
-  // Base58Check para P2PKH
   const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  
   function b58enc(bytes) {
     let n = 0n;
     for (const b of bytes) n = n * 256n + BigInt(b);
@@ -897,52 +921,49 @@ async function tryBlockchainInfo(xpub) {
   }
 
   // Deriva 100 externos + 20 change
-  const addrs = [];
   const ext = hd.deriveChild(0), chg = hd.deriveChild(1);
+  const addrs = [];
   for (let i=0;i<100;i++) addrs.push(await toAddr(ext.deriveChild(i).publicKey));
   for (let i=0;i<20;i++) addrs.push(await toAddr(chg.deriveChild(i).publicKey));
   
-  log(`   m/0/0=${addrs[0]}`, true);
-  log(`   ${addrs.length} endereços derivados`);
+  log(`${addrs.length} endereços derivados (m/0/0=${addrs[0].slice(0,8)}…)`);
 
-  // Consulta em lotes de 50
   let totalSats=0, allTxs=[], allAddrs=[];
   for (let i=0;i<addrs.length;i+=50) {
     const lote = addrs.slice(i,i+50);
-    const url = `https://blockchain.info/multiaddr?active=${lote.join('|')}&n=20&cors=true`;
-    log(`   lote ${Math.floor(i/50)+1}/${Math.ceil(addrs.length/50)}`);
     try {
-      const d = await tryFetch(url, 20000);
+      const url = `https://blockchain.info/multiaddr?active=${lote.join('|')}&n=20&cors=true`;
+      const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d = await r.json();
       (d.addresses||[]).forEach(a => { totalSats += (a.final_balance||0); });
       allTxs.push(...(d.txs||[]));
       allAddrs.push(...(d.addresses||[]));
-    } catch(e) { log(`   lote falhou: ${e.message}`, false); }
+    } catch(e) { log(`lote ${Math.floor(i/50)+1} falhou: ${e.message}`, false); }
     await new Promise(r=>setTimeout(r,400));
   }
-
-  const seen = new Set();
-  const uniq = allTxs.filter(t => { if(seen.has(t.hash)) return false; seen.add(t.hash); return true; });
+  const seen=new Set(), uniq=allTxs.filter(t=>{if(seen.has(t.hash))return false;seen.add(t.hash);return true;});
+  log(`blockchain.info: ${totalSats} sats, ${uniq.length} txs`);
   
-  log(`   total: ${totalSats} sats, ${uniq.length} txs`, totalSats >= 0);
-  return { sats: totalSats, txCount: uniq.length, txs: normalizeBlockchainTxs(uniq, new Set(addrs)), source: 'Blockchain.com', _addrs: addrs };
-}
-
-function normalizeBlockchainTxs(txs, addrSet) {
-  return txs.map(tx => {
-    let rcv=0, snt=0;
-    (tx.out||[]).forEach(o => { if(addrSet.has(o.addr)) rcv+=(o.value||0); });
-    (tx.inputs||[]).forEach(i => { if(addrSet.has(i.prev_out?.addr)) snt+=(i.prev_out?.value||0); });
-    return { hash: tx.hash, time: tx.time, value: rcv-snt, received: rcv>=snt };
+  const addrSet = new Set(addrs);
+  const txsNorm = uniq.map(tx => {
+    let rcv=0,snt=0;
+    (tx.out||[]).forEach(o=>{if(addrSet.has(o.addr))rcv+=(o.value||0);});
+    (tx.inputs||[]).forEach(i=>{if(addrSet.has(i.prev_out?.addr))snt+=(i.prev_out?.value||0);});
+    return {hash:tx.hash, time:tx.time, value:rcv-snt, received:rcv>=snt};
   });
+  return { sats: totalSats, txCount: uniq.length, txs: txsNorm, source: 'Blockchain.info' };
 }
 
-/* ══ RENDERIZAÇÃO DE TRANSAÇÕES ══════════════════════ */
+/* ══════════════════════════════════════════════════
+   RENDERIZAÇÃO
+══════════════════════════════════════════════════ */
 function renderTxs(txs) {
   const tbody = document.getElementById('tx-body');
   tbody.innerHTML = '';
   if (!txs || txs.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);
-      padding:20px;font-size:13px">Nenhuma transação encontrada.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;
+      color:var(--muted);padding:20px;font-size:13px">Nenhuma transação encontrada.</td></tr>`;
     return;
   }
   txs.slice(0,20).forEach(tx => {
@@ -982,7 +1003,7 @@ function renderFallback(xpub) {
   document.getElementById('tx-body').innerHTML = `
     <tr><td colspan="4" style="text-align:center;padding:32px 20px">
       <div style="font-size:13px;color:var(--text);margin-bottom:18px;line-height:1.6">
-        Todas as APIs bloqueadas pelo browser/rede.<br>Acesse diretamente:
+        APIs bloqueadas (possível CSP do servidor).<br>Acesse diretamente:
       </div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <a href="https://mempool.space/xpub/${encodeURIComponent(xpub)}" target="_blank"
@@ -991,14 +1012,15 @@ function renderFallback(xpub) {
           Mempool.space ↗</a>
         <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}" target="_blank"
            style="display:inline-flex;align-items:center;gap:7px;background:var(--bg2);color:var(--off);
-                  border:1px solid var(--border);font-size:13px;padding:11px 20px;
-                  border-radius:10px;text-decoration:none">
+                  border:1px solid var(--border);font-size:13px;padding:11px 20px;border-radius:10px;text-decoration:none">
           Blockchain.com ↗</a>
       </div>
     </td></tr>`;
 }
 
-/* ══ ORQUESTRADOR ════════════════════════════════════ */
+/* ══════════════════════════════════════════════════
+   ORQUESTRADOR
+══════════════════════════════════════════════════ */
 async function loadXpub() {
   const raw = document.getElementById('xpub-input').value.trim();
   if (!raw) { showToast('Cole sua xpub no campo.'); return; }
@@ -1011,20 +1033,21 @@ async function loadXpub() {
   const logEl = document.getElementById('xpub-log');
   if (logEl) { logEl.innerHTML = ''; logEl.style.display = 'block'; }
   log('xpub: ' + raw.slice(0,14) + '…' + raw.slice(-6));
-  showTxLoading('Iniciando…');
+  showTxLoading('Consultando Trezor Blockbook…');
 
   const apis = [
-    { name: 'Mempool.space',    fn: () => tryMempool(raw) },
-    { name: 'Blockstream',      fn: () => tryBlockstream(raw) },
-    { name: 'Blockchain.info',  fn: () => tryBlockchainInfo(raw) },
+    { name: 'Trezor Blockbook', fn: () => tryTrezor(raw) },
+    { name: 'Haskoin (blockchain.com)', fn: () => tryHaskoin(raw) },
+    { name: 'Blockchain.info (endereços)', fn: () => tryBlockchainWithScure(raw) },
   ];
 
   let result = null;
   for (const api of apis) {
     showTxLoading(`Tentando ${api.name}…`);
+    log(`Tentando ${api.name}…`);
     try {
       result = await api.fn();
-      log(`✓ ${api.name} funcionou — ${result.sats} sats`, true);
+      log(`✓ ${api.name}: ${result.sats} sats`, true);
       break;
     } catch(e) {
       log(`✗ ${api.name}: ${e.message}`, false);
@@ -1038,10 +1061,10 @@ async function loadXpub() {
     renderTxs(result.txs);
     appendExplorerLinks(raw);
     document.getElementById('tx-section').style.display = 'block';
-    log(`RESULTADO: ${result.sats} sats = ${(result.sats/1e8).toFixed(8)} BTC`, result.sats >= 0);
-    showToast(result.sats > 0 ? `✓ ${fmtSats(result.sats)}` : 'Carteira carregada — saldo zero');
+    showToast(result.sats > 0 ? `✓ ${fmtSats(result.sats)}` : 'Carteira carregada');
   } else {
-    setStatus('APIs indisponíveis'); renderFallback(raw);
+    setStatus('APIs indisponíveis');
+    renderFallback(raw);
     showToast('Use os links do explorador.');
   }
 
@@ -1066,6 +1089,7 @@ function updatePortfolio(sats) {
 function refreshPortfolioValues() {
   if (walletBalance !== null) updatePortfolio(walletBalance);
 }
+
 
 
 
