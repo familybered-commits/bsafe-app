@@ -1,18 +1,22 @@
-# netlify.toml — configuração do site BSafe Bitcoin
+# netlify.toml
 
 [build]
   publish = "."
   functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[context.production.environment]
+  NODE_VERSION = "18"
 
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
 
 [[redirects]]
   from = "/api/xpub"
   to = "/.netlify/functions/xpub"
   status = 200
-

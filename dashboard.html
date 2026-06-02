@@ -821,13 +821,19 @@ function log(msg, ok) {
 ══════════════════════════════════════════════════ */
 async function queryProxy(xpub, type = 'info') {
   const url = `/api/xpub?xpub=${encodeURIComponent(xpub)}&type=${type}`;
-  const r = await fetch(url, {
-    signal: AbortSignal.timeout(20000),
-    headers: { Accept: 'application/json' },
-  });
+  let r;
+  try {
+    r = await fetch(url, { headers: { Accept: 'application/json' } });
+  } catch(fetchErr) {
+    throw new Error('Função /api/xpub não encontrada — verifique o deploy do Netlify. ' + fetchErr.message);
+  }
   if (!r.ok) {
-    const err = await r.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${r.status}`);
+    let errMsg = `HTTP ${r.status}`;
+    try {
+      const err = await r.json();
+      errMsg = err.error || (err.details && err.details[0]) || errMsg;
+    } catch(e) {}
+    throw new Error(errMsg);
   }
   return r.json();
 }
@@ -974,7 +980,7 @@ async function loadXpub() {
     log('ERRO: ' + e.message, false);
     setStatus('Erro na consulta');
     renderFallback(raw);
-    showToast('Erro: ' + e.message.slice(0, 60));
+    showToast('Erro: ' + (e.message || String(e)).slice(0, 80));
   }
 
   btn.textContent = 'Rastrear carteira'; btn.disabled = false;
