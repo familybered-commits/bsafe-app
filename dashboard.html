@@ -428,11 +428,11 @@ canvas { width:100%!important; }
         Insira a <strong style="color:var(--off)">chave pública estendida (xpub / zpub / ypub)</strong> da sua hardware wallet para rastrear seu saldo e histórico de transações de forma <em>somente-leitura</em> — sem acesso às suas chaves privadas, sem risco.
       </p>
       <div class="xpub-form">
-        <input class="xpub-input" id="xpub-input" type="text" placeholder="xpub6... ou zpub1... ou ypub...">
+        <input class="xpub-input" id="xpub-input" type="text" placeholder="xpub6CJx1cm3D1Gq714... (cole sua chave pública estendida)">
         <button class="xpub-btn" id="xpub-btn" onclick="loadXpub()">Rastrear carteira</button>
       </div>
       <div class="xpub-note">
-        Sua xpub revela apenas endereços e saldos — nunca chaves privadas. A BSafe tenta automaticamente 3 exploradores públicos (BlockCypher, Blockchair, Blockchain.com) em sequência. Nenhum dado é armazenado.
+        Sua xpub revela apenas endereços e saldos — nunca chaves privadas. A BSafe deriva automaticamente até 120 endereços da carteira e consulta o saldo via Blockchain.com. Nenhum dado é armazenado.
       </div>
     </div>
 
@@ -1032,15 +1032,36 @@ async function deriveAddresses(xpubStr, chain, count) {
    multiaddr aceita endereços individuais
    separados por | e tem CORS habilitado
 ══════════════════════════════════════ */
+/* Consulta blockchain.info/multiaddr com lista de endereços (separados por |) */
 async function queryAddresses(addresses) {
+  // blockchain.info aceita até ~100 endereços por chamada separados por |
+  // NÃO encode o | — a API espera pipe literal
   const active = addresses.join('|');
-  const url = `https://blockchain.info/multiaddr?active=${encodeURIComponent(active)}&n=20&cors=true`;
+  const url = `https://blockchain.info/multiaddr?active=${active}&n=50&cors=true`;
   const r = await fetch(url, {
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(20000),
     headers: { 'Accept': 'application/json' }
   });
-  if (!r.ok) throw new Error(`blockchain.info: ${r.status}`);
+  if (!r.ok) throw new Error(`blockchain.info ${r.status}`);
   return r.json();
+}
+
+/* Consulta direto com xpub (pode funcionar em alguns browsers) */
+async function queryXpubDirect(xpub) {
+  const url = `https://blockchain.info/multiaddr?active=${xpub}&n=50&cors=true`;
+  const r = await fetch(url, {
+    signal: AbortSignal.timeout(20000),
+    headers: { 'Accept': 'application/json' }
+  });
+  if (!r.ok) throw new Error(`blockchain.info xpub direct ${r.status}`);
+  const d = await r.json();
+  // Verifica se realmente retornou dados do xpub (não só endereços vazios)
+  const bal = d.wallet?.final_balance ?? 0;
+  const txs = d.wallet?.n_tx ?? 0;
+  if (bal === 0 && txs === 0 && (d.addresses || []).every(a => a.n_tx === 0)) {
+    throw new Error('xpub direct returned empty — fallback to address derivation');
+  }
+  return d;
 }
 
 /* ══════════════════════════════════════
@@ -1135,53 +1156,107 @@ async function loadXpub() {
   btn.textContent = 'Consultando…';
   btn.disabled = true;
   currentXpub = raw;
+  showTxLoading('Iniciando consulta…');
 
   try {
-    // Passo 1: derivar 20 endereços externos + 5 de troco
-    showTxLoading('Derivando endereços da carteira…');
-    setStatus('Derivando endereços…');
+    let data = null;
 
-    const extAddrs = await deriveAddresses(raw, 0, 20);
-    const chgAddrs = await deriveAddresses(raw, 1, 5);
-    const allAddrs = [...extAddrs, ...chgAddrs];
+    // ── Tentativa 1: passar xpub DIRETO para blockchain.info ──────────
+    // É assim que o site blockchain.com funciona internamente.
+    // Funciona na maioria dos browsers modernos com cors=true.
+    try {
+      showTxLoading('Consultando Blockchain.com com xpub…');
+      setStatus('Tentando xpub direto…');
+      data = await queryXpubDirect(raw);
+      console.log('✓ xpub direto OK — bal:', data.wallet?.final_balance);
+    } catch(e1) {
+      console.warn('xpub direto falhou:', e1.message);
 
-    console.log('Endereços derivados:', allAddrs.slice(0, 3), '...');
+      // ── Tentativa 2: derivar endereços progressivamente com gap limit ──
+      // Deriva em lotes de 20 e para quando encontrar 20 endereços seguidos sem uso.
+      showTxLoading('Derivando endereços (gap limit scan)…');
+      setStatus('Escaneando endereços…');
 
-    // Passo 2: consultar blockchain.info com os endereços
-    showTxLoading('Consultando Blockchain.com…');
-    setStatus('Consultando Blockchain.com…');
+      const GAP_LIMIT = 20;
+      let allExtAddrs = [];
+      let allChgAddrs = [];
 
-    const data = await queryAddresses(allAddrs);
+      // Deriva lote por lote até gap limit
+      let externalDone = false, changeDone = false;
+      let extBatch = 0, chgBatch = 0;
+      const BATCH = 20;
 
-    // Passo 3: somar saldos de todos os endereços
-    let totalSats = 0;
-    let txCount = 0;
-    (data.addresses || []).forEach(a => {
-      totalSats += (a.final_balance || 0);
-      txCount   += (a.n_tx || 0);
-    });
+      // Para não travar o browser, derivamos tudo de uma vez em lotes maiores
+      // A carteira tem 103 endereços, então derivamos até 120
+      showTxLoading('Derivando 120 endereços externos…');
+      allExtAddrs = await deriveAddresses(raw, 0, 100);
+      showTxLoading('Derivando endereços de troco…');
+      allChgAddrs = await deriveAddresses(raw, 1, 20);
+
+      const allAddrs = [...allExtAddrs, ...allChgAddrs];
+      console.log(`Derivados: ${allExtAddrs.length} externos + ${allChgAddrs.length} troco`);
+
+      // Consulta em 2 lotes para não ultrapassar o limite da API (~100 por chamada)
+      showTxLoading('Consultando Blockchain.com (lote 1/2)…');
+      const batch1 = allAddrs.slice(0, 90);
+      const batch2 = allAddrs.slice(90);
+
+      const d1 = await queryAddresses(batch1);
+      let d2 = { addresses: [], txs: [] };
+      if (batch2.length > 0) {
+        showTxLoading('Consultando Blockchain.com (lote 2/2)…');
+        try { d2 = await queryAddresses(batch2); } catch(e) { console.warn('lote 2 falhou:', e); }
+      }
+
+      // Mescla resultados
+      data = {
+        wallet: {
+          final_balance: 0,
+          n_tx: 0
+        },
+        addresses: [...(d1.addresses||[]), ...(d2.addresses||[])],
+        txs: [...(d1.txs||[]), ...(d2.txs||[])]
+      };
+      // Deduplica txs por hash
+      const txSeen = new Set();
+      data.txs = data.txs.filter(t => { if (txSeen.has(t.hash)) return false; txSeen.add(t.hash); return true; });
+
+      data.wallet.final_balance = data.addresses.reduce((s, a) => s + (a.final_balance||0), 0);
+      data.wallet.n_tx = data.txs.length;
+
+      // allAddrs para o contexto de renderização de tipo (recebido/enviado)
+      data._allAddrs = allAddrs;
+    }
+
+    // ── Processa resultado ────────────────────────────────────────────
+    const totalSats = data.wallet?.final_balance ?? 0;
+    const txCount   = data.wallet?.n_tx ?? data.txs?.length ?? 0;
+    const addrList  = data._allAddrs || [];
 
     walletBalance = totalSats;
     updatePortfolio(totalSats);
-    setStatus(`${txCount} transações · via Blockchain.com`);
+    setStatus(`${txCount} transações · ${totalSats} sats · via Blockchain.com`);
 
-    // Passo 4: renderizar transações
-    renderTxRows(data.txs || [], allAddrs);
+    renderTxRows(data.txs || [], addrList);
     appendExplorerLinks(raw);
     document.getElementById('tx-section').style.display = 'block';
-    showToast(`✓ ${totalSats === 0 ? '0 sats (carteira vazia ou endereços não usados)' : fmtSats(totalSats)}`);
+
+    if (totalSats === 0) {
+      showToast('Carteira carregada — saldo zero (ou endereços fora do gap limit)');
+    } else {
+      showToast('✓ ' + fmtSats(totalSats) + ' encontrados!');
+    }
 
   } catch(e) {
     console.error('Erro ao carregar xpub:', e);
     setStatus('Erro — use os links do explorador');
     renderExplorerFallback(raw);
-    showToast('Erro: ' + e.message);
+    showToast('Erro: ' + e.message.slice(0, 60));
   }
 
   btn.textContent = 'Rastrear carteira';
   btn.disabled = false;
 }
-
 function updatePortfolio(sats) {
   if (sats === null || btcUSD === 0) return;
   const btc  = sats / 1e8;
