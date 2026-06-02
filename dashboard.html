@@ -432,7 +432,7 @@ canvas { width:100%!important; }
         <button class="xpub-btn" id="xpub-btn" onclick="loadXpub()">Rastrear carteira</button>
       </div>
       <div class="xpub-note">
-        Sua xpub revela apenas endereços e saldos — nunca suas chaves privadas. Os dados são consultados via Blockchain.com (API pública) e abertos no explorador para verificação. Nenhum dado é armazenado pela BSafe.
+        Sua xpub revela apenas endereços e saldos — nunca chaves privadas. A BSafe tenta automaticamente 3 exploradores públicos (BlockCypher, Blockchair, Blockchain.com) em sequência. Nenhum dado é armazenado.
       </div>
     </div>
 
@@ -771,127 +771,241 @@ function setPeriod(btn, period) {
 }
 
 /* ═══════════════════════════════════════
-   XPUB / PORTFOLIO — via Blockchain.com API
+   XPUB / PORTFOLIO — multi-provider com fallback
+   Providers tentados em ordem:
+   1. BlockCypher  (CORS nativo, xpub direto)
+   2. Blockchair   (CORS nativo, xpub direto)
+   3. blockchain.info multiaddr (CORS=true)
+   4. Fallback visual com link explorador
 ═══════════════════════════════════════ */
-let walletBalance = null; // in satoshis
-let currentXpub = '';
+let walletBalance = null;
+let currentXpub   = '';
 
-async function loadXpub() {
-  const raw = document.getElementById('xpub-input').value.trim();
-  if (!raw) { showToast('Cole sua xpub, zpub ou ypub no campo.'); return; }
-  if (raw.length < 30) { showToast('Chave pública inválida — verifique e tente novamente.'); return; }
+/* ── helpers ── */
+const fmtSats  = s => (s / 1e8).toFixed(8) + ' ₿';
+const fmtDate  = t => t ? new Date(t * 1000).toLocaleDateString('pt-BR') : 'Pendente';
+const shortTx  = h => h && h.length > 14 ? h.slice(0,8) + '…' + h.slice(-6) : (h || '—');
 
-  const btn = document.getElementById('xpub-btn');
-  btn.textContent = 'Consultando...';
-  btn.disabled = true;
-
-  currentXpub = raw;
-
-  try {
-    // Blockchain.com xpub API — suporta xpub/ypub/zpub
-    const url = `https://blockchain.info/multiaddr?active=${encodeURIComponent(raw)}&n=20&cors=true`;
-    const resp = await fetch(url, { signal: AbortSignal.timeout(12000) });
-
-    if (!resp.ok) throw new Error('blockchain_api_error');
-
-    const data = await resp.json();
-    const wallet = data.wallet;
-    const txs = data.txs || [];
-
-    walletBalance = wallet.final_balance || 0; // satoshis
-    const txCount = wallet.n_tx || txs.length;
-
-    document.getElementById('tx-addr-count').textContent =
-      txCount + ' transações · saldo confirmado';
-
-    updatePortfolio(walletBalance);
-    renderBlockchainTxTable(txs, raw);
-    document.getElementById('tx-section').style.display = 'block';
-    showToast('✓ Carteira carregada via Blockchain.com');
-
-  } catch(e) {
-    console.warn('Blockchain.com xpub error:', e);
-    // Fallback: abre o explorador Blockchain.com para verificação manual
-    // e exibe botão para abrir no explorador
-    showToast('Não foi possível carregar via API. Abrindo explorador externo...');
-    document.getElementById('tx-addr-count').textContent = 'Verificação via explorador externo';
-    renderExplorerFallback(raw);
-    document.getElementById('tx-section').style.display = 'block';
-  }
-
-  btn.textContent = 'Rastrear carteira';
-  btn.disabled = false;
+function setStatus(msg) {
+  const el = document.getElementById('tx-addr-count');
+  if (el) el.textContent = msg;
 }
 
-function renderBlockchainTxTable(txs, xpub) {
+/* ── UI de loading no painel de transações ── */
+function showTxLoading() {
+  document.getElementById('tx-section').style.display = 'block';
+  document.getElementById('tx-body').innerHTML = `
+    <tr><td colspan="4" style="text-align:center;padding:28px;color:var(--muted);
+        font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.06em">
+      ⏳ Consultando blockchain…
+    </td></tr>`;
+}
+
+/* ── Renderização de tabela de transações ── */
+function renderTxRows(txs, explorerBase) {
   const tbody = document.getElementById('tx-body');
   tbody.innerHTML = '';
 
   if (!txs || txs.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Nenhuma transação encontrada neste endereço.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;font-size:13px">Nenhuma transação encontrada.</td></tr>';
     return;
   }
 
-  txs.slice(0, 20).forEach(tx => {
-    const date = tx.time
-      ? new Date(tx.time * 1000).toLocaleDateString('pt-BR')
-      : 'Pendente';
-    const txid = tx.hash || '—';
-    const short = txid.length > 14 ? txid.substring(0,8) + '...' + txid.slice(-6) : txid;
-
-    // Calcula valor líquido: saídas para endereços externos menos entradas
-    // result positivo = recebido, negativo = enviado
-    const result = tx.result !== undefined ? tx.result : 0;
-    const btcVal = Math.abs(result) / 1e8;
-    const tipo = result >= 0
+  txs.forEach(tx => {
+    const tr = document.createElement('tr');
+    const link = `${explorerBase}${tx.hash}`;
+    const tipo = tx.result >= 0
       ? '<span class="up">↓ Recebido</span>'
       : '<span class="down">↑ Enviado</span>';
-
-    const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${date}</td>
-      <td><a href="https://www.blockchain.com/btc/tx/${txid}" target="_blank"
-          style="color:var(--btc);text-decoration:none;font-family:'DM Mono',monospace;font-size:12px">${short} ↗</a></td>
+      <td style="color:var(--muted);font-size:12px">${tx.date}</td>
+      <td><a href="${link}" target="_blank"
+          style="color:var(--btc);text-decoration:none;font-family:'DM Mono',monospace;font-size:12px">
+          ${shortTx(tx.hash)} ↗</a></td>
       <td>${tipo}</td>
-      <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${btcVal.toFixed(8)} ₿</td>
-    `;
+      <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">
+          ${fmtSats(Math.abs(tx.result))}</td>`;
     tbody.appendChild(tr);
   });
-
-  // Adiciona link para ver carteira completa no Blockchain.com
-  const tfooter = document.createElement('tr');
-  tfooter.innerHTML = `
-    <td colspan="4" style="text-align:center;padding:14px">
-      <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}" target="_blank"
-         style="color:var(--btc);font-size:12px;font-family:'DM Mono',monospace;text-decoration:none">
-        Ver carteira completa no Blockchain.com ↗
-      </a>
-    </td>
-  `;
-  tbody.appendChild(tfooter);
 }
 
-function renderExplorerFallback(xpub) {
+function appendExplorerFooter(xpub) {
   const tbody = document.getElementById('tx-body');
-  tbody.innerHTML = `
-    <tr>
-      <td colspan="4" style="text-align:center;padding:28px 20px">
-        <div style="margin-bottom:14px;font-size:13px;color:var(--text)">
-          Consulte sua carteira diretamente no explorador:
-        </div>
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td colspan="4" style="text-align:center;padding:14px;border-top:1px solid var(--border)">
+      <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}"
+         target="_blank" style="color:var(--btc);font-size:11px;
+         font-family:'DM Mono',monospace;text-decoration:none;letter-spacing:.04em">
+        Ver carteira completa no Blockchain.com ↗
+      </a>
+    </td>`;
+  tbody.appendChild(tr);
+}
+
+/* ── Fallback visual quando todas as APIs falham ── */
+function renderExplorerFallback(xpub) {
+  document.getElementById('tx-section').style.display = 'block';
+  document.getElementById('tx-body').innerHTML = `
+    <tr><td colspan="4" style="text-align:center;padding:32px 20px">
+      <div style="font-size:13px;color:var(--text);margin-bottom:18px;line-height:1.6">
+        As APIs públicas estão temporariamente indisponíveis.<br>
+        Consulte sua carteira diretamente no explorador:
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}"
-           target="_blank"
-           style="display:inline-flex;align-items:center;gap:8px;background:var(--btc);color:#000;
-                  font-weight:700;font-size:13px;padding:12px 22px;border-radius:10px;
-                  text-decoration:none;font-family:'DM Sans',sans-serif">
-          Abrir no Blockchain.com ↗
+           target="_blank" style="display:inline-flex;align-items:center;gap:7px;
+           background:var(--btc);color:#000;font-weight:700;font-size:13px;
+           padding:11px 20px;border-radius:10px;text-decoration:none;
+           font-family:'DM Sans',sans-serif">
+          Blockchain.com ↗
         </a>
-        <div style="margin-top:12px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">
-          Somente leitura — suas chaves privadas estão seguras
-        </div>
-      </td>
-    </tr>
-  `;
+        <a href="https://mempool.space/xpub/${encodeURIComponent(xpub)}"
+           target="_blank" style="display:inline-flex;align-items:center;gap:7px;
+           background:var(--bg2);color:var(--off);border:1px solid var(--border);
+           font-weight:600;font-size:13px;padding:11px 20px;border-radius:10px;
+           text-decoration:none;font-family:'DM Sans',sans-serif">
+          Mempool.space ↗
+        </a>
+      </div>
+      <div style="margin-top:14px;font-size:11px;color:var(--muted);
+          font-family:'DM Mono',monospace;letter-spacing:.04em">
+        Somente leitura — suas chaves privadas estão seguras
+      </div>
+    </td></tr>`;
+}
+
+/* ══════════════════════════════
+   PROVIDER 1 — BlockCypher
+   GET /v1/btc/main/addrs/{xpub}
+   Retorna: balance (satoshis), txrefs
+══════════════════════════════ */
+async function tryBlockCypher(xpub) {
+  const url = `https://api.blockcypher.com/v1/btc/main/addrs/${xpub}?limit=20&includesubchain=true`;
+  const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  if (!r.ok) throw new Error(`BlockCypher ${r.status}`);
+  const d = await r.json();
+  if (d.error) throw new Error(d.error);
+
+  const sats = d.final_balance ?? d.balance ?? 0;
+  const txrefs = [...(d.txrefs || []), ...(d.unconfirmed_txrefs || [])];
+
+  // Normaliza para formato interno
+  const txs = txrefs.slice(0, 20).map(t => ({
+    hash:   t.tx_hash,
+    date:   fmtDate(t.confirmed ? new Date(t.confirmed).getTime() / 1000 : null),
+    result: t.value * (t.tx_input_n >= 0 && t.tx_output_n === -1 ? -1 : 1)
+  }));
+
+  return { sats, txs, txCount: d.n_tx || txrefs.length, provider: 'BlockCypher' };
+}
+
+/* ══════════════════════════════
+   PROVIDER 2 — Blockchair
+   GET /bitcoin/dashboards/xpub/{xpub}
+   Retorna: balance, transactions
+══════════════════════════════ */
+async function tryBlockchair(xpub) {
+  const url = `https://api.blockchair.com/bitcoin/dashboards/xpub/${xpub}?transaction_details=true&limit=20`;
+  const r = await fetch(url, { signal: AbortSignal.timeout(15000) });
+  if (!r.ok) throw new Error(`Blockchair ${r.status}`);
+  const d = await r.json();
+  if (d.context?.error) throw new Error(d.context.error);
+
+  const xdata = d.data?.[xpub];
+  if (!xdata) throw new Error('Blockchair: xpub não encontrada');
+
+  const sats = xdata.xpub?.balance ?? 0;
+  const txCount = xdata.xpub?.transaction_count ?? 0;
+  const txDetails = xdata.transactions || [];
+
+  const txs = txDetails.slice(0, 20).map(tx => {
+    const balChange = tx.balance_change ?? 0;
+    const timeVal = tx.time ? new Date(tx.time + 'Z').getTime() / 1000 : null;
+    return {
+      hash:   tx.hash,
+      date:   fmtDate(timeVal),
+      result: balChange
+    };
+  });
+
+  return { sats, txs, txCount, provider: 'Blockchair' };
+}
+
+/* ══════════════════════════════
+   PROVIDER 3 — Blockchain.info multiaddr
+   GET /multiaddr?active={xpub}&cors=true
+══════════════════════════════ */
+async function tryBlockchainInfo(xpub) {
+  const url = `https://blockchain.info/multiaddr?active=${encodeURIComponent(xpub)}&n=20&cors=true`;
+  const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  if (!r.ok) throw new Error(`Blockchain.info ${r.status}`);
+  const d = await r.json();
+
+  const sats = d.wallet?.final_balance ?? 0;
+  const txCount = d.wallet?.n_tx ?? 0;
+
+  const txs = (d.txs || []).slice(0, 20).map(tx => ({
+    hash:   tx.hash,
+    date:   fmtDate(tx.time),
+    result: tx.result ?? 0
+  }));
+
+  return { sats, txs, txCount, provider: 'Blockchain.com' };
+}
+
+/* ══════════════════════════════
+   ORQUESTRADOR PRINCIPAL
+══════════════════════════════ */
+async function loadXpub() {
+  const raw = document.getElementById('xpub-input').value.trim();
+  if (!raw) { showToast('Cole sua xpub, zpub ou ypub no campo.'); return; }
+  if (raw.length < 80) { showToast('Chave pública inválida — verifique e tente novamente.'); return; }
+
+  const btn = document.getElementById('xpub-btn');
+  btn.textContent = 'Consultando…';
+  btn.disabled = true;
+  currentXpub = raw;
+  showTxLoading();
+
+  const providers = [
+    { name: 'BlockCypher',    fn: () => tryBlockCypher(raw) },
+    { name: 'Blockchair',     fn: () => tryBlockchair(raw)  },
+    { name: 'Blockchain.info',fn: () => tryBlockchainInfo(raw) },
+  ];
+
+  let result = null;
+  let lastErr = '';
+
+  for (const p of providers) {
+    try {
+      setStatus(`Tentando ${p.name}…`);
+      result = await p.fn();
+      console.log(`✓ ${p.name} OK — saldo: ${result.sats} sats`);
+      break;
+    } catch(e) {
+      console.warn(`✗ ${p.name}:`, e.message);
+      lastErr = e.message;
+    }
+  }
+
+  if (result) {
+    walletBalance = result.sats;
+    updatePortfolio(walletBalance);
+    setStatus(result.txCount + ' transações · via ' + result.provider);
+    renderTxRows(result.txs, 'https://www.blockchain.com/btc/tx/');
+    appendExplorerFooter(raw);
+    document.getElementById('tx-section').style.display = 'block';
+    showToast('✓ Carteira carregada via ' + result.provider);
+  } else {
+    setStatus('Não foi possível carregar automaticamente');
+    renderExplorerFallback(raw);
+    showToast('APIs indisponíveis. Use os links do explorador.');
+    console.error('Todos os providers falharam. Último erro:', lastErr);
+  }
+
+  btn.textContent = 'Rastrear carteira';
+  btn.disabled = false;
 }
 
 function updatePortfolio(sats) {
@@ -899,7 +1013,7 @@ function updatePortfolio(sats) {
   const btc = sats / 1e8;
   const usd = btc * btcUSD;
   const brl = btc * btcBRL;
-  const fmt = (n) => n.toLocaleString('pt-BR', {maximumFractionDigits:0});
+  const fmt = n => n.toLocaleString('pt-BR', {maximumFractionDigits:0});
   document.getElementById('pt-btc').textContent = btc.toFixed(8) + ' ₿';
   document.getElementById('pt-btc-sub').textContent = sats.toLocaleString('pt-BR') + ' satoshis';
   document.getElementById('pt-usd').textContent = '$' + fmt(usd);
