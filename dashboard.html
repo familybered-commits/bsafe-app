@@ -432,7 +432,12 @@ canvas { width:100%!important; }
         <button class="xpub-btn" id="xpub-btn" onclick="loadXpub()">Rastrear carteira</button>
       </div>
       <div class="xpub-note">
-        Sua xpub revela apenas endereços e saldos — nunca chaves privadas. A BSafe deriva automaticamente até 120 endereços da carteira e consulta o saldo via Blockchain.com. Nenhum dado é armazenado.
+        Sua xpub revela apenas endereços e saldos — nunca chaves privadas. A BSafe tenta 3 estratégias em sequência: xpub direto → Blockchair → derivação de 120 endereços. Nenhum dado é armazenado.
+      </div>
+      <div id="xpub-log" style="display:none;margin-top:14px;background:var(--bg);
+        border:1px solid var(--border);border-radius:8px;padding:12px 14px;
+        max-height:160px;overflow-y:auto;font-family:'DM Mono',monospace;font-size:11px;
+        color:var(--text);line-height:1.7;letter-spacing:.02em;">
       </div>
     </div>
 
@@ -1150,113 +1155,185 @@ function renderExplorerFallback(xpub) {
 async function loadXpub() {
   const raw = document.getElementById('xpub-input').value.trim();
   if (!raw) { showToast('Cole sua xpub, zpub ou ypub no campo.'); return; }
-  if (raw.length < 80) { showToast('Chave pública inválida — verifique e tente novamente.'); return; }
+  if (raw.length < 80) { showToast('Chave pública inválida.'); return; }
 
   const btn = document.getElementById('xpub-btn');
   btn.textContent = 'Consultando…';
   btn.disabled = true;
   currentXpub = raw;
-  showTxLoading('Iniciando consulta…');
+
+  // ── Log visual na tela (para diagnóstico sem DevTools) ──
+  const logEl = document.getElementById('xpub-log');
+  if (logEl) logEl.style.display = 'block';
+  function log(msg, ok) {
+    if (!logEl) return;
+    const line = document.createElement('div');
+    line.style.cssText = `padding:3px 0;font-size:11px;font-family:'DM Mono',monospace;
+      color:${ok===true?'#22c55e':ok===false?'#ef4444':'#9a9a90'};`;
+    line.textContent = (ok===true?'✓ ':ok===false?'✗ ':'  ') + msg;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  if (logEl) logEl.innerHTML = '';
+  log('xpub: ' + raw.slice(0,12) + '…' + raw.slice(-8));
+
+  showTxLoading('Iniciando…');
 
   try {
     let data = null;
 
-    // ── Tentativa 1: passar xpub DIRETO para blockchain.info ──────────
-    // É assim que o site blockchain.com funciona internamente.
-    // Funciona na maioria dos browsers modernos com cors=true.
+    // ══ ESTRATÉGIA A: xpub direto na blockchain.info ══════════════════
+    // A blockchain.com usa esta API internamente. Funciona quando o browser
+    // não bloqueia a requisição cross-origin.
+    log('A) blockchain.info/multiaddr?active=xpub (direto)');
     try {
-      showTxLoading('Consultando Blockchain.com com xpub…');
-      setStatus('Tentando xpub direto…');
-      data = await queryXpubDirect(raw);
-      console.log('✓ xpub direto OK — bal:', data.wallet?.final_balance);
-    } catch(e1) {
-      console.warn('xpub direto falhou:', e1.message);
-
-      // ── Tentativa 2: derivar endereços progressivamente com gap limit ──
-      // Deriva em lotes de 20 e para quando encontrar 20 endereços seguidos sem uso.
-      showTxLoading('Derivando endereços (gap limit scan)…');
-      setStatus('Escaneando endereços…');
-
-      const GAP_LIMIT = 20;
-      let allExtAddrs = [];
-      let allChgAddrs = [];
-
-      // Deriva lote por lote até gap limit
-      let externalDone = false, changeDone = false;
-      let extBatch = 0, chgBatch = 0;
-      const BATCH = 20;
-
-      // Para não travar o browser, derivamos tudo de uma vez em lotes maiores
-      // A carteira tem 103 endereços, então derivamos até 120
-      showTxLoading('Derivando 120 endereços externos…');
-      allExtAddrs = await deriveAddresses(raw, 0, 100);
-      showTxLoading('Derivando endereços de troco…');
-      allChgAddrs = await deriveAddresses(raw, 1, 20);
-
-      const allAddrs = [...allExtAddrs, ...allChgAddrs];
-      console.log(`Derivados: ${allExtAddrs.length} externos + ${allChgAddrs.length} troco`);
-
-      // Consulta em 2 lotes para não ultrapassar o limite da API (~100 por chamada)
-      showTxLoading('Consultando Blockchain.com (lote 1/2)…');
-      const batch1 = allAddrs.slice(0, 90);
-      const batch2 = allAddrs.slice(90);
-
-      const d1 = await queryAddresses(batch1);
-      let d2 = { addresses: [], txs: [] };
-      if (batch2.length > 0) {
-        showTxLoading('Consultando Blockchain.com (lote 2/2)…');
-        try { d2 = await queryAddresses(batch2); } catch(e) { console.warn('lote 2 falhou:', e); }
+      const url = `https://blockchain.info/multiaddr?active=${raw}&n=50&cors=true`;
+      showTxLoading('A) blockchain.info xpub direto…');
+      const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
+      log(`   status: ${r.status}`, r.ok);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d = await r.json();
+      const bal = d.wallet?.final_balance ?? 0;
+      const ntx = d.wallet?.n_tx ?? 0;
+      log(`   balance: ${bal} sats, n_tx: ${ntx}`, bal > 0 || ntx > 0);
+      if (bal > 0 || ntx > 0) {
+        data = d;
+        log('   ✓ Dados encontrados via estratégia A', true);
+      } else {
+        log('   balance=0 e n_tx=0 — tentando próxima estratégia');
       }
+    } catch(eA) { log(`   falhou: ${eA.message}`, false); }
 
-      // Mescla resultados
-      data = {
-        wallet: {
-          final_balance: 0,
-          n_tx: 0
-        },
-        addresses: [...(d1.addresses||[]), ...(d2.addresses||[])],
-        txs: [...(d1.txs||[]), ...(d2.txs||[])]
-      };
-      // Deduplica txs por hash
-      const txSeen = new Set();
-      data.txs = data.txs.filter(t => { if (txSeen.has(t.hash)) return false; txSeen.add(t.hash); return true; });
-
-      data.wallet.final_balance = data.addresses.reduce((s, a) => s + (a.final_balance||0), 0);
-      data.wallet.n_tx = data.txs.length;
-
-      // allAddrs para o contexto de renderização de tipo (recebido/enviado)
-      data._allAddrs = allAddrs;
+    // ══ ESTRATÉGIA B: Blockchair xpub API ════════════════════════════
+    if (!data) {
+      log('B) api.blockchair.com/bitcoin/dashboards/xpub');
+      try {
+        const url = `https://api.blockchair.com/bitcoin/dashboards/xpub/${raw}?transaction_details=true&limit=20`;
+        showTxLoading('B) Blockchair xpub…');
+        const r = await fetch(url, { signal: AbortSignal.timeout(15000) });
+        log(`   status: ${r.status}`, r.ok);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        const xd = d.data?.[raw];
+        const bal = xd?.xpub?.balance ?? 0;
+        const ntx = xd?.xpub?.transaction_count ?? 0;
+        log(`   balance: ${bal} sats, transactions: ${ntx}`, bal > 0 || ntx > 0);
+        if (xd && (bal > 0 || ntx > 0)) {
+          // Normaliza para formato interno
+          const txs = (xd.transactions || []).slice(0,20).map(tx => ({
+            hash: tx.hash,
+            time: tx.time ? Math.floor(new Date(tx.time+'Z').getTime()/1000) : null,
+            result: tx.balance_change ?? 0,
+            out: [], inputs: []
+          }));
+          data = {
+            wallet: { final_balance: bal, n_tx: ntx },
+            addresses: [],
+            txs,
+            _allAddrs: []
+          };
+          log('   ✓ Dados encontrados via estratégia B', true);
+        } else {
+          log('   sem dados úteis');
+        }
+      } catch(eB) { log(`   falhou: ${eB.message}`, false); }
     }
 
-    // ── Processa resultado ────────────────────────────────────────────
-    const totalSats = data.wallet?.final_balance ?? 0;
-    const txCount   = data.wallet?.n_tx ?? data.txs?.length ?? 0;
-    const addrList  = data._allAddrs || [];
+    // ══ ESTRATÉGIA C: derivar 120 endereços + consultar em lotes ═════
+    if (!data) {
+      log('C) Derivando 120 endereços + blockchain.info/multiaddr');
+      try {
+        showTxLoading('C) Derivando endereços externos…');
+        log('   derivando 100 externos…');
+        const extAddrs = await deriveAddresses(raw, 0, 100);
+        log(`   ${extAddrs.length} externos OK — ex: ${extAddrs[0]}`);
 
-    walletBalance = totalSats;
-    updatePortfolio(totalSats);
-    setStatus(`${txCount} transações · ${totalSats} sats · via Blockchain.com`);
+        showTxLoading('C) Derivando endereços de troco…');
+        log('   derivando 20 change…');
+        const chgAddrs = await deriveAddresses(raw, 1, 20);
+        log(`   ${chgAddrs.length} change OK`);
 
-    renderTxRows(data.txs || [], addrList);
-    appendExplorerLinks(raw);
-    document.getElementById('tx-section').style.display = 'block';
+        const allAddrs = [...extAddrs, ...chgAddrs];
 
-    if (totalSats === 0) {
-      showToast('Carteira carregada — saldo zero (ou endereços fora do gap limit)');
+        // Consulta em lotes de 50 (limite seguro da blockchain.info)
+        let allApiAddresses = [];
+        let allTxs = [];
+        const LOTE = 50;
+        for (let i = 0; i < allAddrs.length; i += LOTE) {
+          const lote = allAddrs.slice(i, i + LOTE);
+          const loteNum = Math.floor(i/LOTE) + 1;
+          const totalLotes = Math.ceil(allAddrs.length/LOTE);
+          showTxLoading(`C) Consultando lote ${loteNum}/${totalLotes}…`);
+          log(`   lote ${loteNum}/${totalLotes}: ${lote.length} endereços`);
+          try {
+            const url = `https://blockchain.info/multiaddr?active=${lote.join('|')}&n=20&cors=true`;
+            const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
+            log(`   lote ${loteNum} status: ${r.status}`, r.ok);
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const d = await r.json();
+            allApiAddresses.push(...(d.addresses || []));
+            allTxs.push(...(d.txs || []));
+            const loteBal = (d.addresses||[]).reduce((s,a)=>s+(a.final_balance||0),0);
+            log(`   lote ${loteNum}: ${loteBal} sats, ${(d.txs||[]).length} txs`);
+          } catch(eLote) {
+            log(`   lote ${loteNum} falhou: ${eLote.message}`, false);
+          }
+          // Pausa pequena para não rate-limit
+          await new Promise(r => setTimeout(r, 300));
+        }
+
+        // Deduplica txs
+        const txSeen = new Set();
+        const uniqueTxs = allTxs.filter(t => {
+          if (txSeen.has(t.hash)) return false;
+          txSeen.add(t.hash); return true;
+        });
+
+        const totalBal = allApiAddresses.reduce((s,a)=>s+(a.final_balance||0),0);
+        const totalTx  = uniqueTxs.length;
+        log(`   TOTAL: ${totalBal} sats, ${totalTx} txs únicas`, totalBal >= 0);
+
+        data = {
+          wallet: { final_balance: totalBal, n_tx: totalTx },
+          addresses: allApiAddresses,
+          txs: uniqueTxs,
+          _allAddrs: allAddrs
+        };
+        log('   ✓ Estratégia C concluída', true);
+      } catch(eC) { log(`   falhou: ${eC.message}`, false); }
+    }
+
+    // ══ Processa resultado ════════════════════════════════════════════
+    if (data) {
+      const totalSats = data.wallet?.final_balance ?? 0;
+      const txCount   = data.wallet?.n_tx ?? 0;
+      const addrList  = data._allAddrs || [];
+
+      walletBalance = totalSats;
+      updatePortfolio(totalSats);
+      setStatus(`${txCount} transações · ${totalSats} sats`);
+      renderTxRows(data.txs || [], addrList);
+      appendExplorerLinks(raw);
+      document.getElementById('tx-section').style.display = 'block';
+      log(`RESULTADO FINAL: ${totalSats} sats (${(totalSats/1e8).toFixed(8)} BTC)`, totalSats > 0);
+      showToast(totalSats > 0 ? `✓ ${fmtSats(totalSats)}` : 'Carregado — saldo zerado');
     } else {
-      showToast('✓ ' + fmtSats(totalSats) + ' encontrados!');
+      log('Todas as estratégias falharam — usando links externos', false);
+      setStatus('APIs indisponíveis');
+      renderExplorerFallback(raw);
+      showToast('APIs bloqueadas. Use os links abaixo.');
     }
 
   } catch(e) {
-    console.error('Erro ao carregar xpub:', e);
-    setStatus('Erro — use os links do explorador');
+    log('ERRO GERAL: ' + e.message, false);
     renderExplorerFallback(raw);
-    showToast('Erro: ' + e.message.slice(0, 60));
+    showToast('Erro: ' + e.message.slice(0,60));
   }
 
   btn.textContent = 'Rastrear carteira';
   btn.disabled = false;
 }
+
 function updatePortfolio(sats) {
   if (sats === null || btcUSD === 0) return;
   const btc  = sats / 1e8;
