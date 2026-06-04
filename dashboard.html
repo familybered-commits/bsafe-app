@@ -367,7 +367,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v11</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v13</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -429,19 +429,23 @@ canvas { width:100%!important; }
 
     <div class="xpub-panel">
       <p class="xpub-intro">
-        Insira a <strong style="color:var(--off)">chave pública estendida (xpub / zpub / ypub)</strong> da sua hardware wallet para visualizar seu patrimônio no explorador.
+        Insira a <strong style="color:var(--off)">chave pública estendida (xpub / zpub / ypub)</strong>
+        da sua hardware wallet para rastrear seu saldo e transações em tempo real.
       </p>
       <div class="xpub-form">
         <input class="xpub-input" id="xpub-input" type="text"
           placeholder="xpub6... ou zpub1... ou ypub...">
-        <button class="xpub-btn" id="xpub-btn" onclick="openBlockchain()">Ver no Blockchain.com</button>
+        <button class="xpub-btn" id="xpub-btn" onclick="loadXpub()">Rastrear carteira</button>
       </div>
-      <div class="xpub-note">
-        Abre o explorador blockchain.com com os dados completos da sua carteira: saldo, transações e endereços derivados. Somente leitura — nunca expõe suas chaves privadas.
+      <div class="xpub-note" id="xpub-note">
+        Somente leitura — sua xpub nunca expõe chaves privadas. Nenhum dado armazenado pela BSafe.
       </div>
+      <div id="xpub-log" style="display:none;margin-top:12px;background:var(--bg);
+        border:1px solid var(--border);border-radius:8px;padding:12px 14px;
+        max-height:140px;overflow-y:auto;"></div>
     </div>
 
-    <!-- Cards de patrimônio (preenchidos ao abrir blockchain.com) -->
+    <!-- Cards de patrimônio -->
     <div class="portfolio-grid" style="margin-bottom:24px">
       <div class="ptile">
         <div class="ptile-label">SALDO TOTAL (BTC)</div>
@@ -460,37 +464,22 @@ canvas { width:100%!important; }
       </div>
     </div>
 
-    <!-- Painel de links externos -->
-    <div id="xpub-explorer" style="display:none;margin-bottom:24px">
-      <div class="chart-box" style="padding:28px;text-align:center">
-        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
-             letter-spacing:.08em;margin-bottom:8px">CARTEIRA RASTREADA</div>
-        <div id="xpub-short" style="font-family:'DM Mono',monospace;font-size:13px;
-             color:var(--btc);margin-bottom:20px;word-break:break-all"></div>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-          <a id="link-blockchain" href="#" target="_blank"
-             style="display:inline-flex;align-items:center;gap:8px;
-                    background:var(--btc);color:#000;font-weight:700;font-size:14px;
-                    padding:13px 24px;border-radius:10px;text-decoration:none;
-                    font-family:'DM Sans',sans-serif;transition:.2s"
-             onmouseover="this.style.background='#ffaa33'"
-             onmouseout="this.style.background='var(--btc)'">
-            ₿ Ver no Blockchain.com ↗
-          </a>
-          <a id="link-mempool" href="#" target="_blank"
-             style="display:inline-flex;align-items:center;gap:8px;
-                    background:var(--bg2);color:var(--off);border:1px solid var(--border);
-                    font-size:14px;padding:13px 24px;border-radius:10px;text-decoration:none;
-                    font-family:'DM Sans',sans-serif;transition:.2s"
-             onmouseover="this.style.borderColor='var(--btc)'"
-             onmouseout="this.style.borderColor='var(--border)'">
-            Ver no Mempool.space ↗
-          </a>
-        </div>
-        <div style="margin-top:16px;font-size:11px;color:var(--muted);
-             font-family:'DM Mono',monospace;letter-spacing:.04em">
-          Somente leitura — suas chaves privadas estão seguras
-        </div>
+    <!-- Transações -->
+    <div id="tx-section" style="display:none;margin-bottom:24px">
+      <div class="sec-head">
+        <div class="sec-title">Últimas Transações</div>
+        <div id="tx-addr-count" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace"></div>
+      </div>
+      <div class="chart-box" style="padding:0;overflow:hidden">
+        <table class="returns-table" id="tx-table">
+          <thead>
+            <tr>
+              <th>DATA</th><th>TXID</th><th>TIPO</th>
+              <th style="text-align:right">VALOR (BTC)</th>
+            </tr>
+          </thead>
+          <tbody id="tx-body"></tbody>
+        </table>
       </div>
     </div>
 
@@ -788,44 +777,171 @@ function setPeriod(btn, period) {
   buildComparisonChart(period);
 }
 
-/* ═══════════════════════════════════
-   XPUB / PORTFOLIO  v11 — simples
-   Abre blockchain.com em nova aba.
-   Mostra valor BTC/USD/BRL ao vivo.
-═══════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   XPUB / PORTFOLIO  v13
+   
+   API: blockchain.info/multiaddr?active=XPUB&cors=true
+   Confirmado funcionando no browser (Passo 2, teste de 03/06/2026)
+   Retorna wallet.final_balance e array de transações.
+═══════════════════════════════════════════════════════ */
 let walletBalance = null;
 let currentXpub   = '';
 
-function openBlockchain() {
+const fmtSats = s => (s / 1e8).toFixed(8) + ' ₿';
+const fmtDate = t => t ? new Date(t * 1000).toLocaleDateString('pt-BR') : 'Pendente';
+const shortTx = h => h && h.length > 14 ? h.slice(0,8) + '…' + h.slice(-6) : (h || '—');
+
+function setStatus(msg) {
+  const el = document.getElementById('tx-addr-count');
+  if (el) el.textContent = msg;
+}
+function showTxLoading(msg) {
+  document.getElementById('tx-section').style.display = 'block';
+  document.getElementById('tx-body').innerHTML = `<tr><td colspan="4"
+    style="text-align:center;padding:24px;color:var(--muted);
+    font-family:'DM Mono',monospace;font-size:12px">⏳ ${msg}</td></tr>`;
+}
+function log(msg, ok) {
+  const el = document.getElementById('xpub-log');
+  if (!el) return;
+  el.style.display = 'block';
+  const d = document.createElement('div');
+  d.style.cssText = `padding:2px 0;font-size:11px;font-family:'DM Mono',monospace;
+    color:${ok===true?'#22c55e':ok===false?'#ef4444':'#9a9a90'};`;
+  d.textContent = (ok===true?'✓ ':ok===false?'✗ ':'  ') + msg;
+  el.appendChild(d); el.scrollTop = el.scrollHeight;
+}
+
+async function loadXpub() {
   const raw = document.getElementById('xpub-input').value.trim();
   if (!raw) { showToast('Cole sua xpub no campo.'); return; }
   if (raw.length < 80) { showToast('xpub inválida — verifique e tente novamente.'); return; }
 
+  const btn = document.getElementById('xpub-btn');
+  btn.textContent = 'Consultando…'; btn.disabled = true;
   currentXpub = raw;
 
-  // Monta URLs dos exploradores
-  const bcUrl  = `https://www.blockchain.com/explorer/assets/btc/xpub/${encodeURIComponent(raw)}`;
-  const mpUrl  = `https://mempool.space/xpub/${encodeURIComponent(raw)}`;
+  const logEl = document.getElementById('xpub-log');
+  if (logEl) logEl.innerHTML = '';
+  log('xpub: ' + raw.slice(0,14) + '…' + raw.slice(-6));
+  showTxLoading('Consultando blockchain.info…');
 
-  // Atualiza links
-  document.getElementById('link-blockchain').href = bcUrl;
-  document.getElementById('link-mempool').href    = mpUrl;
+  try {
+    // blockchain.info/multiaddr aceita xpub diretamente com &cors=true
+    // Confirmado funcionando em 03/06/2026 (status 200, retorna final_balance)
+    const url = `https://blockchain.info/multiaddr?active=${encodeURIComponent(raw)}&n=50&cors=true`;
+    log('GET blockchain.info/multiaddr…');
 
-  // Mostra xpub abreviada
-  document.getElementById('xpub-short').textContent =
-    raw.slice(0, 16) + '…' + raw.slice(-12);
+    const r = await fetch(url, {
+      signal: AbortSignal.timeout(20000),
+      headers: { Accept: 'application/json' }
+    });
 
-  // Mostra painel de links
-  document.getElementById('xpub-explorer').style.display = 'block';
+    log(`Status: ${r.status}`, r.ok);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
 
-  // Abre blockchain.com automaticamente
-  window.open(bcUrl, '_blank');
+    const data = await r.json();
 
-  showToast('Blockchain.com aberto em nova aba ↗');
+    // O saldo pode estar em wallet.final_balance ou na entrada do xpub dentro de addresses
+    let totalSats = data.wallet?.final_balance ?? 0;
+    let txCount   = data.wallet?.n_tx ?? 0;
+
+    // Fallback: soma final_balance de todos os addresses retornados
+    if (totalSats === 0 && data.addresses?.length) {
+      totalSats = data.addresses.reduce((s, a) => s + (a.final_balance || 0), 0);
+      txCount   = data.addresses.reduce((s, a) => s + (a.n_tx || 0), 0);
+    }
+
+    log(`wallet.final_balance: ${data.wallet?.final_balance ?? '—'}`, true);
+    log(`addresses[0].final_balance: ${data.addresses?.[0]?.final_balance ?? '—'}`, true);
+    log(`total: ${totalSats} sats`, totalSats > 0);
+    log(`n_tx: ${txCount}`, true);
+
+    walletBalance = totalSats;
+    updatePortfolio(totalSats);
+
+    // Renderiza transações
+    const txs = data.txs || [];
+    log(`transações: ${txs.length}`, true);
+    setStatus(`${txCount} transações · ${(totalSats/1e8).toFixed(8)} BTC · blockchain.info`);
+    renderTxs(txs, raw);
+    document.getElementById('tx-section').style.display = 'block';
+    showToast(totalSats > 0 ? `✓ ${fmtSats(totalSats)}` : 'Carregado — verifique o log');
+
+  } catch(e) {
+    log('ERRO: ' + e.message, false);
+    setStatus('Erro — use os links abaixo');
+    renderFallback(raw);
+    showToast('Erro: ' + e.message.slice(0, 60));
+  }
+
+  btn.textContent = 'Rastrear carteira'; btn.disabled = false;
+}
+
+function renderTxs(txs, xpub) {
+  const tbody = document.getElementById('tx-body');
+  tbody.innerHTML = '';
+  if (!txs.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;
+      color:var(--muted);padding:20px;font-size:13px">
+      Nenhuma transação encontrada.</td></tr>`;
+  } else {
+    txs.slice(0, 20).forEach(tx => {
+      // Calcula fluxo líquido: outputs - inputs
+      const out = (tx.out    || []).reduce((s, o) => s + (o.value || 0), 0);
+      const inp = (tx.inputs || []).reduce((s, i) => s + (i.prev_out?.value || 0), 0);
+      const net = out - inp;
+      const tipo = net >= 0
+        ? '<span class="up">↓ Recebido</span>'
+        : '<span class="down">↑ Enviado</span>';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:var(--muted);font-size:12px">${fmtDate(tx.time)}</td>
+        <td><a href="https://www.blockchain.com/btc/tx/${tx.hash}" target="_blank"
+            style="color:var(--btc);text-decoration:none;font-family:'DM Mono',monospace;font-size:12px">
+            ${shortTx(tx.hash)} ↗</a></td>
+        <td>${tipo}</td>
+        <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">
+            ${fmtSats(Math.abs(net))}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  // Footer com links
+  const tf = document.createElement('tr');
+  tf.innerHTML = `<td colspan="4" style="text-align:center;padding:12px;
+    border-top:1px solid var(--border)">
+    <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}" target="_blank"
+       style="color:var(--btc);font-size:11px;margin-right:14px;
+       font-family:'DM Mono',monospace;text-decoration:none">Blockchain.com ↗</a>
+    <a href="https://mempool.space/xpub/${encodeURIComponent(xpub)}" target="_blank"
+       style="color:var(--muted);font-size:11px;
+       font-family:'DM Mono',monospace;text-decoration:none">Mempool.space ↗</a>
+  </td>`;
+  tbody.appendChild(tf);
+}
+
+function renderFallback(xpub) {
+  document.getElementById('tx-section').style.display = 'block';
+  document.getElementById('tx-body').innerHTML = `
+    <tr><td colspan="4" style="text-align:center;padding:28px 20px">
+      <div style="font-size:13px;color:var(--text);margin-bottom:16px;line-height:1.6">
+        Não foi possível consultar automaticamente. Acesse diretamente:
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <a href="https://www.blockchain.com/btc/xpub/${encodeURIComponent(xpub)}" target="_blank"
+           style="display:inline-flex;align-items:center;background:var(--btc);color:#000;
+                  font-weight:700;font-size:13px;padding:11px 20px;border-radius:10px;text-decoration:none">
+          Blockchain.com ↗</a>
+        <a href="https://mempool.space/xpub/${encodeURIComponent(xpub)}" target="_blank"
+           style="display:inline-flex;align-items:center;background:var(--bg2);color:var(--off);
+                  border:1px solid var(--border);font-size:13px;padding:11px 20px;border-radius:10px;text-decoration:none">
+          Mempool.space ↗</a>
+      </div>
+    </td></tr>`;
 }
 
 function updatePortfolio(sats) {
-  if (!sats || btcUSD === 0) return;
+  if (sats === null || btcUSD === 0) return;
   const btc = sats / 1e8;
   const fmt = n => n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
   document.getElementById('pt-btc').textContent     = btc.toFixed(8) + ' ₿';
@@ -842,6 +958,8 @@ function updatePortfolio(sats) {
 function refreshPortfolioValues() {
   if (walletBalance !== null) updatePortfolio(walletBalance);
 }
+
+
 
 
 
