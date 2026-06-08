@@ -367,7 +367,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v17</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v18</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -873,16 +873,42 @@ function segwitAddr(hrp, witver, witprog) {
   return hrp + '1' + [...data, ...checksum].map(d => BECH32_CHARS[d]).join('');
 }
 
-/* ── Detecta tipo de endereço pelo prefixo do xpub ── */
-function detectAddrType(xpubStr) {
-  // Primeiros 4 chars após decodificação base58 indicam o tipo
-  // xpub (0x0488B21E) → Legacy P2PKH (1...)
-  // ypub (0x049D7CB2) → P2SH-P2WPKH (3...)
-  // zpub (0x04B24746) → Native SegWit P2WPKH (bc1q...)
+/* ── Detecta tipo de endereço — proba os primeiros endereços ── */
+async function detectAddrType(xpubStr) {
+  // Prefixo dá uma dica, mas wallets podem exportar xpub mesmo usando segwit
   const prefix = xpubStr.slice(0, 4).toLowerCase();
-  if (prefix === 'zpub') return 'p2wpkh';
   if (prefix === 'ypub') return 'p2sh-p2wpkh';
-  return 'p2pkh'; // xpub padrão → Legacy
+  // Para zpub, sempre P2WPKH
+  if (prefix === 'zpub') return 'p2wpkh';
+  
+  // Para xpub: testa os primeiros 3 endereços de cada tipo
+  // e usa o que tiver atividade na blockchain
+  const hd = _HDKey.fromExtendedKey(xpubStr);
+  const ext = hd.deriveChild(0);
+  
+  const types = ['p2pkh', 'p2wpkh', 'p2sh-p2wpkh'];
+  for (const type of types) {
+    let hasActivity = false;
+    for (let i = 0; i < 3; i++) {
+      try {
+        const addr = pubkeyToAddr(ext.deriveChild(i).publicKey, type);
+        const r = await fetch(`https://mempool.space/api/address/${addr}`,
+          {signal: AbortSignal.timeout(6000)});
+        if (!r.ok) continue;
+        const d = await r.json();
+        const txs = d.chain_stats?.tx_count || 0;
+        if (txs > 0) { hasActivity = true; break; }
+      } catch(e) {}
+    }
+    if (hasActivity) {
+      log(`Tipo detectado por sondagem: ${type}`, true);
+      return type;
+    }
+  }
+  
+  // Fallback: usa o tipo sugerido pelo prefixo
+  log('Nenhuma atividade encontrada na sondagem, usando P2WPKH como padrão');
+  return 'p2wpkh';
 }
 
 /* Base58Check para P2PKH */
@@ -1072,7 +1098,8 @@ async function loadXpub() {
     await loadLibs();
 
     // Detecta tipo de endereço pelo prefixo do xpub
-    const addrType = detectAddrType(raw);
+    log('Detectando tipo de endereço…');
+    const addrType = await detectAddrType(raw);
     const typeLabel = addrType === 'p2wpkh' ? 'Native SegWit bc1q' :
                       addrType === 'p2sh-p2wpkh' ? 'SegWit Wrapped 3...' : 'Legacy 1...';
     log(`Tipo detectado: ${typeLabel} (${raw.slice(0,4)})`);
