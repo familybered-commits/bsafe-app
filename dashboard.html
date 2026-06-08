@@ -367,7 +367,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v19</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v20</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -953,14 +953,27 @@ function pubkeyToAddr(pub, addrType) {
 
 /* Consulta mempool.space para um endereço */
 async function mempoolAddr(addr) {
-  const r = await fetch(`https://mempool.space/api/address/${addr}`,
-    { signal: AbortSignal.timeout(8000) });
-  if (!r.ok) throw new Error(`HTTP ${r.status}: ${addr.slice(0,12)}`);
-  const d = await r.json();
-  return {
-    bal: (d.chain_stats?.funded_txo_sum || 0) - (d.chain_stats?.spent_txo_sum || 0),
-    txs: d.chain_stats?.tx_count || 0,
-  };
+  // Tenta mempool.space primeiro, fallback para blockstream.info
+  const endpoints = [
+    `https://mempool.space/api/address/${addr}`,
+    `https://blockstream.info/api/address/${addr}`,
+  ];
+  let lastErr = '';
+  for (const url of endpoints) {
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!r.ok) { lastErr = `HTTP ${r.status}`; continue; }
+      const d = await r.json();
+      return {
+        bal: (d.chain_stats?.funded_txo_sum || 0) - (d.chain_stats?.spent_txo_sum || 0),
+        txs: d.chain_stats?.tx_count || 0,
+      };
+    } catch(e) {
+      lastErr = e.message;
+      await new Promise(r => setTimeout(r, 800));
+    }
+  }
+  throw new Error(lastErr);
 }
 
 async function mempoolAddrTxs(addr) {
