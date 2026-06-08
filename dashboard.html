@@ -367,7 +367,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v16</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v17</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -873,10 +873,56 @@ function segwitAddr(hrp, witver, witprog) {
   return hrp + '1' + [...data, ...checksum].map(d => BECH32_CHARS[d]).join('');
 }
 
+/* ── Detecta tipo de endereço pelo prefixo do xpub ── */
+function detectAddrType(xpubStr) {
+  // Primeiros 4 chars após decodificação base58 indicam o tipo
+  // xpub (0x0488B21E) → Legacy P2PKH (1...)
+  // ypub (0x049D7CB2) → P2SH-P2WPKH (3...)
+  // zpub (0x04B24746) → Native SegWit P2WPKH (bc1q...)
+  const prefix = xpubStr.slice(0, 4).toLowerCase();
+  if (prefix === 'zpub') return 'p2wpkh';
+  if (prefix === 'ypub') return 'p2sh-p2wpkh';
+  return 'p2pkh'; // xpub padrão → Legacy
+}
+
+/* Base58Check para P2PKH */
+const B58CHARS = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function b58encode(bytes) {
+  let n = 0n;
+  for (const b of bytes) n = n * 256n + BigInt(b);
+  let s = '';
+  while (n > 0n) { s = B58CHARS[Number(n % 58n)] + s; n /= 58n; }
+  for (const b of bytes) { if (b !== 0) break; s = '1' + s; }
+  return s;
+}
+
+function pubkeyToP2PKH(pub) {
+  const h160 = _ripemd160(_sha256fn(pub));
+  const v = new Uint8Array(21); v[0] = 0x00; v.set(h160, 1);
+  const cs = _sha256fn(_sha256fn(v)).slice(0, 4);
+  const p  = new Uint8Array(25); p.set(v); p.set(cs, 21);
+  return b58encode(p);
+}
+
+function pubkeyToP2SHP2WPKH(pub) {
+  const h160    = _ripemd160(_sha256fn(pub));
+  const redeem  = new Uint8Array(22); redeem[0]=0x00; redeem[1]=0x14; redeem.set(h160, 2);
+  const scrHash = _ripemd160(_sha256fn(redeem));
+  const v = new Uint8Array(21); v[0] = 0x05; v.set(scrHash, 1);
+  const cs = _sha256fn(_sha256fn(v)).slice(0, 4);
+  const p  = new Uint8Array(25); p.set(v); p.set(cs, 21);
+  return b58encode(p);
+}
+
 function pubkeyToP2WPKH(pubkey) {
-  // hash160 = RIPEMD160(SHA256(pubkey))
   const h160 = _ripemd160(_sha256fn(pubkey));
   return segwitAddr('bc', 0, Array.from(h160));
+}
+
+function pubkeyToAddr(pub, addrType) {
+  if (addrType === 'p2wpkh')     return pubkeyToP2WPKH(pub);
+  if (addrType === 'p2sh-p2wpkh') return pubkeyToP2SHP2WPKH(pub);
+  return pubkeyToP2PKH(pub); // default: legacy
 }
 
 /* Consulta mempool.space para um endereço */
@@ -899,7 +945,7 @@ async function mempoolAddrTxs(addr) {
 }
 
 /* Scan de uma chain com gap limit */
-async function scanChain(xpub, chain, chainLabel, GAP = 20) {
+async function scanChain(xpub, chain, chainLabel, GAP = 20, addrType = 'p2wpkh') {
   const hd   = _HDKey.fromExtendedKey(xpub);
   const node = hd.deriveChild(chain);
 
@@ -907,7 +953,7 @@ async function scanChain(xpub, chain, chainLabel, GAP = 20) {
   const activeAddrs = [], allTxEntries = [];
 
   while (gap < GAP && idx <= 200) {
-    const addr = pubkeyToP2WPKH(node.deriveChild(idx).publicKey);
+    const addr = pubkeyToAddr(node.deriveChild(idx).publicKey, addrType);
 
     // Verifica primeiro endereço derivado no log
     if (idx === 0) log(`  ${chainLabel}/0 = ${addr}`);
@@ -1025,9 +1071,15 @@ async function loadXpub() {
   try {
     await loadLibs();
 
+    // Detecta tipo de endereço pelo prefixo do xpub
+    const addrType = detectAddrType(raw);
+    const typeLabel = addrType === 'p2wpkh' ? 'Native SegWit bc1q' :
+                      addrType === 'p2sh-p2wpkh' ? 'SegWit Wrapped 3...' : 'Legacy 1...';
+    log(`Tipo detectado: ${typeLabel} (${raw.slice(0,4)})`);
+
     // Valida o primeiro endereço antes de escanear tudo
     const hd   = _HDKey.fromExtendedKey(raw);
-    const addr0 = pubkeyToP2WPKH(hd.deriveChild(0).deriveChild(0).publicKey);
+    const addr0 = pubkeyToAddr(hd.deriveChild(0).deriveChild(0).publicKey, addrType);
     log(`m/0/0 = ${addr0}`);
 
     // Testa se o endereço é válido no mempool
@@ -1041,13 +1093,13 @@ async function loadXpub() {
     // Scan externos com gap limit 20
     showTxLoading('Escaneando endereços externos…');
     log('Scan m/0 (externos)…');
-    const extResult = await scanChain(raw, 0, 'm/0', 20);
+    const extResult = await scanChain(raw, 0, 'm/0', 20, addrType);
     log(`Externos: ${extResult.totalSats} sats, ${extResult.activeAddrs.length} ativos, ${extResult.scanned} verificados`, true);
 
     // Scan change com gap limit 20
     showTxLoading('Escaneando endereços de troco…');
     log('Scan m/1 (change)…');
-    const chgResult = await scanChain(raw, 1, 'm/1', 20);
+    const chgResult = await scanChain(raw, 1, 'm/1', 20, addrType);
     log(`Change: ${chgResult.totalSats} sats, ${chgResult.activeAddrs.length} ativos`, true);
 
     const totalSats    = extResult.totalSats + chgResult.totalSats;
