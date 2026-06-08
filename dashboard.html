@@ -367,7 +367,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v21</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v22</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -1300,19 +1300,24 @@ async function btcPriceOnDate(timestamp) {
   }
 }
 
-/* Busca histórico de preço BTC (últimos N dias) */
-async function btcPriceHistory(days = 365) {
+/* Busca histórico de preço BTC em um range de datas */
+async function fetchPriceRange(fromTs, toTs, currency = 'usd') {
   try {
-    const r = await fetch(
-      `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${days}&interval=daily`,
-      { signal: AbortSignal.timeout(15000) }
-    );
-    if (!r.ok) throw new Error();
+    const url = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=${currency}&from=${fromTs}&to=${toTs}`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const d = await r.json();
-    return d.prices; // [[timestamp_ms, price_usd], ...]
+    return d.prices; // [[timestamp_ms, price], ...]
   } catch(e) {
     return null;
   }
+}
+
+/* Busca histórico de preço BTC (últimos N dias) — usa fetchPriceRange */
+async function btcPriceHistory(days = 365) {
+  const toTs   = Math.floor(Date.now() / 1000);
+  const fromTs = toTs - days * 86400;
+  return fetchPriceRange(fromTs, toTs, 'usd');
 }
 
 /* Processa transações e identifica aportes (recebimentos) */
@@ -1389,12 +1394,11 @@ async function buildPerformanceChart(aportes, currentBtcUsd, allTxEntries) {
   const firstTime = aportes[0].time;
   const now = Math.floor(Date.now() / 1000);
   const daysSince = Math.ceil((now - firstTime) / 86400);
-  const daysToFetch = Math.min(daysSince + 10, 1800);
-
   document.getElementById('aportes-loading').textContent = '⏳ Buscando histórico de preços BTC…';
 
-  const btcHistory = await btcPriceHistory(daysToFetch);
-  if (!btcHistory) {
+  // Usa fetchPriceRange para pegar do primeiro aporte até hoje
+  const btcHistory = await fetchPriceRange(firstTime, Math.floor(Date.now()/1000), 'usd');
+  if (!btcHistory || btcHistory.length < 2) {
     document.getElementById('aportes-loading').textContent = 'Não foi possível carregar histórico de preços.';
     return;
   }
@@ -1678,17 +1682,33 @@ async function analyzeAportes(allTxEntries, totalSats) {
 
   document.getElementById('aportes-status').textContent = `${aportes.length} aportes identificados — buscando preços históricos…`;
 
-  // Busca preço BTC em cada data de aporte
-  for (let i = 0; i < aportes.length; i++) {
-    const a = aportes[i];
-    document.getElementById('aportes-status').textContent =
-      `Buscando preço histórico ${i+1}/${aportes.length}…`;
-    const prices = await btcPriceOnDate(a.time);
-    if (prices) {
-      a.priceUsd = prices.usd;
-      a.priceBrl = prices.brl;
-    }
-    await new Promise(r => setTimeout(r, 1200)); // respeita rate limit CoinGecko
+  // Busca histórico de preços em UMA única chamada (evita rate limit)
+  document.getElementById('aportes-status').textContent = 'Buscando histórico de preços BTC…';
+  
+  const firstTime = aportes[0].time;
+  const lastTime  = Math.floor(Date.now() / 1000);
+  const daysSince = Math.ceil((lastTime - firstTime) / 86400);
+  
+  // Uma chamada só para todos os preços
+  const allPricesUsd = await fetchPriceRange(firstTime, lastTime, 'usd');
+  const allPricesBrl = await fetchPriceRange(firstTime, lastTime, 'brl');
+  
+  if (allPricesUsd) {
+    // Para cada aporte, encontra o preço mais próximo da data
+    aportes.forEach(a => {
+      const targetMs = a.time * 1000;
+      let closest = allPricesUsd.reduce((best, [ts, price]) => {
+        return Math.abs(ts - targetMs) < Math.abs(best[0] - targetMs) ? [ts, price] : best;
+      }, allPricesUsd[0]);
+      a.priceUsd = closest[1];
+      
+      if (allPricesBrl) {
+        const closestBrl = allPricesBrl.reduce((best, [ts, price]) => {
+          return Math.abs(ts - targetMs) < Math.abs(best[0] - targetMs) ? [ts, price] : best;
+        }, allPricesBrl[0]);
+        a.priceBrl = closestBrl[1];
+      }
+    });
   }
 
   // Calcula DCA
