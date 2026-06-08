@@ -367,7 +367,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v18</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v19</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -978,31 +978,39 @@ async function scanChain(xpub, chain, chainLabel, GAP = 20, addrType = 'p2wpkh')
   let totalSats = 0, gap = 0, idx = 0;
   const activeAddrs = [], allTxEntries = [];
 
-  while (gap < GAP && idx <= 200) {
+  while (gap < GAP && idx <= 300) {
     const addr = pubkeyToAddr(node.deriveChild(idx).publicKey, addrType);
 
-    // Verifica primeiro endereço derivado no log
     if (idx === 0) log(`  ${chainLabel}/0 = ${addr}`);
 
-    try {
-      const { bal, txs } = await mempoolAddr(addr);
-      if (bal > 0 || txs > 0) {
-        gap = 0;
-        totalSats += bal;
-        activeAddrs.push({ idx, addr, bal, txs });
-        log(`  🎯 ${chainLabel}/${idx}: ${addr.slice(0,16)}… ${bal} sats ${txs} txs`, true);
-        if (txs > 0) {
-          const addrTxs = await mempoolAddrTxs(addr);
-          allTxEntries.push(...addrTxs.map(tx => ({ addr, tx })));
+    let fetched = false, retries = 2;
+    while (!fetched && retries > 0) {
+      try {
+        const { bal, txs } = await mempoolAddr(addr);
+        fetched = true;
+        if (bal > 0 || txs > 0) {
+          gap = 0;
+          totalSats += bal;
+          activeAddrs.push({ idx, addr, bal, txs });
+          log(`  🎯 ${chainLabel}/${idx}: ${addr.slice(0,16)}… ${bal} sats ${txs} txs`, true);
+          if (txs > 0) {
+            const addrTxs = await mempoolAddrTxs(addr);
+            allTxEntries.push(...addrTxs.map(tx => ({ addr, tx })));
+          }
+        } else {
+          gap++;
         }
-      } else {
-        gap++;
+        await new Promise(r => setTimeout(r, 150));
+      } catch(e) {
+        retries--;
+        if (retries > 0) {
+          await new Promise(r => setTimeout(r, 2000)); // retry after wait
+        } else {
+          // Network error — do NOT count as gap, just skip this index
+          log(`  ${chainLabel}/${idx}: erro de rede, pulando`, false);
+          await new Promise(r => setTimeout(r, 500));
+        }
       }
-      await new Promise(r => setTimeout(r, 80));
-    } catch(e) {
-      log(`  ${chainLabel}/${idx}: ${e.message}`, false);
-      await new Promise(r => setTimeout(r, 600));
-      // Erros não contam como gap — tenta de novo seria ideal mas continua
     }
     idx++;
   }
