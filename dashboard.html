@@ -367,7 +367,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v20</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v21</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -483,7 +483,73 @@ canvas { width:100%!important; }
       </div>
     </div>
 
-        <!-- ── COMPARATIVO DE DESEMPENHO ── -->
+    
+    <!-- ── ANÁLISE DE APORTES ── -->
+    <div id="aportes-section" style="display:none;margin-bottom:32px">
+      <div class="sec-head">
+        <div>
+          <div class="sec-tag">ANÁLISE DE APORTES</div>
+          <div class="sec-title" style="margin-top:4px">Histórico & Performance</div>
+        </div>
+        <div id="aportes-status" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace"></div>
+      </div>
+
+      <!-- Cards de resumo DCA -->
+      <div class="portfolio-grid" style="margin-bottom:20px">
+        <div class="ptile">
+          <div class="ptile-label">PREÇO MÉDIO DE COMPRA</div>
+          <div class="ptile-value" id="dca-usd">—</div>
+          <div class="ptile-sub" id="dca-brl">—</div>
+        </div>
+        <div class="ptile">
+          <div class="ptile-label">CUSTO TOTAL INVESTIDO</div>
+          <div class="ptile-value" id="cost-usd">—</div>
+          <div class="ptile-sub" id="cost-brl">—</div>
+        </div>
+        <div class="ptile">
+          <div class="ptile-label">GANHO / PERDA</div>
+          <div class="ptile-value" id="pnl-usd">—</div>
+          <div class="ptile-sub" id="pnl-pct">—</div>
+        </div>
+      </div>
+
+      <!-- Gráfico de performance -->
+      <div class="chart-box" style="padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.08em">
+            PERFORMANCE COMPARADA — Base 100 desde primeiro aporte
+          </div>
+          <div id="chart-legend" style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;font-family:'DM Mono',monospace"></div>
+        </div>
+        <div id="aportes-loading" style="text-align:center;padding:40px;color:var(--muted);font-size:12px;font-family:'DM Mono',monospace">
+          ⏳ Carregando histórico de preços…
+        </div>
+        <canvas id="performance-chart" style="display:none;width:100%;max-height:340px"></canvas>
+      </div>
+
+      <!-- Tabela de aportes -->
+      <div class="chart-box" style="padding:0;overflow:hidden;margin-top:16px">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.08em">
+            APORTES IDENTIFICADOS
+          </div>
+        </div>
+        <table class="returns-table" id="aportes-table">
+          <thead>
+            <tr>
+              <th>DATA</th>
+              <th>QUANTIDADE (BTC)</th>
+              <th>PREÇO NA DATA (USD)</th>
+              <th>VALOR INVESTIDO (USD)</th>
+              <th style="text-align:right">RETORNO ATUAL</th>
+            </tr>
+          </thead>
+          <tbody id="aportes-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── COMPARATIVO DE DESEMPENHO ── -->
     <div class="sec-head">
       <div>
         <div class="sec-tag">PERFORMANCE</div>
@@ -1163,6 +1229,9 @@ async function loadXpub() {
     document.getElementById('tx-section').style.display = 'block';
     showToast(totalSats > 0 ? `✓ ${fmtSats(totalSats)}` : 'Carteira carregada');
 
+    // Análise de aportes (assíncrono, não bloqueia UI)
+    analyzeAportes(allTxEntries, totalSats).catch(e => console.warn('analyzeAportes:', e));
+
   } catch(e) {
     log('ERRO: ' + e.message, false);
     renderFallback(raw);
@@ -1190,6 +1259,474 @@ function updatePortfolio(sats) {
 function refreshPortfolioValues() {
   if (walletBalance !== null) updatePortfolio(walletBalance);
 }
+
+/* ═══════════════════════════════════════════════════════
+   ANÁLISE DE APORTES & PERFORMANCE COMPARADA
+   
+   Fluxo:
+   1. Após scan xpub, coleta todas as txs de recebimento
+   2. Busca preço BTC em cada data via CoinGecko
+   3. Calcula DCA, custo, P&L
+   4. Busca histórico de preços para o gráfico
+   5. Renderiza gráfico comparativo + tabela de aportes
+═══════════════════════════════════════════════════════ */
+
+// Cache de preços para não repetir chamadas
+const priceCache = {};
+
+/* Busca preço BTC em uma data específica via CoinGecko */
+async function btcPriceOnDate(timestamp) {
+  const date = new Date(timestamp * 1000);
+  const dd = String(date.getUTCDate()).padStart(2,'0');
+  const mm = String(date.getUTCMonth()+1).padStart(2,'0');
+  const yyyy = date.getUTCFullYear();
+  const key = `${dd}-${mm}-${yyyy}`;
+  
+  if (priceCache[key]) return priceCache[key];
+  
+  try {
+    const r = await fetch(
+      `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${key}&localization=false`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const usd = d.market_data?.current_price?.usd || 0;
+    const brl = d.market_data?.current_price?.brl || 0;
+    priceCache[key] = { usd, brl };
+    return { usd, brl };
+  } catch(e) {
+    return null;
+  }
+}
+
+/* Busca histórico de preço BTC (últimos N dias) */
+async function btcPriceHistory(days = 365) {
+  try {
+    const r = await fetch(
+      `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${days}&interval=daily`,
+      { signal: AbortSignal.timeout(15000) }
+    );
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    return d.prices; // [[timestamp_ms, price_usd], ...]
+  } catch(e) {
+    return null;
+  }
+}
+
+/* Processa transações e identifica aportes (recebimentos) */
+function extractAportes(allTxEntries) {
+  const aporteMap = {}; // txid → aporte
+
+  allTxEntries.forEach(({ addr, tx }) => {
+    const txid = tx.txid;
+    const time = tx.status?.block_time || null;
+    if (!time) return;
+
+    // Calcula quanto foi recebido neste endereço nesta tx
+    const received = (tx.vout || [])
+      .filter(o => o.scriptpubkey_address === addr)
+      .reduce((s, o) => s + (o.value || 0), 0);
+    const spent = (tx.vin || [])
+      .filter(i => i.prevout?.scriptpubkey_address === addr)
+      .reduce((s, i) => s + (i.prevout?.value || 0), 0);
+    
+    const net = received - spent;
+    if (net <= 0) return; // não é recebimento
+
+    if (!aporteMap[txid]) {
+      aporteMap[txid] = { txid, time, satoshis: 0 };
+    }
+    aporteMap[txid].satoshis += net;
+  });
+
+  return Object.values(aporteMap)
+    .filter(a => a.satoshis > 0)
+    .sort((a, b) => a.time - b.time);
+}
+
+/* Renderiza tabela de aportes */
+function renderAportesTable(aportes, currentBtcUsd) {
+  const tbody = document.getElementById('aportes-body');
+  tbody.innerHTML = '';
+
+  aportes.forEach(a => {
+    const btc = a.satoshis / 1e8;
+    const invested = a.priceUsd ? btc * a.priceUsd : null;
+    const currentVal = btc * currentBtcUsd;
+    const returnPct = invested ? ((currentVal - invested) / invested * 100) : null;
+    const returnClass = returnPct >= 0 ? 'up' : 'down';
+    
+    const date = new Date(a.time * 1000).toLocaleDateString('pt-BR');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--muted);font-size:12px">${date}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px">
+        ${btc.toFixed(8)} ₿
+        <br><span style="color:var(--muted);font-size:10px">${a.satoshis.toLocaleString('pt-BR')} sats</span>
+      </td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px">
+        ${a.priceUsd ? '$' + a.priceUsd.toLocaleString('pt-BR', {maximumFractionDigits:0}) : '—'}
+        ${a.priceBrl ? '<br><span style="color:var(--muted);font-size:10px">R$' + a.priceBrl.toLocaleString('pt-BR', {maximumFractionDigits:0}) + '</span>' : ''}
+      </td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px">
+        ${invested ? '$' + invested.toLocaleString('pt-BR', {maximumFractionDigits:0}) : '—'}
+      </td>
+      <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">
+        ${returnPct !== null
+          ? `<span class="${returnClass}">${returnPct >= 0 ? '+' : ''}${returnPct.toFixed(1)}%</span>`
+          : '—'}
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* Constrói o gráfico de performance comparada */
+async function buildPerformanceChart(aportes, currentBtcUsd, allTxEntries) {
+  if (!aportes.length) return;
+  
+  const firstTime = aportes[0].time;
+  const now = Math.floor(Date.now() / 1000);
+  const daysSince = Math.ceil((now - firstTime) / 86400);
+  const daysToFetch = Math.min(daysSince + 10, 1800);
+
+  document.getElementById('aportes-loading').textContent = '⏳ Buscando histórico de preços BTC…';
+
+  const btcHistory = await btcPriceHistory(daysToFetch);
+  if (!btcHistory) {
+    document.getElementById('aportes-loading').textContent = 'Não foi possível carregar histórico de preços.';
+    return;
+  }
+
+  // Filtra datas a partir do primeiro aporte
+  const filtered = btcHistory.filter(([ts]) => ts >= firstTime * 1000);
+  if (filtered.length < 2) return;
+
+  // Preço BTC no dia do primeiro aporte (base 100)
+  const basePrice = filtered[0][1];
+
+  // Calcula portfolio value ao longo do tempo
+  // Para cada ponto no tempo, calcula quantos BTC foram acumulados até então
+  // e multiplica pelo preço histórico
+  const portfolioPoints = filtered.map(([ts, price]) => {
+    const tsSec = ts / 1000;
+    // BTC acumulado até esta data
+    const btcAccum = aportes
+      .filter(a => a.time <= tsSec)
+      .reduce((s, a) => s + a.satoshis / 1e8, 0);
+    
+    // Custo acumulado até esta data
+    const costAccum = aportes
+      .filter(a => a.time <= tsSec && a.priceUsd)
+      .reduce((s, a) => s + (a.satoshis / 1e8) * a.priceUsd, 0);
+    
+    const portfolioValue = btcAccum * price;
+    const returnPct = costAccum > 0 ? ((portfolioValue - costAccum) / costAccum * 100) : 0;
+    return { ts, price, btcAccum, portfolioValue, costAccum, returnPct };
+  });
+
+  // Índices comparativos — estimativas baseadas em dados conhecidos
+  // CDI acumulado desde o primeiro aporte (taxa anual ~10.5% em 2024-2025)
+  const cdiAnnual = 0.105;
+  const daysFactor = daysSince / 365;
+  
+  // Labels e datasets para o gráfico
+  const labels = filtered.map(([ts]) => {
+    const d = new Date(ts);
+    return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`;
+  });
+
+  // Normaliza BTC price (base 100 desde primeiro aporte)
+  const btcNorm = filtered.map(([, price]) => (price / basePrice) * 100);
+
+  // Portfolio value normalizado (base 100 = custo inicial)
+  const firstCost = aportes.filter(a => a.priceUsd)[0];
+  const baseCost = firstCost ? (firstCost.satoshis / 1e8) * firstCost.priceUsd : null;
+  const portfolioNorm = portfolioPoints.map(p => 
+    baseCost && p.costAccum > 0 ? (p.portfolioValue / p.costAccum) * 100 : null
+  );
+
+  // CDI estimado (crescimento linear aproximado)
+  const cdiNorm = filtered.map(([ts]) => {
+    const daysPassed = (ts / 1000 - firstTime) / 86400;
+    return 100 * Math.pow(1 + cdiAnnual, daysPassed / 365);
+  });
+
+  // S&P 500 estimado (+~25% 2024, +~10% 2025 projeção)
+  const sp500Annual = 0.18; // média recente
+  const sp500Norm = filtered.map(([ts]) => {
+    const daysPassed = (ts / 1000 - firstTime) / 86400;
+    return 100 * Math.pow(1 + sp500Annual, daysPassed / 365);
+  });
+
+  // Ouro estimado (+~27% em 2024-2025)
+  const goldAnnual = 0.22;
+  const goldNorm = filtered.map(([ts]) => {
+    const daysPassed = (ts / 1000 - firstTime) / 86400;
+    return 100 * Math.pow(1 + goldAnnual, daysPassed / 365);
+  });
+
+  // Ibovespa estimado (+~12% 2024, -5% 2025)
+  const ibovAnnual = 0.06;
+  const ibovNorm = filtered.map(([ts]) => {
+    const daysPassed = (ts / 1000 - firstTime) / 86400;
+    return 100 * Math.pow(1 + ibovAnnual, daysPassed / 365);
+  });
+
+  // DCA price line (preço médio ponderado em % do preço atual)
+  const totalSats = aportes.reduce((s, a) => s + a.satoshis, 0);
+  const totalCost = aportes.filter(a => a.priceUsd).reduce((s, a) => s + (a.satoshis / 1e8) * a.priceUsd, 0);
+  const dcaPrice = totalCost / (totalSats / 1e8);
+  const dcaNorm = filtered.map(([, price]) => (dcaPrice / basePrice) * 100);
+
+  // Marcadores de aportes
+  const aporteDates = aportes.map(a => {
+    const d = new Date(a.time * 1000);
+    return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`;
+  });
+
+  // Renderiza gráfico
+  document.getElementById('aportes-loading').style.display = 'none';
+  const canvas = document.getElementById('performance-chart');
+  canvas.style.display = 'block';
+
+  // Destrói gráfico anterior se existir
+  if (window._perfChart) window._perfChart.destroy();
+
+  const ctx = canvas.getContext('2d');
+  const style = getComputedStyle(document.documentElement);
+  const btcColor   = '#F7931A';
+  const portColor  = '#22c55e';
+  const cdiColor   = '#60a5fa';
+  const sp500Color = '#a78bfa';
+  const goldColor  = '#fbbf24';
+  const ibovColor  = '#f87171';
+  const dcaColor   = '#9a9a90';
+  const textColor  = '#9a9a90';
+  const gridColor  = 'rgba(255,255,255,0.05)';
+
+  window._perfChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Carteira BTC',
+          data: portfolioNorm,
+          borderColor: portColor,
+          borderWidth: 2.5,
+          pointRadius: 0,
+          tension: 0.3,
+          fill: false,
+          order: 1,
+        },
+        {
+          label: 'BTC (preço)',
+          data: btcNorm,
+          borderColor: btcColor,
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.3,
+          borderDash: [4,2],
+          fill: false,
+          order: 2,
+        },
+        {
+          label: `DCA ($${dcaPrice.toLocaleString('pt-BR',{maximumFractionDigits:0})})`,
+          data: dcaNorm,
+          borderColor: dcaColor,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          borderDash: [6,3],
+          fill: false,
+          order: 3,
+        },
+        {
+          label: 'S&P 500',
+          data: sp500Norm,
+          borderColor: sp500Color,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.3,
+          fill: false,
+          order: 4,
+        },
+        {
+          label: 'Ouro',
+          data: goldNorm,
+          borderColor: goldColor,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.3,
+          fill: false,
+          order: 5,
+        },
+        {
+          label: 'CDI (~10.5%a.a.)',
+          data: cdiNorm,
+          borderColor: cdiColor,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.3,
+          fill: false,
+          order: 6,
+        },
+        {
+          label: 'Ibovespa',
+          data: ibovNorm,
+          borderColor: ibovColor,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.3,
+          fill: false,
+          order: 7,
+        },
+        // Aportes como scatter points
+        {
+          label: 'Aportes',
+          data: labels.map((l, i) => aporteDates.includes(l) ? btcNorm[i] : null),
+          type: 'scatter',
+          backgroundColor: btcColor,
+          borderColor: '#fff',
+          borderWidth: 1.5,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          showLine: false,
+          order: 0,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2.5,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(10,10,10,0.95)',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          titleColor: '#fff',
+          bodyColor: '#9a9a90',
+          padding: 12,
+          callbacks: {
+            title: (items) => items[0]?.label || '',
+            label: (item) => {
+              if (item.parsed.y === null) return null;
+              const val = item.parsed.y.toFixed(1);
+              return ` ${item.dataset.label}: ${val}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor },
+          ticks: {
+            color: textColor,
+            maxTicksLimit: 8,
+            font: { family: "'DM Mono', monospace", size: 10 }
+          }
+        },
+        y: {
+          grid: { color: gridColor },
+          ticks: {
+            color: textColor,
+            font: { family: "'DM Mono', monospace", size: 10 },
+            callback: v => v.toFixed(0)
+          }
+        }
+      }
+    }
+  });
+
+  // Renderiza legenda customizada
+  const legendEl = document.getElementById('chart-legend');
+  legendEl.innerHTML = '';
+  const legendItems = [
+    { color: portColor,  label: 'Carteira BTC' },
+    { color: btcColor,   label: 'BTC preço' },
+    { color: dcaColor,   label: 'DCA' },
+    { color: sp500Color, label: 'S&P 500' },
+    { color: goldColor,  label: 'Ouro' },
+    { color: cdiColor,   label: 'CDI' },
+    { color: ibovColor,  label: 'Ibovespa' },
+  ];
+  legendItems.forEach(({ color, label }) => {
+    const item = document.createElement('div');
+    item.style.cssText = 'display:flex;align-items:center;gap:5px;cursor:pointer';
+    item.innerHTML = `<div style="width:16px;height:2px;background:${color};border-radius:2px"></div>
+      <span style="color:${textColor}">${label}</span>`;
+    legendEl.appendChild(item);
+  });
+}
+
+/* Função principal — chamada após loadXpub ter o resultado */
+async function analyzeAportes(allTxEntries, totalSats) {
+  if (!allTxEntries || !allTxEntries.length) return;
+
+  document.getElementById('aportes-section').style.display = 'block';
+  document.getElementById('aportes-status').textContent = 'Carregando análise…';
+
+  const aportes = extractAportes(allTxEntries);
+  if (!aportes.length) {
+    document.getElementById('aportes-status').textContent = 'Nenhum aporte identificado';
+    return;
+  }
+
+  document.getElementById('aportes-status').textContent = `${aportes.length} aportes identificados — buscando preços históricos…`;
+
+  // Busca preço BTC em cada data de aporte
+  for (let i = 0; i < aportes.length; i++) {
+    const a = aportes[i];
+    document.getElementById('aportes-status').textContent =
+      `Buscando preço histórico ${i+1}/${aportes.length}…`;
+    const prices = await btcPriceOnDate(a.time);
+    if (prices) {
+      a.priceUsd = prices.usd;
+      a.priceBrl = prices.brl;
+    }
+    await new Promise(r => setTimeout(r, 1200)); // respeita rate limit CoinGecko
+  }
+
+  // Calcula DCA
+  const validAportes = aportes.filter(a => a.priceUsd);
+  const totalBtc = totalSats / 1e8;
+  const totalCostUsd = validAportes.reduce((s, a) => s + (a.satoshis / 1e8) * a.priceUsd, 0);
+  const totalCostBrl = validAportes.reduce((s, a) => s + (a.satoshis / 1e8) * (a.priceBrl || 0), 0);
+  const dcaUsd = totalCostUsd / (validAportes.reduce((s,a) => s + a.satoshis, 0) / 1e8);
+  const dcaBrl = totalCostBrl / (validAportes.reduce((s,a) => s + a.satoshis, 0) / 1e8);
+
+  const currentValUsd = totalBtc * btcUSD;
+  const currentValBrl = totalBtc * btcBRL;
+  const pnlUsd = currentValUsd - totalCostUsd;
+  const pnlPct = totalCostUsd > 0 ? (pnlUsd / totalCostUsd * 100) : 0;
+  const pnlClass = pnlUsd >= 0 ? 'up' : 'down';
+
+  const fmt = (n, decimals=0) => n.toLocaleString('pt-BR', {maximumFractionDigits: decimals});
+
+  // Atualiza cards
+  document.getElementById('dca-usd').textContent = `$${fmt(dcaUsd)}`;
+  document.getElementById('dca-brl').textContent = `R$${fmt(dcaBrl)} por BTC`;
+  document.getElementById('cost-usd').textContent = `$${fmt(totalCostUsd)}`;
+  document.getElementById('cost-brl').textContent = `R$${fmt(totalCostBrl)}`;
+  document.getElementById('pnl-usd').innerHTML =
+    `<span class="${pnlClass}">${pnlUsd >= 0 ? '+' : ''}$${fmt(Math.abs(pnlUsd))}</span>`;
+  document.getElementById('pnl-pct').innerHTML =
+    `<span class="${pnlClass}">${pnlPct >= 0 ? '+' : ''}${fmt(pnlPct, 1)}% sobre custo</span>`;
+
+  // Renderiza tabela
+  renderAportesTable(aportes, btcUSD);
+
+  // Constrói gráfico
+  await buildPerformanceChart(aportes, btcUSD, allTxEntries);
+
+  document.getElementById('aportes-status').textContent =
+    `${aportes.length} aportes · DCA $${fmt(dcaUsd)} · ${pnlPct >= 0 ? '+' : ''}${fmt(pnlPct,1)}% retorno`;
+}
+
 
 
 
