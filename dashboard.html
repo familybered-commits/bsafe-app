@@ -367,7 +367,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v22</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v24</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -1300,20 +1300,86 @@ async function btcPriceOnDate(timestamp) {
   }
 }
 
-/* Busca histórico de preço BTC em um range de datas */
+/* Busca histórico de preço BTC — tenta CoinGecko, Kraken, Bitstamp
+   Suporta qualquer data de início, inclusive aportes de anos atrás */
 async function fetchPriceRange(fromTs, toTs, currency = 'usd') {
+
+  // 1. CoinGecko com max — retorna histórico completo desde 2013
+  //    Filtramos localmente para o range solicitado
   try {
-    const url = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=${currency}&from=${fromTs}&to=${toTs}`;
+    const url = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=${currency}&days=max&interval=daily`;
     const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const d = await r.json();
-    return d.prices; // [[timestamp_ms, price], ...]
-  } catch(e) {
-    return null;
+    if (r.ok) {
+      const d = await r.json();
+      if (d.prices && d.prices.length > 100) {
+        const filtered = d.prices.filter(([ts]) => ts >= fromTs * 1000 && ts <= toTs * 1000);
+        if (filtered.length > 5) return filtered;
+      }
+    }
+  } catch(e) {}
+
+  // 2. Kraken — pagina para trás a partir do fromTs até toTs
+  //    Cada chamada retorna até 720 candles diários (~2 anos)
+  if (currency === 'usd') {
+    try {
+      const allCandles = [];
+      let since = fromTs;
+      const maxPages = 10; // até ~20 anos de dados
+      for (let page = 0; page < maxPages; page++) {
+        const url = `https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440&since=${since}`;
+        const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
+        if (!r.ok) break;
+        const d = await r.json();
+        const candles = d.result?.XXBTZUSD || [];
+        if (!candles.length) break;
+        // Filtra candles dentro do range
+        const inRange = candles.filter(c => c[0] >= fromTs && c[0] <= toTs);
+        allCandles.push(...inRange);
+        // Se último candle já passou toTs, ou menos de 718 candles, acabou
+        if (candles[candles.length-1][0] >= toTs || candles.length < 718) break;
+        since = candles[candles.length-1][0];
+        await new Promise(r => setTimeout(r, 300)); // evita rate limit Kraken
+      }
+      if (allCandles.length > 5) {
+        return allCandles
+          .map(c => [c[0] * 1000, parseFloat(c[4])])
+          .sort((a,b) => a[0]-b[0]);
+      }
+    } catch(e) {}
   }
+
+  // 3. Bitstamp — até 1000 candles por chamada, pagina se necessário
+  if (currency === 'usd') {
+    try {
+      const allCandles = [];
+      const step = 86400;
+      const limit = 1000;
+      let start = fromTs;
+      for (let page = 0; page < 15; page++) {
+        const end = Math.min(start + limit * step, toTs);
+        const url = `https://www.bitstamp.net/api/v2/ohlcdata/btcusd/?step=${step}&limit=${limit}&start=${start}&end=${end}`;
+        const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
+        if (!r.ok) break;
+        const d = await r.json();
+        const candles = d.data?.ohlc || [];
+        if (!candles.length) break;
+        allCandles.push(...candles);
+        if (end >= toTs) break;
+        start = end;
+        await new Promise(r => setTimeout(r, 400));
+      }
+      if (allCandles.length > 5) {
+        return allCandles
+          .map(c => [parseInt(c.timestamp) * 1000, parseFloat(c.close)])
+          .sort((a,b) => a[0]-b[0]);
+      }
+    } catch(e) {}
+  }
+
+  return null;
 }
 
-/* Busca histórico de preço BTC (últimos N dias) — usa fetchPriceRange */
+/* Busca histórico de preço BTC (últimos N dias) */
 async function btcPriceHistory(days = 365) {
   const toTs   = Math.floor(Date.now() / 1000);
   const fromTs = toTs - days * 86400;
@@ -1716,8 +1782,9 @@ async function analyzeAportes(allTxEntries, totalSats) {
   const totalBtc = totalSats / 1e8;
   const totalCostUsd = validAportes.reduce((s, a) => s + (a.satoshis / 1e8) * a.priceUsd, 0);
   const totalCostBrl = validAportes.reduce((s, a) => s + (a.satoshis / 1e8) * (a.priceBrl || 0), 0);
-  const dcaUsd = totalCostUsd / (validAportes.reduce((s,a) => s + a.satoshis, 0) / 1e8);
-  const dcaBrl = totalCostBrl / (validAportes.reduce((s,a) => s + a.satoshis, 0) / 1e8);
+  const validSats = validAportes.reduce((s,a) => s + a.satoshis, 0);
+  const dcaUsd = validSats > 0 ? totalCostUsd / (validSats / 1e8) : 0;
+  const dcaBrl = validSats > 0 ? totalCostBrl / (validSats / 1e8) : 0;
 
   const currentValUsd = totalBtc * btcUSD;
   const currentValBrl = totalBtc * btcBRL;
@@ -1728,14 +1795,23 @@ async function analyzeAportes(allTxEntries, totalSats) {
   const fmt = (n, decimals=0) => n.toLocaleString('pt-BR', {maximumFractionDigits: decimals});
 
   // Atualiza cards
-  document.getElementById('dca-usd').textContent = `$${fmt(dcaUsd)}`;
-  document.getElementById('dca-brl').textContent = `R$${fmt(dcaBrl)} por BTC`;
-  document.getElementById('cost-usd').textContent = `$${fmt(totalCostUsd)}`;
-  document.getElementById('cost-brl').textContent = `R$${fmt(totalCostBrl)}`;
-  document.getElementById('pnl-usd').innerHTML =
-    `<span class="${pnlClass}">${pnlUsd >= 0 ? '+' : ''}$${fmt(Math.abs(pnlUsd))}</span>`;
-  document.getElementById('pnl-pct').innerHTML =
-    `<span class="${pnlClass}">${pnlPct >= 0 ? '+' : ''}${fmt(pnlPct, 1)}% sobre custo</span>`;
+  if (validAportes.length > 0) {
+    document.getElementById('dca-usd').textContent = `$${fmt(dcaUsd)}`;
+    document.getElementById('dca-brl').textContent = `R$${fmt(dcaBrl)} por BTC`;
+    document.getElementById('cost-usd').textContent = `$${fmt(totalCostUsd)}`;
+    document.getElementById('cost-brl').textContent = `R$${fmt(totalCostBrl)}`;
+    document.getElementById('pnl-usd').innerHTML =
+      `<span class="${pnlClass}">${pnlUsd >= 0 ? '+' : ''}$${fmt(Math.abs(pnlUsd))}</span>`;
+    document.getElementById('pnl-pct').innerHTML =
+      `<span class="${pnlClass}">${pnlPct >= 0 ? '+' : ''}${fmt(pnlPct, 1)}% sobre custo</span>`;
+  } else {
+    document.getElementById('dca-usd').textContent = 'Carregando…';
+    document.getElementById('dca-brl').textContent = 'Buscando preços históricos';
+    document.getElementById('cost-usd').textContent = '—';
+    document.getElementById('cost-brl').textContent = '—';
+    document.getElementById('pnl-usd').textContent = '—';
+    document.getElementById('pnl-pct').textContent = 'Aguardando dados de preço';
+  }
 
   // Renderiza tabela
   renderAportesTable(aportes, btcUSD);
