@@ -367,7 +367,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v15</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v16</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -778,13 +778,9 @@ function setPeriod(btn, period) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   XPUB / PORTFOLIO  v15 — Native SegWit P2WPKH (bc1q)
-   
-   Confirmado em 08/06/2026:
-   - Endereços são bc1q... (Native SegWit, BIP84)
-   - API: mempool.space/api/address/{addr} (CORS ✓)
-   - Derivação: @scure/bip32 + bech32 P2WPKH
-   - Gap limit: 20 consecutivos sem uso
+   XPUB / PORTFOLIO  v16
+   Native SegWit bc1q via mempool.space
+   Usa @scure/bip32 + @noble/hashes (mesmas libs do teste)
 ═══════════════════════════════════════════════════════ */
 let walletBalance = null;
 let currentXpub   = '';
@@ -814,76 +810,80 @@ function log(msg, ok) {
   el.appendChild(d); el.scrollTop = el.scrollHeight;
 }
 
-/* ══ BECH32 — P2WPKH (bc1q...) ══════════════════════ */
-const BECH32_CHARS = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
-function bech32Polymod(v) {
-  let c = 1;
-  for (const x of v) {
-    const c0 = c >> 25;
-    c = ((c & 0x1ffffff) << 5) ^ x;
-    if (c0 &  1) c ^= 0x3b6a57b2;
-    if (c0 &  2) c ^= 0x26508e6d;
-    if (c0 &  4) c ^= 0x1ea119fa;
-    if (c0 &  8) c ^= 0x3d4233dd;
-    if (c0 & 16) c ^= 0x2a1462b3;
-  }
-  return c;
-}
-function bech32Encode(hrp, data) {
-  const expand = [...hrp].flatMap(c => [c.charCodeAt(0) >> 5, 0])
-    .slice(0, hrp.length)
-    .concat([0], [...hrp].map(c => c.charCodeAt(0) & 31));
-  const pm = bech32Polymod([...expand, ...data, 0,0,0,0,0,0]) ^ 1;
-  const chk = Array.from({length:6}, (_,i) => (pm >> (5*(5-i))) & 31);
-  return hrp + '1' + [...data, ...chk].map(x => BECH32_CHARS[x]).join('');
-}
-function convertBits(data, from, to) {
-  let acc=0, bits=0; const r=[];
-  for (const v of data) {
-    acc = (acc << from) | v; bits += from;
-    while (bits >= to) { bits -= to; r.push((acc >> bits) & ((1<<to)-1)); }
-  }
-  if (bits > 0) r.push((acc << (to - bits)) & ((1<<to)-1));
-  return r;
-}
+/* Libs carregadas via dynamic import (mesmo método do teste que funcionou) */
+let _HDKey = null, _ripemd160 = null, _sha256fn = null;
 
-/* ══ DERIVAÇÃO P2WPKH ════════════════════════════════ */
-let _HDKey = null, _ripemd160 = null, _sha256 = null;
 async function loadLibs() {
   if (_HDKey) return;
-  const [bip32, hashes, sha] = await Promise.all([
+  log('Carregando @scure/bip32…');
+  const [bip32mod, ripmod, shamod] = await Promise.all([
     import('https://esm.sh/@scure/bip32@1.4.0'),
     import('https://esm.sh/@noble/hashes@1.7.2/ripemd160'),
     import('https://esm.sh/@noble/hashes@1.7.2/sha256'),
   ]);
-  _HDKey     = bip32.HDKey;
-  _ripemd160 = hashes.ripemd160;
-  _sha256    = sha.sha256;
+  _HDKey     = bip32mod.HDKey;
+  _ripemd160 = ripmod.ripemd160;
+  _sha256fn  = shamod.sha256;
+  log('Libs carregadas ✓', true);
 }
 
-function pubkeyToP2WPKH(pub) {
-  // hash160 = RIPEMD160(SHA256(pub))
-  const h160 = _ripemd160(_sha256(pub));
-  // witness program: OP_0 <20-byte-hash>
-  return bech32Encode('bc', [0, ...convertBits(h160, 8, 5)]);
-}
+/* P2WPKH — bc1q address
+   Idêntico ao que funcionou no xpub-test.html */
+const BECH32_CHARS = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
 
-async function deriveAddresses(xpub, chain, count) {
-  await loadLibs();
-  const hd   = _HDKey.fromExtendedKey(xpub);
-  const node = hd.deriveChild(chain);
-  const out  = [];
-  for (let i = 0; i < count; i++) {
-    out.push(pubkeyToP2WPKH(node.deriveChild(i).publicKey));
+function bech32Polymod(values) {
+  const GEN = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+  let chk = 1;
+  for (const v of values) {
+    const b = chk >> 25;
+    chk = ((chk & 0x1ffffff) << 5) ^ v;
+    for (let i = 0; i < 5; i++) if ((b >> i) & 1) chk ^= GEN[i];
   }
-  return out;
+  return chk;
 }
 
-/* ══ MEMPOOL.SPACE ADDRESS API ═══════════════════════ */
+function bech32HrpExpand(hrp) {
+  const ret = [];
+  for (const c of hrp) ret.push(c.charCodeAt(0) >> 5);
+  ret.push(0);
+  for (const c of hrp) ret.push(c.charCodeAt(0) & 31);
+  return ret;
+}
+
+function convertbits(data, frombits, tobits, pad = true) {
+  let acc = 0, bits = 0;
+  const ret = [];
+  for (const value of data) {
+    acc = (acc << frombits) | value;
+    bits += frombits;
+    while (bits >= tobits) {
+      bits -= tobits;
+      ret.push((acc >> bits) & ((1 << tobits) - 1));
+    }
+  }
+  if (pad && bits > 0) ret.push((acc << (tobits - bits)) & ((1 << tobits) - 1));
+  return ret;
+}
+
+function segwitAddr(hrp, witver, witprog) {
+  const data = [witver, ...convertbits(witprog, 8, 5)];
+  const checksum_input = [...bech32HrpExpand(hrp), ...data, 0, 0, 0, 0, 0, 0];
+  const pm = bech32Polymod(checksum_input) ^ 1;
+  const checksum = Array.from({length: 6}, (_, i) => (pm >> (5 * (5 - i))) & 31);
+  return hrp + '1' + [...data, ...checksum].map(d => BECH32_CHARS[d]).join('');
+}
+
+function pubkeyToP2WPKH(pubkey) {
+  // hash160 = RIPEMD160(SHA256(pubkey))
+  const h160 = _ripemd160(_sha256fn(pubkey));
+  return segwitAddr('bc', 0, Array.from(h160));
+}
+
+/* Consulta mempool.space para um endereço */
 async function mempoolAddr(addr) {
   const r = await fetch(`https://mempool.space/api/address/${addr}`,
-    { signal: AbortSignal.timeout(10000) });
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    { signal: AbortSignal.timeout(8000) });
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${addr.slice(0,12)}`);
   const d = await r.json();
   return {
     bal: (d.chain_stats?.funded_txo_sum || 0) - (d.chain_stats?.spent_txo_sum || 0),
@@ -893,85 +893,79 @@ async function mempoolAddr(addr) {
 
 async function mempoolAddrTxs(addr) {
   const r = await fetch(`https://mempool.space/api/address/${addr}/txs`,
-    { signal: AbortSignal.timeout(12000) });
+    { signal: AbortSignal.timeout(10000) });
   if (!r.ok) return [];
   return r.json();
 }
 
-/* ══ SCAN COM GAP LIMIT ══════════════════════════════ */
+/* Scan de uma chain com gap limit */
 async function scanChain(xpub, chain, chainLabel, GAP = 20) {
-  await loadLibs();
   const hd   = _HDKey.fromExtendedKey(xpub);
   const node = hd.deriveChild(chain);
 
   let totalSats = 0, gap = 0, idx = 0;
-  const activeAddrs = [], allTxs = [];
+  const activeAddrs = [], allTxEntries = [];
 
-  while (gap < GAP) {
+  while (gap < GAP && idx <= 200) {
     const addr = pubkeyToP2WPKH(node.deriveChild(idx).publicKey);
+
+    // Verifica primeiro endereço derivado no log
+    if (idx === 0) log(`  ${chainLabel}/0 = ${addr}`);
+
     try {
       const { bal, txs } = await mempoolAddr(addr);
       if (bal > 0 || txs > 0) {
         gap = 0;
         totalSats += bal;
         activeAddrs.push({ idx, addr, bal, txs });
-        log(`  ${chainLabel}/${idx}: ${addr.slice(0,16)}… ${bal} sats ${txs} txs`, true);
-
-        // Busca txs deste endereço
+        log(`  🎯 ${chainLabel}/${idx}: ${addr.slice(0,16)}… ${bal} sats ${txs} txs`, true);
         if (txs > 0) {
           const addrTxs = await mempoolAddrTxs(addr);
-          allTxs.push(...addrTxs.map(tx => ({ addr, tx })));
+          allTxEntries.push(...addrTxs.map(tx => ({ addr, tx })));
         }
       } else {
         gap++;
       }
-      // Throttle leve
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 80));
     } catch(e) {
-      log(`  ${chainLabel}/${idx}: erro - ${e.message}`, false);
-      await new Promise(r => setTimeout(r, 500));
+      log(`  ${chainLabel}/${idx}: ${e.message}`, false);
+      await new Promise(r => setTimeout(r, 600));
+      // Erros não contam como gap — tenta de novo seria ideal mas continua
     }
     idx++;
-    if (idx > 200) break; // segurança
   }
 
-  return { totalSats, activeAddrs, allTxs, scanned: idx };
+  return { totalSats, activeAddrs, allTxEntries, scanned: idx };
 }
 
-/* ══ RENDERIZAÇÃO DE TRANSAÇÕES ═════════════════════ */
+/* Renderização de transações */
 function renderTxs(allTxEntries, xpub) {
   const tbody = document.getElementById('tx-body');
   tbody.innerHTML = '';
 
-  // Deduplica por txid
   const seen = new Set();
   const unique = allTxEntries.filter(e => {
-    const id = e.tx.txid;
-    if (seen.has(id)) return false;
-    seen.add(id); return true;
+    if (seen.has(e.tx.txid)) return false;
+    seen.add(e.tx.txid); return true;
   });
-
-  // Ordena por block_time desc
-  unique.sort((a,b) => (b.tx.status?.block_time||0) - (a.tx.status?.block_time||0));
+  unique.sort((a, b) => (b.tx.status?.block_time||0) - (a.tx.status?.block_time||0));
 
   if (!unique.length) {
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;
       color:var(--muted);padding:20px;font-size:13px">Nenhuma transação encontrada.</td></tr>`;
   } else {
     unique.slice(0, 20).forEach(({ addr, tx }) => {
-      const time = tx.status?.block_time || null;
-      // Calcula valor líquido para este endereço
-      const out  = (tx.vout||[]).filter(o => o.scriptpubkey_address === addr)
-                                .reduce((s,o) => s + (o.value||0), 0);
-      const inp  = (tx.vin ||[]).filter(i => i.prevout?.scriptpubkey_address === addr)
-                                .reduce((s,i) => s + (i.prevout?.value||0), 0);
+      const out = (tx.vout||[]).filter(o => o.scriptpubkey_address === addr)
+                               .reduce((s, o) => s + (o.value||0), 0);
+      const inp = (tx.vin ||[]).filter(i => i.prevout?.scriptpubkey_address === addr)
+                               .reduce((s, i) => s + (i.prevout?.value||0), 0);
       const net  = out - inp;
       const tipo = net >= 0
         ? '<span class="up">↓ Recebido</span>'
         : '<span class="down">↑ Enviado</span>';
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td style="color:var(--muted);font-size:12px">${fmtDate(time)}</td>
+        <td style="color:var(--muted);font-size:12px">${fmtDate(tx.status?.block_time||null)}</td>
         <td><a href="https://mempool.space/tx/${tx.txid}" target="_blank"
             style="color:var(--btc);text-decoration:none;font-family:'DM Mono',monospace;font-size:12px">
             ${shortTx(tx.txid)} ↗</a></td>
@@ -981,7 +975,6 @@ function renderTxs(allTxEntries, xpub) {
       tbody.appendChild(tr);
     });
   }
-
   const tf = document.createElement('tr');
   tf.innerHTML = `<td colspan="4" style="text-align:center;padding:12px;
     border-top:1px solid var(--border)">
@@ -1015,7 +1008,7 @@ function renderFallback(xpub) {
     </td></tr>`;
 }
 
-/* ══ ORQUESTRADOR ════════════════════════════════════ */
+/* Orquestrador */
 async function loadXpub() {
   const raw = document.getElementById('xpub-input').value.trim();
   if (!raw) { showToast('Cole sua xpub no campo.'); return; }
@@ -1027,36 +1020,45 @@ async function loadXpub() {
 
   const logEl = document.getElementById('xpub-log');
   if (logEl) logEl.innerHTML = '';
-  log('Tipo: Native SegWit bc1q (P2WPKH, BIP84)');
-  log('API: mempool.space');
   showTxLoading('Carregando bibliotecas…');
 
   try {
     await loadLibs();
-    log('Bibliotecas carregadas', true);
 
-    // Scan externos (chain=0) com gap limit 20
+    // Valida o primeiro endereço antes de escanear tudo
+    const hd   = _HDKey.fromExtendedKey(raw);
+    const addr0 = pubkeyToP2WPKH(hd.deriveChild(0).deriveChild(0).publicKey);
+    log(`m/0/0 = ${addr0}`);
+
+    // Testa se o endereço é válido no mempool
+    showTxLoading('Validando endereço…');
+    const test = await mempoolAddr(addr0).catch(e => ({ error: e.message }));
+    if (test.error) {
+      throw new Error(`Endereço inválido no mempool (${test.error}). Verifique se é xpub/zpub/ypub correto.`);
+    }
+    log(`Endereço válido no mempool ✓`, true);
+
+    // Scan externos com gap limit 20
     showTxLoading('Escaneando endereços externos…');
-    log('Scan externos (m/0/i) com gap limit 20…');
+    log('Scan m/0 (externos)…');
     const extResult = await scanChain(raw, 0, 'm/0', 20);
-    log(`Externos: ${extResult.totalSats} sats em ${extResult.activeAddrs.length} endereços (${extResult.scanned} verificados)`, true);
+    log(`Externos: ${extResult.totalSats} sats, ${extResult.activeAddrs.length} ativos, ${extResult.scanned} verificados`, true);
 
-    // Scan change (chain=1) com gap limit 20
+    // Scan change com gap limit 20
     showTxLoading('Escaneando endereços de troco…');
-    log('Scan change (m/1/i) com gap limit 20…');
+    log('Scan m/1 (change)…');
     const chgResult = await scanChain(raw, 1, 'm/1', 20);
-    log(`Change: ${chgResult.totalSats} sats em ${chgResult.activeAddrs.length} endereços`, true);
+    log(`Change: ${chgResult.totalSats} sats, ${chgResult.activeAddrs.length} ativos`, true);
 
-    const totalSats = extResult.totalSats + chgResult.totalSats;
-    const allTxEntries = [...extResult.allTxs, ...chgResult.allTxs];
-    const totalTxs = new Set(allTxEntries.map(e => e.tx.txid)).size;
+    const totalSats    = extResult.totalSats + chgResult.totalSats;
+    const allTxEntries = [...extResult.allTxEntries, ...chgResult.allTxEntries];
+    const totalTxs     = new Set(allTxEntries.map(e => e.tx.txid)).size;
 
     log(`TOTAL: ${totalSats} sats = ${(totalSats/1e8).toFixed(8)} BTC`, totalSats > 0);
 
     walletBalance = totalSats;
     updatePortfolio(totalSats);
     setStatus(`${totalTxs} transações · ${(totalSats/1e8).toFixed(8)} BTC · mempool.space`);
-
     renderTxs(allTxEntries, raw);
     document.getElementById('tx-section').style.display = 'block';
     showToast(totalSats > 0 ? `✓ ${fmtSats(totalSats)}` : 'Carteira carregada');
@@ -1064,7 +1066,7 @@ async function loadXpub() {
   } catch(e) {
     log('ERRO: ' + e.message, false);
     renderFallback(raw);
-    showToast('Erro: ' + e.message.slice(0, 60));
+    showToast(e.message.slice(0, 80));
   }
 
   btn.textContent = 'Rastrear carteira'; btn.disabled = false;
@@ -1088,6 +1090,7 @@ function updatePortfolio(sats) {
 function refreshPortfolioValues() {
   if (walletBalance !== null) updatePortfolio(walletBalance);
 }
+
 
 
 
