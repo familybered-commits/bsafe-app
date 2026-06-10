@@ -322,7 +322,17 @@ canvas { width:100%!important; }
   .xpub-input{min-width:0}
   .login-box{padding:32px 24px}
 }
+
+  @keyframes scanLine {
+    0%   { top: 17.5%; opacity: 1; }
+    45%  { top: 82.5%; opacity: 1; }
+    50%  { opacity: 0; }
+    55%  { top: 17.5%; opacity: 0; }
+    60%  { opacity: 1; }
+    100% { top: 82.5%; opacity: 1; }
+  }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </head>
 <body>
 
@@ -367,7 +377,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v24</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v25</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -435,7 +445,65 @@ canvas { width:100%!important; }
       <div class="xpub-form">
         <input class="xpub-input" id="xpub-input" type="text"
           placeholder="xpub6... ou zpub1... ou ypub...">
+        <button class="xpub-btn" id="qr-btn" onclick="openQrScanner()" title="Ler QR Code"
+          style="padding:0 16px;font-size:18px;flex-shrink:0;background:var(--bg2);
+          color:var(--off);border:1px solid var(--border);"
+          onmouseover="this.style.borderColor='var(--btc)'"
+          onmouseout="this.style.borderColor='var(--border)'">
+          📷
+        </button>
         <button class="xpub-btn" id="xpub-btn" onclick="loadXpub()">Rastrear carteira</button>
+      </div>
+
+      <!-- Modal QR Scanner -->
+      <div id="qr-modal" style="display:none;position:fixed;inset:0;z-index:9999;
+        background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;
+          padding:24px;width:min(420px,90vw);text-align:center">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="font-size:14px;font-weight:700;color:var(--off);letter-spacing:.06em">
+              📷 LER QR CODE DA XPUB
+            </div>
+            <button onclick="closeQrScanner()" style="background:none;border:none;color:var(--muted);
+              font-size:20px;cursor:pointer;padding:0 4px;line-height:1">✕</button>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:16px;font-family:'DM Mono',monospace">
+            Aponte a câmera para o QR Code da sua xpub / zpub / ypub
+          </div>
+          <!-- Área do vídeo -->
+          <div style="position:relative;border-radius:12px;overflow:hidden;background:#000;
+            aspect-ratio:1;margin-bottom:16px">
+            <video id="qr-video" autoplay playsinline muted
+              style="width:100%;height:100%;object-fit:cover"></video>
+            <!-- Mira de scan -->
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+              <div style="width:65%;height:65%;border:2px solid var(--btc);border-radius:8px;
+                box-shadow:0 0 0 2000px rgba(0,0,0,0.4)"></div>
+            </div>
+            <!-- Linha de scan animada -->
+            <div id="scan-line" style="position:absolute;left:17.5%;right:17.5%;height:2px;
+              background:linear-gradient(90deg,transparent,var(--btc),transparent);
+              animation:scanLine 2s linear infinite;top:50%"></div>
+          </div>
+          <canvas id="qr-canvas" style="display:none"></canvas>
+          <div id="qr-status" style="font-size:12px;font-family:'DM Mono',monospace;
+            color:var(--muted);min-height:20px">Iniciando câmera…</div>
+          <!-- Seletor de câmera se houver múltiplas -->
+          <select id="qr-camera-select" style="display:none;margin-top:12px;width:100%;
+            background:var(--bg);border:1px solid var(--border);color:var(--off);
+            padding:8px;border-radius:6px;font-family:'DM Mono',monospace;font-size:12px"></select>
+          <!-- Fallback: upload de imagem -->
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <label style="font-size:11px;color:var(--muted);cursor:pointer;
+              font-family:'DM Mono',monospace">
+              Ou carregue uma imagem do QR Code:
+              <input type="file" id="qr-file-input" accept="image/*"
+                style="display:none" onchange="readQrFromFile(event)">
+              <span onclick="document.getElementById('qr-file-input').click()"
+                style="color:var(--btc);cursor:pointer;margin-left:6px">Selecionar arquivo ↑</span>
+            </label>
+          </div>
+        </div>
       </div>
       <div class="xpub-note" id="xpub-note">
         Somente leitura — sua xpub nunca expõe chaves privadas. Nenhum dado armazenado pela BSafe.
@@ -1259,6 +1327,185 @@ function updatePortfolio(sats) {
 function refreshPortfolioValues() {
   if (walletBalance !== null) updatePortfolio(walletBalance);
 }
+
+/* ═══════════════════════════════════════════════════
+   QR CODE SCANNER
+   Usa jsQR para decodificar frames da câmera
+   Fallback: upload de imagem com QR Code
+═══════════════════════════════════════════════════ */
+let qrStream = null;
+let qrAnimFrame = null;
+let qrCameras = [];
+
+function openQrScanner() {
+  const modal = document.getElementById('qr-modal');
+  modal.style.display = 'flex';
+  document.getElementById('qr-status').textContent = 'Iniciando câmera…';
+  startQrCamera();
+}
+
+function closeQrScanner() {
+  stopQrCamera();
+  document.getElementById('qr-modal').style.display = 'none';
+}
+
+async function startQrCamera(deviceId = null) {
+  stopQrCamera();
+  const video = document.getElementById('qr-video');
+  const status = document.getElementById('qr-status');
+
+  try {
+    const constraints = {
+      video: deviceId
+        ? { deviceId: { exact: deviceId }, facingMode: 'environment' }
+        : { facingMode: { ideal: 'environment' } }
+    };
+
+    qrStream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = qrStream;
+    await video.play();
+
+    // Lista câmeras disponíveis para o seletor
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    qrCameras = devices.filter(d => d.kind === 'videoinput');
+    if (qrCameras.length > 1) {
+      const sel = document.getElementById('qr-camera-select');
+      sel.style.display = 'block';
+      sel.innerHTML = qrCameras.map((c, i) =>
+        `<option value="${c.deviceId}">${c.label || 'Câmera ' + (i+1)}</option>`
+      ).join('');
+      sel.onchange = e => startQrCamera(e.target.value);
+    }
+
+    status.textContent = 'Aponte para o QR Code da sua xpub…';
+    scanQrFrame();
+
+  } catch(e) {
+    if (e.name === 'NotAllowedError') {
+      status.textContent = '⚠ Permissão de câmera negada. Use o upload de imagem abaixo.';
+    } else if (e.name === 'NotFoundError') {
+      status.textContent = '⚠ Nenhuma câmera encontrada. Use o upload de imagem abaixo.';
+    } else {
+      status.textContent = '⚠ Erro: ' + e.message;
+    }
+  }
+}
+
+function stopQrCamera() {
+  if (qrAnimFrame) { cancelAnimationFrame(qrAnimFrame); qrAnimFrame = null; }
+  if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
+}
+
+function scanQrFrame() {
+  const video  = document.getElementById('qr-video');
+  const canvas = document.getElementById('qr-canvas');
+  const status = document.getElementById('qr-status');
+
+  if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+    qrAnimFrame = requestAnimationFrame(scanQrFrame);
+    return;
+  }
+
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, imageData.width, imageData.height, {
+    inversionAttempts: 'dontInvert'
+  });
+
+  if (code) {
+    const text = code.data.trim();
+    // Aceita xpub, ypub, zpub e também URIs como bitcoin:?xpub=...
+    const xpubMatch = text.match(/[xyz]pub[a-zA-Z0-9]{50,}/);
+    if (xpubMatch) {
+      onQrDetected(xpubMatch[0]);
+      return;
+    }
+    // Tenta texto cru se parece com xpub
+    if (/^[xyz]pub/.test(text) && text.length > 80) {
+      onQrDetected(text);
+      return;
+    }
+    status.textContent = '⚠ QR detectado mas não é uma xpub válida. Tente outro.';
+  }
+
+  // Continua escaneando
+  qrAnimFrame = requestAnimationFrame(scanQrFrame);
+}
+
+function onQrDetected(xpub) {
+  // Feedback visual
+  const status = document.getElementById('qr-status');
+  status.style.color = 'var(--btc)';
+  status.textContent = '✓ xpub detectada! Carregando…';
+
+  // Pequena vibração háptica se disponível
+  if (navigator.vibrate) navigator.vibrate(100);
+
+  // Fecha modal após 600ms
+  setTimeout(() => {
+    closeQrScanner();
+    // Preenche o campo e inicia rastreamento
+    const input = document.getElementById('xpub-input');
+    input.value = xpub;
+    input.style.borderColor = 'var(--btc)';
+    setTimeout(() => { input.style.borderColor = ''; }, 2000);
+    // Dispara automaticamente
+    loadXpub();
+  }, 600);
+}
+
+/* Fallback: lê QR de uma imagem enviada pelo usuário */
+async function readQrFromFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const status = document.getElementById('qr-status');
+  status.textContent = 'Processando imagem…';
+
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.getElementById('qr-canvas');
+    canvas.width  = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+    if (code) {
+      const text = code.data.trim();
+      const xpubMatch = text.match(/[xyz]pub[a-zA-Z0-9]{50,}/);
+      const detected  = xpubMatch ? xpubMatch[0] : (/^[xyz]pub/.test(text) && text.length > 80 ? text : null);
+      if (detected) {
+        onQrDetected(detected);
+      } else {
+        status.textContent = '⚠ QR encontrado mas não contém xpub válida.';
+      }
+    } else {
+      status.textContent = '⚠ Nenhum QR Code encontrado na imagem.';
+    }
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(file);
+  // Reset file input
+  event.target.value = '';
+}
+
+// Fecha modal ao clicar fora
+document.addEventListener('click', e => {
+  const modal = document.getElementById('qr-modal');
+  if (modal && e.target === modal) closeQrScanner();
+});
+
+// Fecha modal com ESC
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeQrScanner();
+});
+
 
 /* ═══════════════════════════════════════════════════════
    ANÁLISE DE APORTES & PERFORMANCE COMPARADA
