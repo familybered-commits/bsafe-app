@@ -377,7 +377,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v28</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v29</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -1752,8 +1752,21 @@ function handleQrText(text, statusEl) {
   }
 
   if (allXpubs.length > 1) {
-    // Múltiplas xpubs (multisig) — mostra seleção
-    if (statusEl) statusEl.textContent = `${allXpubs.length} xpubs encontradas no descriptor. Escolha abaixo:`;
+    const parsed = parseDescriptor(text);
+
+    // Multisig real (multi/sortedmulti) → scan combinado direto, sem picker
+    if (parsed && (parsed.type === 'multi' || parsed.type === 'sortedmulti')) {
+      if (statusEl) statusEl.textContent = `Multisig ${parsed.threshold}-de-${allXpubs.length} detectada. Iniciando scan…`;
+      setTimeout(() => {
+        closeQrScanner();
+        document.getElementById('xpub-input').value = text;
+        loadMultisigXpub(text, parsed);
+      }, 800);
+      return;
+    }
+
+    // Liana/timelock → picker para escolher entre chave primária e recuperação
+    if (statusEl) statusEl.textContent = `${allXpubs.length} chaves encontradas. Escolha abaixo:`;
     showXpubPicker(allXpubs, text);
     return;
   }
@@ -1771,9 +1784,9 @@ function handleQrText(text, statusEl) {
 /* Mostra seletor quando há múltiplas xpubs no descriptor */
 function showXpubPicker(xpubs, rawDescriptor) {
   const status = document.getElementById('qr-status');
+  const parsed  = parseDescriptor(rawDescriptor);
 
-  // Tipo de descriptor
-  const isMultisig = rawDescriptor.includes('multi(') || rawDescriptor.includes('sortedmulti(');
+  const isMultisig = parsed && (parsed.type === 'multi' || parsed.type === 'sortedmulti');
   const isLiana    = rawDescriptor.includes('wsh(') && rawDescriptor.includes('after(');
   const label      = isLiana    ? '🔑 Liana / Herança' :
                      isMultisig ? '🔐 Multisig' :
@@ -1781,14 +1794,35 @@ function showXpubPicker(xpubs, rawDescriptor) {
 
   let html = `<div style="text-align:left;margin-top:8px">
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-family:'DM Mono',monospace">
-      ${label} — escolha a chave a rastrear:
+      ${label} — ${isLiana ? 'escolha a chave:' : 'escolha o modo de rastreamento:'}
     </div>`;
+
+  // Para multisig: botão de rastreamento completo em destaque
+  if (isMultisig && parsed) {
+    html += `
+      <button onclick="(function(){
+          const p=document.getElementById('xpub-picker');if(p)p.remove();
+          closeQrScanner();
+          document.getElementById('xpub-input').value=${JSON.stringify(rawDescriptor)};
+          loadMultisigXpub(${JSON.stringify(rawDescriptor)}, ${JSON.stringify(parsed)});
+        })()"
+        style="display:block;width:100%;text-align:left;margin-bottom:8px;
+        background:var(--btc);border:1px solid var(--btc);color:#000;
+        padding:12px 14px;border-radius:8px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;
+        font-weight:700;transition:.15s">
+        <div style="font-size:12px;margin-bottom:3px">✅ Rastrear carteira completa</div>
+        <div style="font-weight:400;font-size:10px;opacity:.8">${parsed.threshold}-de-${xpubs.length} multisig · endereços P2WSH combinados</div>
+      </button>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px;font-family:'DM Mono',monospace;text-align:center">
+        — ou rastrear uma chave individual —
+      </div>`;
+  }
 
   xpubs.forEach((xpub, i) => {
     const short = xpub.slice(0,14) + '…' + xpub.slice(-8);
     const role  = isLiana
       ? (i === 0 ? '🟢 Chave primária' : '🔴 Chave de recuperação (timelock)')
-      : `Chave ${i+1}`;
+      : `🔑 Chave ${i+1}`;
     html += `
       <button onclick="onQrDetected('${xpub}')"
         style="display:block;width:100%;text-align:left;margin-bottom:8px;
@@ -1803,8 +1837,6 @@ function showXpubPicker(xpubs, rawDescriptor) {
   });
   html += '</div>';
 
-  // Substitui o status pela seleção
-  const container = status.parentElement;
   const picker = document.createElement('div');
   picker.id = 'xpub-picker';
   picker.innerHTML = html;
