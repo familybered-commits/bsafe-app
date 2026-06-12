@@ -220,6 +220,39 @@ canvas { width:100%!important; }
 }
 .xpub-note::before { content:'ℹ';color:var(--btc);flex-shrink:0;margin-top:1px; }
 
+/* modo da carteira: individual vs multisig */
+.wallet-mode { display:flex;gap:8px;margin-bottom:16px; }
+.wmode-btn {
+  background:var(--bg3);border:1px solid var(--border);border-radius:999px;
+  padding:8px 18px;font-size:12px;color:var(--text);cursor:pointer;
+  font-family:'DM Mono',monospace;letter-spacing:.05em;transition:all .2s;
+}
+.wmode-btn.active { background:var(--btc-dim);border-color:var(--border-btc);color:var(--btc); }
+.wmode-btn:hover { border-color:var(--border-btc); }
+.ms-fields { display:none; }
+.ms-fields.show { display:block; }
+.ms-textarea {
+  width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:12px 15px;font-size:12px;color:var(--white);font-family:'DM Mono',monospace;
+  outline:none;transition:border-color .2s;min-height:110px;resize:vertical;line-height:1.6;
+}
+.ms-textarea:focus { border-color:var(--btc); }
+.ms-textarea::placeholder { color:var(--muted2);font-family:'DM Sans',sans-serif; }
+.ms-row { display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:12px; }
+.ms-field { display:flex;flex-direction:column;gap:6px; }
+.ms-field label { font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.09em; }
+.ms-field input {
+  width:110px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:11px 14px;font-size:13px;color:var(--white);font-family:'DM Mono',monospace;outline:none;
+}
+.ms-field input:focus { border-color:var(--btc); }
+.ms-badge {
+  display:none;font-size:11px;font-family:'DM Mono',monospace;color:var(--btc);
+  background:var(--btc-dim);border:1px solid var(--border-btc);border-radius:999px;
+  padding:7px 14px;letter-spacing:.05em;
+}
+.ms-badge.show { display:inline-block; }
+
 /* Portfolio summary */
 .portfolio-grid { display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px; }
 .ptile {
@@ -322,17 +355,7 @@ canvas { width:100%!important; }
   .xpub-input{min-width:0}
   .login-box{padding:32px 24px}
 }
-
-  @keyframes scanLine {
-    0%   { top: 17.5%; opacity: 1; }
-    45%  { top: 82.5%; opacity: 1; }
-    50%  { opacity: 0; }
-    55%  { top: 17.5%; opacity: 0; }
-    60%  { opacity: 1; }
-    100% { top: 82.5%; opacity: 1; }
-  }
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </head>
 <body>
 
@@ -377,7 +400,7 @@ canvas { width:100%!important; }
   <nav class="topbar">
     <a href="index.html" class="topbar-logo">
       <div class="topbar-logo-icon">₿</div>
-      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v29</span>
+      BSafe <span style="color:var(--btc);margin-left:4px">Dashboard</span><span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-left:8px;letter-spacing:.06em">v24</span>
     </a>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -438,112 +461,43 @@ canvas { width:100%!important; }
     </div>
 
     <div class="xpub-panel">
-      <p class="xpub-intro">
-        Insira a <strong style="color:var(--off)">chave pública estendida (xpub / zpub / ypub)</strong>
-        da sua hardware wallet para rastrear seu saldo e transações em tempo real.
-      </p>
-      <div class="xpub-form">
-        <input class="xpub-input" id="xpub-input" type="text"
-          placeholder="xpub6... ou zpub1... ou ypub...">
-        <button class="xpub-btn" id="qr-btn" onclick="openQrScanner()" title="Ler QR Code"
-          style="padding:0 16px;font-size:18px;flex-shrink:0;background:var(--bg2);
-          color:var(--off);border:1px solid var(--border);"
-          onmouseover="this.style.borderColor='var(--btc)'"
-          onmouseout="this.style.borderColor='var(--border)'">
-          📷
-        </button>
-        <button class="xpub-btn" id="xpub-btn" onclick="loadXpub()">Rastrear carteira</button>
+      <div class="wallet-mode">
+        <button class="wmode-btn active" id="wmode-single" onclick="setWalletMode('single')">Carteira individual</button>
+        <button class="wmode-btn" id="wmode-multi" onclick="setWalletMode('multi')">Multisig (Tapsigner / Nunchuk)</button>
       </div>
 
-      <!-- Modal QR Scanner -->
-      <div id="qr-modal" style="display:none;position:fixed;inset:0;z-index:9999;
-        background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center">
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;
-          padding:24px;width:min(420px,90vw);text-align:center">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div style="font-size:14px;font-weight:700;color:var(--off);letter-spacing:.06em">
-              📷 LER QR CODE DA XPUB
-            </div>
-            <button onclick="closeQrScanner()" style="background:none;border:none;color:var(--muted);
-              font-size:20px;cursor:pointer;padding:0 4px;line-height:1">✕</button>
-          </div>
-          <!-- Tabs: Câmera / Foto -->
-          <div style="display:flex;gap:8px;margin-bottom:16px">
-            <button id="tab-camera" onclick="switchQrTab('camera')"
-              style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--btc);
-              background:var(--btc);color:#000;font-weight:700;font-size:12px;
-              font-family:'DM Mono',monospace;cursor:pointer;transition:.15s">
-              📷 Câmera ao vivo
-            </button>
-            <button id="tab-upload" onclick="switchQrTab('upload')"
-              style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);
-              background:var(--bg2);color:var(--muted);font-weight:700;font-size:12px;
-              font-family:'DM Mono',monospace;cursor:pointer;transition:.15s">
-              🖼️ Foto / Print
-            </button>
-          </div>
-
-          <!-- Painel Câmera -->
-          <div id="panel-camera">
-            <div style="position:relative;border-radius:12px;overflow:hidden;background:#000;
-              aspect-ratio:1;margin-bottom:12px">
-              <video id="qr-video" autoplay playsinline muted
-                style="width:100%;height:100%;object-fit:cover"></video>
-              <div style="position:absolute;inset:0;display:flex;align-items:center;
-                justify-content:center;pointer-events:none">
-                <div style="width:65%;height:65%;border:2px solid var(--btc);border-radius:8px;
-                  box-shadow:0 0 0 2000px rgba(0,0,0,0.4)"></div>
-              </div>
-              <div id="scan-line" style="position:absolute;left:17.5%;right:17.5%;height:2px;
-                background:linear-gradient(90deg,transparent,var(--btc),transparent);
-                animation:scanLine 2s linear infinite;top:50%"></div>
-            </div>
-            <select id="qr-camera-select" style="display:none;margin-bottom:10px;width:100%;
-              background:var(--bg);border:1px solid var(--border);color:var(--off);
-              padding:8px;border-radius:6px;font-family:'DM Mono',monospace;font-size:12px"></select>
-          </div>
-
-          <!-- Painel Upload -->
-          <div id="panel-upload" style="display:none">
-            <!-- Drop zone -->
-            <div id="drop-zone"
-              onclick="document.getElementById('qr-file-input').click()"
-              ondragover="event.preventDefault();this.style.borderColor='var(--btc)'"
-              ondragleave="this.style.borderColor='var(--border)'"
-              ondrop="handleQrDrop(event)"
-              style="border:2px dashed var(--border);border-radius:12px;
-              padding:40px 20px;text-align:center;cursor:pointer;transition:.2s;
-              margin-bottom:12px"
-              onmouseover="this.style.borderColor='var(--btc)'"
-              onmouseout="this.style.borderColor='var(--border)'">
-              <div style="font-size:40px;margin-bottom:12px">🖼️</div>
-              <div style="font-size:13px;color:var(--off);margin-bottom:6px;font-weight:600">
-                Clique para selecionar ou arraste a imagem aqui
-              </div>
-              <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">
-                Aceita fotos, prints e screenshots do QR Code<br>
-                JPG, PNG, WEBP, HEIC
-              </div>
-            </div>
-            <!-- Preview da imagem carregada -->
-            <div id="img-preview" style="display:none;margin-bottom:12px;text-align:center">
-              <img id="preview-img" style="max-height:200px;border-radius:8px;
-                border:1px solid var(--border);object-fit:contain">
-            </div>
-          </div>
-
-          <canvas id="qr-canvas" style="display:none"></canvas>
-
-          <!-- Status (compartilhado entre os dois painéis) -->
-          <div id="qr-status" style="font-size:12px;font-family:'DM Mono',monospace;
-            color:var(--muted);min-height:20px;text-align:center">Iniciando câmera…</div>
-
-          <input type="file" id="qr-file-input" accept="image/*,image/heic,image/heif"
-            style="display:none" onchange="readQrFromFile(event)">
+      <div id="single-fields">
+        <p class="xpub-intro">
+          Insira a <strong style="color:var(--off)">chave pública estendida (xpub / zpub / ypub)</strong>
+          da sua hardware wallet para rastrear seu saldo e transações em tempo real.
+        </p>
+        <div class="xpub-form">
+          <input class="xpub-input" id="xpub-input" type="text"
+            placeholder="xpub6... ou zpub1... ou ypub...">
+          <button class="xpub-btn" id="xpub-btn" onclick="loadXpub()">Rastrear carteira</button>
         </div>
       </div>
+
+      <div class="ms-fields" id="ms-fields">
+        <p class="xpub-intro">
+          Cole o <strong style="color:var(--off)">descriptor da carteira</strong> exportado pelo coordenador
+          (Nunchuk → Carteira → Exportar → Descriptor BSafe/Sparrow) <em>ou</em> uma chave estendida
+          (xpub / Zpub) por linha. Compatível com Tapsigner, Coldcard, Jade e SeedSigner via Nunchuk ou Sparrow.
+        </p>
+        <textarea class="ms-textarea" id="ms-input"
+          placeholder="wsh(sortedmulti(2,[73c5da0a/48'/0'/0'/2']xpub6.../<0;1>/*,...))&#10;&#10;ou uma chave por linha:&#10;Zpub7...&#10;Zpub6...&#10;Zpub5..."></textarea>
+        <div class="ms-row">
+          <div class="ms-field" id="ms-m-field">
+            <label>ASSINATURAS (M)</label>
+            <input id="ms-m" type="number" min="1" max="15" placeholder="2">
+          </div>
+          <span class="ms-badge" id="ms-badge"></span>
+          <button class="xpub-btn" id="ms-btn" onclick="loadMultisig()">Rastrear multisig</button>
+        </div>
+      </div>
+
       <div class="xpub-note" id="xpub-note">
-        Somente leitura — sua xpub nunca expõe chaves privadas. Nenhum dado armazenado pela BSafe.
+        Somente leitura — chaves públicas estendidas nunca expõem chaves privadas. Nenhum dado armazenado pela BSafe.
       </div>
       <div id="xpub-log" style="display:none;margin-top:12px;background:var(--bg);
         border:1px solid var(--border);border-radius:8px;padding:12px 14px;
@@ -1239,6 +1193,7 @@ function renderTxs(allTxEntries, xpub) {
       tbody.appendChild(tr);
     });
   }
+  if (!xpub) return;
   const tf = document.createElement('tr');
   tf.innerHTML = `<td colspan="4" style="text-align:center;padding:12px;
     border-top:1px solid var(--border)">
@@ -1273,56 +1228,10 @@ function renderFallback(xpub) {
 }
 
 /* Orquestrador */
-
-/* Wrapper para carregar xpub multisig */
-async function loadMultisigXpub(descriptor, parsed) {
-  const btn = document.getElementById('xpub-btn');
-  btn.textContent = 'Consultando…'; btn.disabled = true;
-  currentXpub = parsed.xpubs[0]; // usa primeira xpub para links
-
-  const logEl = document.getElementById('xpub-log');
-  if (logEl) logEl.innerHTML = '';
-  log(`Descriptor: ${parsed.label}`);
-  showTxLoading(`Escaneando ${parsed.label}…`);
-
-  try {
-    const result = await scanMultisigDescriptor(descriptor, (msg, ok) => log(msg, ok));
-    if (!result) throw new Error('Scan multisig falhou');
-
-    const { totalSats, allTxEntries } = result;
-    walletBalance = totalSats;
-    updatePortfolio(totalSats);
-    setStatus(`${new Set(allTxEntries.map(e=>e.tx.txid)).size} txs · ${(totalSats/1e8).toFixed(8)} BTC · ${parsed.label}`);
-    renderTxs(allTxEntries, parsed.xpubs[0]);
-    document.getElementById('tx-section').style.display = 'block';
-    showToast(totalSats > 0 ? `✓ ${fmtSats(totalSats)}` : 'Multisig carregado');
-    analyzeAportes(allTxEntries, totalSats).catch(()=>{});
-  } catch(e) {
-    log('ERRO: ' + e.message, false);
-    renderFallback(parsed.xpubs[0]);
-  }
-
-  btn.textContent = 'Rastrear carteira'; btn.disabled = false;
-}
-
 async function loadXpub() {
   const raw = document.getElementById('xpub-input').value.trim();
   if (!raw) { showToast('Cole sua xpub no campo.'); return; }
-
-  // Verifica se é descriptor multisig
-  const parsedDesc = parseDescriptor(raw);
-  if (parsedDesc && (parsedDesc.type === 'multi' || parsedDesc.type === 'sortedmulti')) {
-    // Redireciona para scan multisig
-    loadMultisigXpub(raw, parsedDesc);
-    return;
-  }
-
-  // Extrai xpub de descriptor simples (Liana usa primeira xpub como single key)
-  const xpubFromDesc = (raw.includes('(') && !raw.startsWith('xpub') && !raw.startsWith('zpub') && !raw.startsWith('ypub'))
-    ? (raw.match(/[xyz]pub[a-zA-Z0-9]{80,}/)?.[0] || raw)
-    : raw;
-
-  if (xpubFromDesc.length < 80) { showToast('xpub inválida.'); return; }
+  if (raw.length < 80) { showToast('xpub inválida.'); return; }
 
   const btn = document.getElementById('xpub-btn');
   btn.textContent = 'Consultando…'; btn.disabled = true;
@@ -1412,529 +1321,257 @@ function refreshPortfolioValues() {
 }
 
 /* ═══════════════════════════════════════════════════════
-   SUPORTE A MULTISIG E DESCRIPTORS
-   
-   Suporta:
-   - wsh(multi(M, xpub1, xpub2, ...))       — P2WSH multisig
-   - wsh(sortedmulti(M, xpub1, xpub2, ...)) — P2WSH sortedmulti
-   - sh(wsh(multi(...)))                     — P2SH-P2WSH
-   - wsh(or_d(...))                          — Liana/Miniscript
-   - xpub/zpub/ypub simples                  — single key
+   MULTISIG (P2WSH sortedmulti / BIP48+BIP67)
+   Tapsigner, Nunchuk, Sparrow, Coldcard, Jade, SeedSigner
+   Derivação verificada contra bitcoinjs-lib.
 ═══════════════════════════════════════════════════════ */
 
-/* Parseia um descriptor e retorna informações estruturadas */
-function parseDescriptor(text) {
+/* ═══════════════════════════════════════════════════════
+   MULTISIG (P2WSH sortedmulti / BIP48+BIP67) — Tapsigner, Nunchuk, Sparrow, Coldcard
+   Usa as mesmas libs já carregadas: _HDKey, _sha256fn, _ripemd160, segwitAddr, b58encode
+═══════════════════════════════════════════════════════ */
+
+/* Base58 decode (BigInt) */
+function b58decode(str) {
+  let n = 0n;
+  for (const c of str) {
+    const v = B58CHARS.indexOf(c);
+    if (v < 0) throw new Error('Caractere base58 inválido: ' + c);
+    n = n * 58n + BigInt(v);
+  }
+  const bytes = [];
+  while (n > 0n) { bytes.unshift(Number(n % 256n)); n /= 256n; }
+  for (const c of str) { if (c !== '1') break; bytes.unshift(0); }
+  return new Uint8Array(bytes);
+}
+
+/* Normaliza Zpub/Ypub/zpub/ypub (SLIP-132) -> xpub padrão, verificando checksum */
+function normalizeXpubMS(key) {
+  key = key.trim();
+  if (!/^[xyzYZ]pub[1-9A-HJ-NP-Za-km-z]{100,120}$/.test(key)) {
+    throw new Error('Chave estendida inválida: ' + key.slice(0, 12) + '…');
+  }
+  const data = b58decode(key);
+  if (data.length !== 82) throw new Error('Tamanho inválido da chave estendida.');
+  const payload = data.slice(0, 78), cs = data.slice(78);
+  const check = _sha256fn(_sha256fn(payload)).slice(0, 4);
+  for (let i = 0; i < 4; i++) {
+    if (cs[i] !== check[i]) throw new Error('Checksum inválido — chave corrompida ou incompleta.');
+  }
+  const out = new Uint8Array(82);
+  out.set(payload); out.set([0x04, 0x88, 0xb2, 0x1e], 0);              // versão xpub
+  const newCs = _sha256fn(_sha256fn(out.slice(0, 78))).slice(0, 4);
+  out.set(newCs, 78);
+  // preserva zeros à esquerda no b58encode
+  return b58encode(out);
+}
+
+/* Parseia entrada multisig: descriptor completo OU lista de xpubs */
+function parseDescriptorMS(text) {
   const raw = text.trim();
+  const keyRe = /[xyzYZ]pub[1-9A-HJ-NP-Za-km-z]{100,120}/g;
+  const keys = raw.match(keyRe) || [];
+  if (keys.length === 0) return null;
 
-  // xpub simples
-  if (/^[xyz]pub[a-zA-Z0-9]{80,}$/.test(raw)) {
-    return { type: 'single', xpubs: [raw], threshold: 1 };
-  }
+  const wrapped = /^sh\s*\(\s*wsh\s*\(/.test(raw);           // P2SH-P2WSH
+  const sortedM = raw.match(/sortedmulti(?:_a)?\s*\(\s*(\d+)/);
+  const multiM  = raw.match(/(?<![a-z_])multi(?:_a)?\s*\(\s*(\d+)/);
 
-  // Extrai todas as xpubs do descriptor
-  const xpubs = [...raw.matchAll(/[xyz]pub[a-zA-Z0-9]{80,}/g)].map(m => m[0]);
-  if (!xpubs.length) return null;
+  if (sortedM) return { keys, threshold: +sortedM[1], sorted: true,  wrapped };
+  if (multiM)  return { keys, threshold: +multiM[1],  sorted: false, wrapped };
 
-  // Detecta tipo
-  const isSorted   = raw.includes('sortedmulti(');
-  const isMulti    = raw.includes('multi(') && !isSorted;
-  const isLiana    = raw.includes('wsh(') && raw.includes('after(');
-  const isShWsh    = raw.startsWith('sh(wsh(');
-
-  if (isSorted || isMulti) {
-    const fn = isSorted ? 'sortedmulti(' : 'multi(';
-    const m  = raw.match(new RegExp(fn.replace('(','\(') + '(\d+)'));
-    const threshold = m ? parseInt(m[1]) : xpubs.length;
-    return {
-      type:      isSorted ? 'sortedmulti' : 'multi',
-      xpubs,
-      threshold,
-      sorted:    isSorted,
-      wrapped:   isShWsh,
-      label:     `${threshold}-de-${xpubs.length} multisig${isShWsh ? ' (P2SH-P2WSH)' : ' (P2WSH)'}`,
-    };
-  }
-
-  if (isLiana) {
-    return { type: 'liana', xpubs, threshold: 1,
-             label: 'Liana / Herança (timelock)' };
-  }
-
-  // Descriptor genérico com xpubs
-  return { type: 'descriptor', xpubs, threshold: 1 };
+  // Sem descriptor: lista de chaves coladas — threshold definido pelo campo M.
+  // Coordenadores modernos (Nunchuk, Sparrow, Coldcard) usam sortedmulti (BIP67).
+  return { keys, threshold: null, sorted: true, wrapped: false };
 }
 
-/* Deriva endereço P2WSH multisig para índice i */
-async function deriveMultisigAddr(hdKeys, threshold, idx, chain, sorted) {
-  // Deriva a pubkey de cada xpub no índice chain/idx
-  const pubkeys = hdKeys.map(hd =>
-    hd.deriveChild(chain).deriveChild(idx).publicKey
-  );
-
-  // Ordena se sortedmulti
-  const sortedPks = sorted
-    ? [...pubkeys].sort((a, b) => {
-        for (let i = 0; i < a.length; i++) {
-          if (a[i] !== b[i]) return a[i] - b[i];
-        }
-        return 0;
-      })
-    : pubkeys;
-
-  // Constrói redeemScript: OP_M <pk1>...<pkN> OP_N OP_CHECKMULTISIG
-  const M = threshold, N = sortedPks.length;
-  let script = new Uint8Array([0x50 + M]);
-  for (const pk of sortedPks) {
-    script = new Uint8Array([...script, pk.length, ...pk]);
-  }
-  script = new Uint8Array([...script, 0x50 + N, 0xAE]);
-
-  // P2WSH = SHA256(script)
-  const scriptHash = new Uint8Array(
-    await crypto.subtle.digest('SHA-256', script)
-  );
-
-  // Bech32 encode (witness v0, 32-byte program)
-  const BC = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
-  function poly(v) {
-    let c=1;
-    for (const x of v) {
-      const b=c>>25; c=((c&0x1ffffff)<<5)^x;
-      for (let i=0;i<5;i++) if((b>>i)&1) c^=[0x3b6a57b2,0x26508e6d,0x1ea119fa,0x3d4233dd,0x2a1462b3][i];
-    }
-    return c;
-  }
-  function cb(d,f,t){
-    let a=0,b=0;const r=[];
-    for(const v of d){a=(a<<f)|v;b+=f;while(b>=t){b-=t;r.push((a>>b)&((1<<t)-1));}}
-    if(b)r.push((a<<(t-b))&((1<<t)-1));
-    return r;
-  }
-  const hrp='bc', data=[0,...cb(Array.from(scriptHash),8,5)];
-  const ex=[...[...hrp].map(c=>c.charCodeAt(0)>>5),0,...[...hrp].map(c=>c.charCodeAt(0)&31)];
-  const pm=poly([...ex,...data,0,0,0,0,0,0])^1;
-  const ck=Array.from({length:6},(_,i)=>(pm>>(5*(5-i)))&31);
-  return hrp+'1'+[...data,...ck].map(d=>BC[d]).join('');
+/* Comparação lexicográfica de bytes (BIP67) */
+function cmpBytesMS(a, b) {
+  const len = Math.min(a.length, b.length);
+  for (let i = 0; i < len; i++) if (a[i] !== b[i]) return a[i] - b[i];
+  return a.length - b.length;
 }
 
-/* Scan completo de um descriptor multisig */
-async function scanMultisigDescriptor(descriptor, logFn) {
-  const parsed = parseDescriptor(descriptor);
-  if (!parsed || parsed.type === 'single') return null;
+/* Deriva endereço multisig para chain/index a partir dos nós de conta */
+function deriveMultisigAddr(hdNodes, m, chain, index, sorted = true, wrapped = false) {
+  const pubkeys = hdNodes.map(hd => hd.deriveChild(chain).deriveChild(index).publicKey);
+  if (sorted) pubkeys.sort(cmpBytesMS);
+  const n = pubkeys.length;
+  if (!(m >= 1 && m <= n)) throw new Error(`Threshold inválido: M=${m} para N=${n} chaves.`);
+  if (n > 15) throw new Error('Máximo de 15 chaves em multisig padrão.');
 
-  if (parsed.type === 'liana') {
-    // Liana: usa a chave primária (índice 0) como single key P2WPKH
-    logFn(`Liana descriptor — rastreando chave primária`);
-    return null; // Deixa o fluxo normal lidar com ela
+  // witness script: OP_m <33B pk> ... OP_n OP_CHECKMULTISIG
+  const script = new Uint8Array(3 + n * 34);
+  let o = 0;
+  script[o++] = 0x50 + m;                       // OP_m
+  for (const pk of pubkeys) {
+    if (pk.length !== 33) throw new Error('Pubkey não comprimida — incompatível com P2WSH.');
+    script[o++] = 33; script.set(pk, o); o += 33;
   }
+  script[o++] = 0x50 + n;                       // OP_n
+  script[o++] = 0xae;                           // OP_CHECKMULTISIG
 
-  if (parsed.type !== 'multi' && parsed.type !== 'sortedmulti') return null;
+  const wsh = _sha256fn(script);                // programa witness de 32 bytes
+  if (!wrapped) return segwitAddr('bc', 0, Array.from(wsh));
 
-  logFn(`Descriptor: ${parsed.label}`);
-  logFn(`${parsed.xpubs.length} xpubs, threshold ${parsed.threshold}`);
+  // P2SH-P2WSH: redeem = 0x00 0x20 <sha256(script)>
+  const redeem = new Uint8Array(34); redeem[0] = 0x00; redeem[1] = 0x20; redeem.set(wsh, 2);
+  const h160 = _ripemd160(_sha256fn(redeem));
+  const v = new Uint8Array(21); v[0] = 0x05; v.set(h160, 1);
+  const cs = _sha256fn(_sha256fn(v)).slice(0, 4);
+  const p = new Uint8Array(25); p.set(v); p.set(cs, 21);
+  return b58encode(p);
+}
 
-  await loadLibs();
-  const hdKeys = parsed.xpubs.map(x => _HDKey.fromExtendedKey(x));
 
+/* ── UI: alterna entre carteira individual e multisig ── */
+function setWalletMode(mode) {
+  const single = document.getElementById('single-fields');
+  const multi  = document.getElementById('ms-fields');
+  document.getElementById('wmode-single').classList.toggle('active', mode === 'single');
+  document.getElementById('wmode-multi').classList.toggle('active', mode === 'multi');
+  single.style.display = mode === 'single' ? 'block' : 'none';
+  multi.classList.toggle('show', mode === 'multi');
+}
+
+/* ── Parsing ao vivo do campo multisig: badge + auto-M ── */
+function previewMultisig() {
+  const badge = document.getElementById('ms-badge');
+  const mInput = document.getElementById('ms-m');
+  const text = document.getElementById('ms-input').value;
+  const p = text.trim() ? parseDescriptorMS(text) : null;
+  if (!p) { badge.classList.remove('show'); return; }
+  if (p.threshold) {
+    mInput.value = p.threshold;
+    badge.textContent = `${p.threshold}-de-${p.keys.length} · ${p.wrapped ? 'P2SH-P2WSH' : 'P2WSH'}${p.sorted ? ' · sortedmulti' : ''}`;
+  } else {
+    badge.textContent = `${p.keys.length} chaves detectadas — informe M`;
+  }
+  badge.classList.add('show');
+}
+
+/* ── Scan de uma chain multisig com gap limit ── */
+async function scanChainMS(hdNodes, m, sorted, wrapped, chain, chainLabel, GAP = 20) {
   let totalSats = 0, gap = 0, idx = 0;
   const activeAddrs = [], allTxEntries = [];
-  const GAP = 20;
 
-  // Scan externos (chain=0) e change (chain=1)
-  for (const chain of [0, 1]) {
-    gap = 0; idx = 0;
-    const chainLabel = chain === 0 ? 'm/0' : 'm/1';
-    logFn(`Scan ${chainLabel} (multisig)…`);
+  while (gap < GAP && idx <= 300) {
+    const addr = deriveMultisigAddr(hdNodes, m, chain, idx, sorted, wrapped);
+    if (idx === 0) log(`  ${chainLabel}/0 = ${addr}`);
 
-    while (gap < GAP && idx <= 200) {
-      const addr = await deriveMultisigAddr(hdKeys, parsed.threshold, idx, chain, parsed.sorted);
-      let fetched = false, retries = 2;
-      while (!fetched && retries > 0) {
-        try {
-          const res = await mempoolAddr(addr);
-          fetched = true;
-          if (res.bal > 0 || res.txs > 0) {
-            gap = 0; totalSats += res.bal;
-            activeAddrs.push({ idx, addr, bal: res.bal, txs: res.txs });
-            logFn(`🎯 ${chainLabel}/${idx}: ${addr.slice(0,16)}… ${res.bal} sats`, true);
-            if (res.txs > 0) {
-              const txs = await mempoolAddrTxs(addr);
-              allTxEntries.push(...txs.map(tx => ({ addr, tx })));
-            }
-          } else { gap++; }
-          await new Promise(r => setTimeout(r, 150));
-        } catch(e) {
-          retries--;
-          if (retries > 0) await new Promise(r => setTimeout(r, 2000));
-          else logFn(`${chainLabel}/${idx}: erro ignorado`, false);
+    let fetched = false, retries = 2;
+    while (!fetched && retries > 0) {
+      try {
+        const { bal, txs } = await mempoolAddr(addr);
+        fetched = true;
+        if (bal > 0 || txs > 0) {
+          gap = 0;
+          totalSats += bal;
+          activeAddrs.push({ idx, addr, bal, txs });
+          log(`  🎯 ${chainLabel}/${idx}: ${addr.slice(0,18)}… ${bal} sats ${txs} txs`, true);
+          if (txs > 0) {
+            const addrTxs = await mempoolAddrTxs(addr);
+            allTxEntries.push(...addrTxs.map(tx => ({ addr, tx })));
+          }
+        } else {
+          gap++;
         }
+        await new Promise(r => setTimeout(r, 150));
+      } catch(e) {
+        retries--;
+        if (retries > 0) await new Promise(r => setTimeout(r, 2000));
+        else { log(`  ${chainLabel}/${idx}: erro de rede, pulando`, false); await new Promise(r => setTimeout(r, 500)); }
       }
-      idx++;
     }
+    idx++;
   }
-
-  return { totalSats, activeAddrs, allTxEntries };
+  return { totalSats, activeAddrs, allTxEntries, scanned: idx };
 }
 
+/* ── Fluxo principal multisig ── */
+async function loadMultisig() {
+  const text = document.getElementById('ms-input').value.trim();
+  if (!text) { showToast('Cole o descriptor ou as chaves da carteira multisig.'); return; }
 
-/* ═══════════════════════════════════════════════════
-   QR CODE SCANNER
-   Usa jsQR para decodificar frames da câmera
-   Fallback: upload de imagem com QR Code
-═══════════════════════════════════════════════════ */
-let qrStream = null;
-let qrAnimFrame = null;
-let qrCameras = [];
+  const btn = document.getElementById('ms-btn');
+  btn.textContent = 'Consultando…'; btn.disabled = true;
 
-function openQrScanner(tab = 'camera') {
-  const modal = document.getElementById('qr-modal');
-  modal.style.display = 'flex';
-  document.getElementById('qr-status').textContent = '';
-  switchQrTab(tab);
-}
-
-function switchQrTab(tab) {
-  const isCamera = tab === 'camera';
-
-  // Update tab buttons
-  const btnCam = document.getElementById('tab-camera');
-  const btnUpl = document.getElementById('tab-upload');
-  if (btnCam) {
-    btnCam.style.background    = isCamera ? 'var(--btc)' : 'var(--bg2)';
-    btnCam.style.color         = isCamera ? '#000'       : 'var(--muted)';
-    btnCam.style.borderColor   = isCamera ? 'var(--btc)' : 'var(--border)';
-  }
-  if (btnUpl) {
-    btnUpl.style.background    = !isCamera ? 'var(--btc)' : 'var(--bg2)';
-    btnUpl.style.color         = !isCamera ? '#000'       : 'var(--muted)';
-    btnUpl.style.borderColor   = !isCamera ? 'var(--btc)' : 'var(--border)';
-  }
-
-  // Show/hide panels
-  const panelCam = document.getElementById('panel-camera');
-  const panelUpl = document.getElementById('panel-upload');
-  if (panelCam) panelCam.style.display = isCamera  ? 'block' : 'none';
-  if (panelUpl) panelUpl.style.display = !isCamera ? 'block' : 'none';
-
-  if (isCamera) {
-    document.getElementById('qr-status').textContent = 'Iniciando câmera…';
-    startQrCamera();
-  } else {
-    stopQrCamera(); // libera câmera quando muda para upload
-    document.getElementById('qr-status').textContent = 'Selecione ou arraste uma imagem com o QR Code.';
-  }
-}
-
-/* Suporte a drag-and-drop */
-function handleQrDrop(event) {
-  event.preventDefault();
-  const dz = document.getElementById('drop-zone');
-  if (dz) dz.style.borderColor = 'var(--border)';
-
-  const file = event.dataTransfer?.files?.[0];
-  if (!file) return;
-  if (!file.type.startsWith('image/')) {
-    document.getElementById('qr-status').textContent = '⚠ Arquivo não é uma imagem.';
-    return;
-  }
-  processImageFile(file);
-}
-
-function closeQrScanner() {
-  stopQrCamera();
-  document.getElementById('qr-modal').style.display = 'none';
-  // Remove picker if present
-  const picker = document.getElementById('xpub-picker');
-  if (picker) picker.remove();
-  const status = document.getElementById('qr-status');
-  if (status) { status.style.display = ''; status.textContent = ''; }
-  // Clear image preview
-  const preview = document.getElementById('img-preview');
-  const previewImg = document.getElementById('preview-img');
-  if (preview)    preview.style.display = 'none';
-  if (previewImg) previewImg.src = '';
-  // Reset file input
-  const fileInput = document.getElementById('qr-file-input');
-  if (fileInput) fileInput.value = '';
-}
-
-async function startQrCamera(deviceId = null) {
-  stopQrCamera();
-  const video = document.getElementById('qr-video');
-  const status = document.getElementById('qr-status');
+  const logEl = document.getElementById('xpub-log');
+  if (logEl) logEl.innerHTML = '';
+  showTxLoading('Carregando bibliotecas…');
 
   try {
-    const constraints = {
-      video: deviceId
-        ? { deviceId: { exact: deviceId }, facingMode: 'environment' }
-        : { facingMode: { ideal: 'environment' } }
-    };
+    await loadLibs();
 
-    qrStream = await navigator.mediaDevices.getUserMedia(constraints);
-    video.srcObject = qrStream;
-    await video.play();
+    const parsed = parseDescriptorMS(text);
+    if (!parsed) throw new Error('Nenhuma chave estendida (xpub/Zpub) encontrada no texto colado.');
 
-    // Lista câmeras disponíveis para o seletor
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    qrCameras = devices.filter(d => d.kind === 'videoinput');
-    if (qrCameras.length > 1) {
-      const sel = document.getElementById('qr-camera-select');
-      sel.style.display = 'block';
-      sel.innerHTML = qrCameras.map((c, i) =>
-        `<option value="${c.deviceId}">${c.label || 'Câmera ' + (i+1)}</option>`
-      ).join('');
-      sel.onchange = e => startQrCamera(e.target.value);
+    let m = parsed.threshold;
+    if (!m) {
+      m = parseInt(document.getElementById('ms-m').value, 10);
+      if (!m) throw new Error('Informe quantas assinaturas (M) a carteira exige — ex.: 2 em uma 2-de-3.');
+    }
+    const n = parsed.keys.length;
+    if (n < 2) throw new Error('Multisig exige pelo menos 2 chaves. Para chave única, use o modo "Carteira individual".');
+    if (m < 1 || m > n) throw new Error(`M=${m} inválido para ${n} chaves.`);
+
+    log(`Configuração: ${m}-de-${n} ${parsed.wrapped ? 'P2SH-P2WSH' : 'P2WSH'} ${parsed.sorted ? 'sortedmulti (BIP67)' : 'multi'}`);
+
+    // Normaliza Zpub/Ypub -> xpub (com verificação de checksum) e monta os nós HD
+    log('Normalizando chaves…');
+    const hdNodes = parsed.keys.map(k => _HDKey.fromExtendedKey(normalizeXpubMS(k)));
+    log(`${n} chaves válidas ✓`, true);
+
+    // Valida o primeiro endereço no mempool antes do scan completo
+    const addr0 = deriveMultisigAddr(hdNodes, m, 0, 0, parsed.sorted, parsed.wrapped);
+    log(`m/0/0 = ${addr0}`);
+    showTxLoading('Validando endereço…');
+    const test = await mempoolAddr(addr0).catch(e => ({ error: e.message }));
+    if (test.error) throw new Error(`Falha ao consultar o endereço (${test.error}). Tente novamente.`);
+    if ((test.txs || 0) === 0) {
+      log('Atenção: m/0/0 sem histórico. Se a carteira tem fundos, confira se o descriptor/ordem das chaves está completo.', false);
+    } else {
+      log('Endereço com histórico no mempool ✓', true);
     }
 
-    status.textContent = 'Aponte para o QR Code da sua xpub…';
-    scanQrFrame();
+    showTxLoading('Escaneando endereços externos…');
+    log('Scan m/0 (externos)…');
+    const ext = await scanChainMS(hdNodes, m, parsed.sorted, parsed.wrapped, 0, 'm/0', 20);
+    log(`Externos: ${ext.totalSats} sats, ${ext.activeAddrs.length} ativos, ${ext.scanned} verificados`, true);
+
+    showTxLoading('Escaneando endereços de troco…');
+    log('Scan m/1 (change)…');
+    const chg = await scanChainMS(hdNodes, m, parsed.sorted, parsed.wrapped, 1, 'm/1', 20);
+    log(`Change: ${chg.totalSats} sats, ${chg.activeAddrs.length} ativos`, true);
+
+    const totalSats    = ext.totalSats + chg.totalSats;
+    const allTxEntries = [...ext.allTxEntries, ...chg.allTxEntries];
+    const totalTxs     = new Set(allTxEntries.map(e => e.tx.txid)).size;
+
+    log(`TOTAL: ${totalSats} sats = ${(totalSats/1e8).toFixed(8)} BTC`, totalSats > 0);
+
+    walletBalance = totalSats;
+    currentXpub = '';
+    updatePortfolio(totalSats);
+    setStatus(`Multisig ${m}-de-${n} · ${totalTxs} transações · ${(totalSats/1e8).toFixed(8)} BTC · mempool.space`);
+    renderTxs(allTxEntries, null);
+    document.getElementById('tx-section').style.display = 'block';
+    showToast(totalSats > 0 ? `✓ ${fmtSats(totalSats)}` : 'Carteira multisig carregada');
+
+    analyzeAportes(allTxEntries, totalSats).catch(e => console.warn('analyzeAportes:', e));
 
   } catch(e) {
-    if (e.name === 'NotAllowedError') {
-      status.textContent = '⚠ Permissão de câmera negada. Use o upload de imagem abaixo.';
-    } else if (e.name === 'NotFoundError') {
-      status.textContent = '⚠ Nenhuma câmera encontrada. Use o upload de imagem abaixo.';
-    } else {
-      status.textContent = '⚠ Erro: ' + e.message;
-    }
+    log('ERRO: ' + e.message, false);
+    showToast(e.message.slice(0, 90));
   }
+
+  btn.textContent = 'Rastrear multisig'; btn.disabled = false;
 }
 
-function stopQrCamera() {
-  if (qrAnimFrame) { cancelAnimationFrame(qrAnimFrame); qrAnimFrame = null; }
-  if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
-}
-
-function scanQrFrame() {
-  const video  = document.getElementById('qr-video');
-  const canvas = document.getElementById('qr-canvas');
-  const status = document.getElementById('qr-status');
-
-  if (video.readyState !== video.HAVE_ENOUGH_DATA) {
-    qrAnimFrame = requestAnimationFrame(scanQrFrame);
-    return;
-  }
-
-  canvas.width  = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const code = jsQR(imageData.data, imageData.width, imageData.height, {
-    inversionAttempts: 'dontInvert'
-  });
-
-  if (code) {
-    const text = code.data.trim();
-    handleQrText(text, status);
-  }
-
-  // Continua escaneando
-  qrAnimFrame = requestAnimationFrame(scanQrFrame);
-}
-
-/* Processa texto do QR — suporta xpub simples E descriptors multisig/Miniscript */
-function handleQrText(text, statusEl) {
-  // 1. xpub/ypub/zpub direto
-  if (/^[xyz]pub[a-zA-Z0-9]{50,}$/.test(text.trim())) {
-    onQrDetected(text.trim());
-    return;
-  }
-
-  // 2. Extrai todas as xpubs de dentro de um descriptor (Liana, Nunchuk, etc.)
-  const allXpubs = [...text.matchAll(/[xyz]pub[a-zA-Z0-9]{50,}/g)].map(m => m[0]);
-
-  if (allXpubs.length === 1) {
-    // Apenas uma xpub no descriptor — usa direto
-    onQrDetected(allXpubs[0]);
-    return;
-  }
-
-  if (allXpubs.length > 1) {
-    const parsed = parseDescriptor(text);
-
-    // Multisig real (multi/sortedmulti) → scan combinado direto, sem picker
-    if (parsed && (parsed.type === 'multi' || parsed.type === 'sortedmulti')) {
-      if (statusEl) statusEl.textContent = `Multisig ${parsed.threshold}-de-${allXpubs.length} detectada. Iniciando scan…`;
-      setTimeout(() => {
-        closeQrScanner();
-        document.getElementById('xpub-input').value = text;
-        loadMultisigXpub(text, parsed);
-      }, 800);
-      return;
-    }
-
-    // Liana/timelock → picker para escolher entre chave primária e recuperação
-    if (statusEl) statusEl.textContent = `${allXpubs.length} chaves encontradas. Escolha abaixo:`;
-    showXpubPicker(allXpubs, text);
-    return;
-  }
-
-  // 3. Formato bitcoin:?xpub=...
-  const uriMatch = text.match(/[?&]xpub=([xyz]pub[a-zA-Z0-9]+)/);
-  if (uriMatch) {
-    onQrDetected(uriMatch[1]);
-    return;
-  }
-
-  if (statusEl) statusEl.textContent = '⚠ QR detectado mas não contém xpub válida.';
-}
-
-/* Mostra seletor quando há múltiplas xpubs no descriptor */
-function showXpubPicker(xpubs, rawDescriptor) {
-  const status = document.getElementById('qr-status');
-  const parsed  = parseDescriptor(rawDescriptor);
-
-  const isMultisig = parsed && (parsed.type === 'multi' || parsed.type === 'sortedmulti');
-  const isLiana    = rawDescriptor.includes('wsh(') && rawDescriptor.includes('after(');
-  const label      = isLiana    ? '🔑 Liana / Herança' :
-                     isMultisig ? '🔐 Multisig' :
-                     '📋 Descriptor complexo';
-
-  let html = `<div style="text-align:left;margin-top:8px">
-    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-family:'DM Mono',monospace">
-      ${label} — ${isLiana ? 'escolha a chave:' : 'escolha o modo de rastreamento:'}
-    </div>`;
-
-  // Para multisig: botão de rastreamento completo em destaque
-  if (isMultisig && parsed) {
-    html += `
-      <button onclick="(function(){
-          const p=document.getElementById('xpub-picker');if(p)p.remove();
-          closeQrScanner();
-          document.getElementById('xpub-input').value=${JSON.stringify(rawDescriptor)};
-          loadMultisigXpub(${JSON.stringify(rawDescriptor)}, ${JSON.stringify(parsed)});
-        })()"
-        style="display:block;width:100%;text-align:left;margin-bottom:8px;
-        background:var(--btc);border:1px solid var(--btc);color:#000;
-        padding:12px 14px;border-radius:8px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;
-        font-weight:700;transition:.15s">
-        <div style="font-size:12px;margin-bottom:3px">✅ Rastrear carteira completa</div>
-        <div style="font-weight:400;font-size:10px;opacity:.8">${parsed.threshold}-de-${xpubs.length} multisig · endereços P2WSH combinados</div>
-      </button>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:8px;font-family:'DM Mono',monospace;text-align:center">
-        — ou rastrear uma chave individual —
-      </div>`;
-  }
-
-  xpubs.forEach((xpub, i) => {
-    const short = xpub.slice(0,14) + '…' + xpub.slice(-8);
-    const role  = isLiana
-      ? (i === 0 ? '🟢 Chave primária' : '🔴 Chave de recuperação (timelock)')
-      : `🔑 Chave ${i+1}`;
-    html += `
-      <button onclick="onQrDetected('${xpub}')"
-        style="display:block;width:100%;text-align:left;margin-bottom:8px;
-        background:var(--bg);border:1px solid var(--border);color:var(--off);
-        padding:10px 14px;border-radius:8px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;
-        transition:.15s"
-        onmouseover="this.style.borderColor='var(--btc)'"
-        onmouseout="this.style.borderColor='var(--border)'">
-        <div style="color:var(--btc);font-size:10px;margin-bottom:3px">${role}</div>
-        ${short}
-      </button>`;
-  });
-  html += '</div>';
-
-  const picker = document.createElement('div');
-  picker.id = 'xpub-picker';
-  picker.innerHTML = html;
-  status.after(picker);
-  status.style.display = 'none';
-}
-
-function onQrDetected(xpub) {
-  // Feedback visual
-  const status = document.getElementById('qr-status');
-  status.style.color = 'var(--btc)';
-  status.textContent = '✓ xpub detectada! Carregando…';
-
-  // Pequena vibração háptica se disponível
-  if (navigator.vibrate) navigator.vibrate(100);
-
-  // Fecha modal após 600ms
-  setTimeout(() => {
-    closeQrScanner();
-    // Preenche o campo e inicia rastreamento
-    const input = document.getElementById('xpub-input');
-    input.value = xpub;
-    input.style.borderColor = 'var(--btc)';
-    setTimeout(() => { input.style.borderColor = ''; }, 2000);
-    // Dispara automaticamente
-    loadXpub();
-  }, 600);
-}
-
-/* Lê QR de arquivo selecionado */
-function readQrFromFile(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  processImageFile(file);
-  event.target.value = ''; // reset para permitir selecionar o mesmo arquivo
-}
-
-/* Processa uma imagem (File ou Blob) e tenta ler o QR Code */
-function processImageFile(file) {
-  const status = document.getElementById('qr-status');
-  status.textContent = 'Processando imagem…';
-
-  // Mostra preview
-  const preview = document.getElementById('img-preview');
-  const previewImg = document.getElementById('preview-img');
-  const objectUrl = URL.createObjectURL(file);
-  if (preview && previewImg) {
-    previewImg.src = objectUrl;
-    preview.style.display = 'block';
-  }
-
-  const img = new Image();
-  img.onload = () => {
-    const canvas = document.getElementById('qr-canvas');
-
-    // Tenta em múltiplas resoluções para QR codes em fotos de baixa qualidade
-    const scales = [1, 2, 0.5];
-    let found = false;
-    for (const scale of scales) {
-      canvas.width  = Math.round(img.width  * scale);
-      canvas.height = Math.round(img.height * scale);
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-      // Tenta decodificar com e sem inversão (QR codes brancos em fundo escuro)
-      let code = jsQR(imageData.data, imageData.width, imageData.height,
-                      { inversionAttempts: 'attemptBoth' });
-      if (code) {
-        found = true;
-        handleQrText(code.data.trim(), status);
-        break;
-      }
-    }
-
-    if (!found) {
-      status.textContent = '⚠ Nenhum QR Code encontrado. Tente uma foto mais nítida ou com melhor iluminação.';
-    }
-    URL.revokeObjectURL(objectUrl);
-  };
-  img.onerror = () => {
-    status.textContent = '⚠ Não foi possível carregar a imagem.';
-    URL.revokeObjectURL(objectUrl);
-  };
-  img.src = objectUrl;
-}
-
-// Fecha modal ao clicar fora
-document.addEventListener('click', e => {
-  const modal = document.getElementById('qr-modal');
-  if (modal && e.target === modal) closeQrScanner();
+document.addEventListener('DOMContentLoaded', () => {
+  const msIn = document.getElementById('ms-input');
+  if (msIn) msIn.addEventListener('input', previewMultisig);
 });
-
-// Fecha modal com ESC
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeQrScanner();
-});
-
 
 /* ═══════════════════════════════════════════════════════
    ANÁLISE DE APORTES & PERFORMANCE COMPARADA
