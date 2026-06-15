@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sucessão Patrimonial: Bitcoin em Autocustódia vs. Patrimônio Fiduciário | BSafe Bitcoin</title>
+<style>
+  :root {
+    --bg: #0b0e11;
+    --bg-card: #14181d;
+    --accent: #f7931a;
+    --accent-soft: #f7931a22;
+    --text: #e8eaed;
+    --text-muted: #9aa3ad;
+    --border: #232a31;
+    --green: #16c784;
+    --red: #ea3943;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 60px 24px 50px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft) 0%, transparent 60%);
+  }
+
+  .hero .tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero h1 span {
+    color: var(--accent);
+  }
+
+  .hero .subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 20px;
+  }
+
+  .hero .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* CONTENT */
+  article {
+    padding-top: 48px;
+  }
+
+  article h2 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 48px 0 18px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  article h2::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 26px;
+    background: var(--accent);
+    border-radius: 3px;
+  }
+
+  article h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    color: var(--accent);
+  }
+
+  article p {
+    font-size: 17px;
+    color: #d4d8dc;
+    margin-bottom: 18px;
+  }
+
+  article strong {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  article a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+  }
+
+  article a:hover {
+    border-bottom-color: var(--accent);
+  }
+
+  /* HIGHLIGHT BOX */
+  .highlight-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 28px 0;
+  }
+
+  .highlight-box .label {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .highlight-box p {
+    margin-bottom: 0;
+    font-size: 17px;
+  }
+
+  /* COMPARISON CARDS */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0 32px;
+  }
+
+  @media (max-width: 600px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+
+  .compare-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .compare-card.fiat { border-top: 3px solid var(--red); }
+  .compare-card.btc { border-top: 3px solid var(--accent); }
+
+  .compare-card h4 {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .compare-card.fiat h4 { color: var(--red); }
+  .compare-card.btc h4 { color: var(--accent); }
+
+  .compare-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .compare-card li {
+    font-size: 15px;
+    color: var(--text-muted);
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .compare-card.fiat li::before {
+    content: "↓";
+    position: absolute;
+    left: 0;
+    color: var(--red);
+    font-weight: 800;
+  }
+
+  .compare-card.btc li::before {
+    content: "↑";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  /* STEPS */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 24px 0 32px;
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+
+  .step-number {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step-text p {
+    margin-bottom: 0;
+    font-size: 15px;
+    color: var(--text-muted);
+  }
+
+  .step-text strong {
+    color: var(--text);
+  }
+
+  /* QUOTE */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 6px 0 6px 24px;
+    margin: 28px 0;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--text);
+  }
+
+  /* CTA */
+  .cta {
+    background: linear-gradient(135deg, var(--accent-soft), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin: 48px 0 12px;
+  }
+
+  .cta h3 {
+    color: var(--text);
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+
+  .cta p {
+    color: var(--text-muted);
+    margin-bottom: 22px;
+  }
+
+  .cta-button {
+    display: inline-block;
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+  }
+
+  .cta-button:hover {
+    transform: translateY(-2px);
+  }
+
+  /* FOOTER NOTE */
+  .disclaimer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .author-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 40px;
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    color: #1a1300;
+    flex-shrink: 0;
+  }
+
+  .author-info p {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .author-info .name {
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .author-info .role {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar a.back {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .topbar a.back:hover { color: var(--text); }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    font-family: inherit;
+  }
+
+  .share-btn:hover {
+    background: var(--accent);
+    color: #1a1300;
+    transform: translateY(-1px);
+  }
+
+  .share-wrap {
+    position: relative;
+  }
+
+  .share-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 190px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    z-index: 60;
+  }
+
+  .share-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .share-menu a,
+  .share-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .share-menu a:hover,
+  .share-menu button:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .share-menu .share-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .share-menu .share-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .share-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 100;
+  }
+
+  .share-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="educacao.html" class="back">← Voltar ao site</a>
+    <div class="share-wrap">
+      <button class="share-btn" onclick="toggleShareMenu(event)">↗ Compartilhar</button>
+      <div class="share-menu" id="share-menu">
+        <a href="#" onclick="shareTo('whatsapp');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.86.5 3.6 1.43 5.1L2 22l5.16-1.5a9.84 9.84 0 0 0 4.87 1.28h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.13-2.9-7-1.88-1.88-4.36-2.87-7.01-2.87Zm0 18.06h-.01a8.18 8.18 0 0 1-4.17-1.14l-.3-.18-3.05.89.91-2.98-.2-.31a8.16 8.16 0 0 1-1.26-4.43c0-4.52 3.68-8.2 8.21-8.2 2.19 0 4.25.86 5.8 2.41a8.13 8.13 0 0 1 2.4 5.79c0 4.53-3.68 8.15-8.33 8.15Zm4.49-6.13c-.25-.12-1.45-.72-1.68-.8-.22-.08-.39-.12-.55.12-.16.25-.63.8-.78.96-.14.16-.29.18-.53.06-1.45-.72-2.4-1.29-3.36-2.92-.25-.43.25-.4.72-1.34.08-.16.04-.3-.03-.43-.08-.12-.55-1.33-.76-1.83-.2-.48-.4-.42-.55-.42-.14-.01-.3-.01-.46-.01-.16 0-.42.06-.64.3-.22.25-.85.83-.85 2.02 0 1.19.87 2.34 1 2.5.12.16 1.7 2.59 4.12 3.53 2.04.79 2.45.66 2.9.62.45-.04 1.45-.59 1.65-1.17.2-.57.2-1.06.14-1.17-.06-.1-.22-.17-.4-.27Z"/></svg>
+          </span>
+          WhatsApp
+        </a>
+        <a href="#" onclick="shareTo('x');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231ZM17.083 19.77h1.833L7.084 4.126H5.117Z"/></svg>
+          </span>
+          X (Twitter)
+        </a>
+        <a href="#" onclick="shareTo('instagram');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg>
+          </span>
+          Instagram
+        </a>
+        <button onclick="shareTo('copy')">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </span>
+          Copiar link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="share-toast" id="share-toast">Link copiado!</div>
+
+  <div class="hero">
+    <span class="tag">Sucessão · BSafe</span>
+    <h1>Quando você falta, seu patrimônio fica preso —<span> ou herdado em minutos?</span></h1>
+    <p class="subtitle">
+      Como a autocustódia de Bitcoin transforma o processo de transmissão de patrimônio para os herdeiros,
+      em comparação com contas bancárias, investimentos e bens registrados no sistema fiduciário tradicional.
+    </p>
+    <div class="meta">
+      <span>⚖️ Sucessões &amp; Bitcoin</span>
+      <span>⏱ 9 min de leitura</span>
+      <span>🟠 bsafebitcoin.org</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <article>
+
+      <p>
+        Ninguém gosta de pensar na própria morte. Mas todo advogado que já atuou em um inventário sabe: o
+        que separa uma transmissão patrimonial tranquila de um pesadelo de anos não é o tamanho do
+        patrimônio — é a <strong>forma como ele está estruturado</strong>. Contas bancárias bloqueadas,
+        corretoras que exigem alvará judicial, imóveis que não podem ser vendidos sem partilha formalizada:
+        o sistema fiduciário tradicional foi desenhado para <em>travar</em> ativos no momento exato em que a
+        família mais precisa de liquidez.
+      </p>
+
+      <p>
+        Este artigo não é sobre evitar o inventário — em muitos casos ele é necessário e legalmente
+        obrigatório. É sobre entender uma diferença estrutural pouco discutida: o Bitcoin em
+        <strong>autocustódia</strong> é o único ativo relevante do patrimônio de uma pessoa cuja transmissão
+        pode ser planejada de forma <em>privada, instantânea e sem dependência de terceiros</em> — algo
+        impossível de replicar com dinheiro em banco, ações em corretora ou imóveis registrados.
+      </p>
+
+      <h2>O problema estrutural da sucessão em ativos fiduciários</h2>
+
+      <p>
+        Quando alguém falece no Brasil, todos os seus ativos financeiros — contas correntes, poupança,
+        aplicações, ações, fundos — são <strong>automaticamente bloqueados</strong> pelas instituições no
+        momento em que tomam conhecimento do óbito. A partir daí, o caminho legal é conhecido por qualquer
+        família que já passou por isso:
+      </p>
+
+      <h3>1. Abertura de inventário (judicial ou extrajudicial)</h3>
+
+      <p>
+        É necessário identificar todos os bens, dívidas, herdeiros e proceder à partilha — seja em
+        cartório (quando há consenso e todos são maiores e capazes) ou na via judicial (quando há
+        conflito, herdeiro menor, ou testamento a cumprir). Esse processo, mesmo no melhor cenário,
+        costuma levar <strong>meses</strong>; em casos litigiosos, pode se estender por <strong>anos</strong>.
+      </p>
+
+      <h3>2. Bloqueio de contas e investimentos até a partilha</h3>
+
+      <p>
+        Bancos e corretoras não liberam um centavo sem documentação formal — certidão de óbito, abertura de
+        inventário, alvará judicial ou escritura de partilha. Mesmo o cônjuge ou filhos, que dependem
+        daquele dinheiro para despesas do dia a dia, ficam sem acesso enquanto o processo tramita.
+      </p>
+
+      <h3>3. Custos que reduzem o patrimônio antes mesmo da partilha</h3>
+
+      <p>
+        ITCMD (imposto sobre herança, com alíquotas que variam por estado), honorários advocatícios, custas
+        cartorárias e judiciais — tudo isso é descontado <strong>do próprio patrimônio</strong>, antes que
+        os herdeiros recebam qualquer valor. Em alguns estados, o ITCMD já chega a 8% sobre o valor total
+        transmitido.
+      </p>
+
+      <h3>4. Exposição pública do patrimônio</h3>
+
+      <p>
+        Um processo de inventário é, por natureza, <strong>público</strong>. Qualquer pessoa pode consultar
+        autos judiciais e descobrir o que cada herdeiro recebeu — informação sensível que muitas famílias
+        prefeririam manter privada.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">O ponto central</span>
+        <p>
+          O sistema fiduciário não foi desenhado com a transmissão em mente — ele foi desenhado para
+          <strong>proteger a instituição</strong> de responder por bens a pessoas não autorizadas. O
+          resultado é que, justamente no momento de luto e necessidade, a família enfrenta meses (ou anos)
+          de burocracia para acessar o que, na prática, já é seu por direito.
+        </p>
+      </div>
+
+      <h2>Como a autocustódia de Bitcoin funciona na prática</h2>
+
+      <p>
+        Bitcoin em autocustódia significa que <strong>você é o único detentor das chaves privadas</strong>
+        que controlam aquele patrimônio — sem banco, corretora ou instituição intermediária. Essa
+        característica, que no dia a dia é sobre soberania financeira, ganha uma dimensão totalmente nova
+        quando pensamos em sucessão:
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-text">
+            <p><strong>Quem tem a chave, tem o ativo — sem precisar provar nada a ninguém.</strong>
+            Diferente de uma conta bancária, não existe uma instituição para "notificar" sobre o óbito.
+            Quem detém a seed phrase (ou as chaves de um setup multisig) pode movimentar os fundos
+            imediatamente, sem alvará, sem certidão, sem processo.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-text">
+            <p><strong>Planejamento sucessório é sobre acesso à informação, não sobre processo judicial.</strong>
+            A "transmissão" de Bitcoin não depende de uma decisão de juiz ou de um sistema bancário — depende
+            apenas de o herdeiro saber onde estão as chaves e como acessá-las. Isso pode ser organizado em
+            vida, de forma privada, com instruções claras guardadas em local seguro.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-text">
+            <p><strong>Multisig e herança programável.</strong> Configurações de carteira multiassinatura
+            (ex: 2 de 3 chaves) permitem estruturar acesso compartilhado entre cônjuge, herdeiros ou um
+            terceiro de confiança — sem que nenhuma parte sozinha controle o patrimônio em vida, mas
+            garantindo acesso combinado em caso de falecimento.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-text">
+            <p><strong>Privacidade real.</strong> Não há registro público vinculando uma chave Bitcoin a uma
+            identidade. O patrimônio em autocustódia não aparece automaticamente em nenhum cadastro que
+            terceiros possam consultar — a discrição faz parte da própria arquitetura do sistema.</p>
+          </div>
+        </div>
+      </div>
+
+      <blockquote>
+        Em ativos fiduciários, a transmissão depende do reconhecimento de terceiros — bancos, cartórios,
+        tribunais. Em Bitcoin autocustodiado, a transmissão depende apenas de informação: quem sabe acessar
+        as chaves, acessa o patrimônio. É a diferença entre esperar uma instituição "liberar" o que é seu e
+        simplesmente já tê-lo em mãos.
+      </blockquote>
+
+      <h2>Comparando os dois modelos lado a lado</h2>
+
+      <div class="compare">
+        <div class="compare-card fiat">
+          <h4>Patrimônio Fiduciário</h4>
+          <ul>
+            <li>Contas bloqueadas automaticamente após o óbito</li>
+            <li>Acesso depende de inventário judicial ou extrajudicial</li>
+            <li>Processo pode levar meses ou anos</li>
+            <li>ITCMD, honorários e custas reduzem o valor transmitido</li>
+            <li>Processo de inventário é público</li>
+            <li>Dependência total de bancos, corretoras e cartórios</li>
+          </ul>
+        </div>
+        <div class="compare-card btc">
+          <h4>Bitcoin em Autocustódia</h4>
+          <ul>
+            <li>Acesso imediato a quem detém as chaves</li>
+            <li>Transmissão não depende de reconhecimento de terceiros</li>
+            <li>Pode ocorrer em minutos, a qualquer momento</li>
+            <li>Sem bloqueio automático nem taxas institucionais na transferência</li>
+            <li>Sem registro público vinculado à identidade</li>
+            <li>Controle 100% do titular das chaves, em vida e na sucessão</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>"Mas e a obrigação legal de declarar e pagar ITCMD?"</h2>
+
+      <p>
+        Este é um ponto que merece honestidade: a <strong>posse técnica</strong> das chaves não elimina a
+        <strong>obrigação legal</strong> de declarar o patrimônio em inventário e recolher os tributos
+        devidos sobre herança, onde aplicável. Bitcoin é um ativo como qualquer outro para fins de direito
+        sucessório — ele deve ser inventariado e tributado conforme a legislação vigente.
+      </p>
+
+      <p>
+        A diferença real não está em "burlar" essa obrigação, mas em <strong>quem controla o timing e o
+        acesso</strong>. Em ativos fiduciários, o herdeiro fica à mercê do processo para sequer
+        <em>acessar</em> o recurso. Em Bitcoin autocustodiado, o acesso técnico está disponível
+        imediatamente — e o cumprimento das obrigações fiscais e sucessórias passa a ser uma escolha
+        organizada da família, e não um pré-requisito imposto por terceiros para a mera disponibilidade do
+        bem.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">Importante</span>
+        <p>
+          Isso não é um convite à sonegação. Pelo contrário: planejamento sucessório bem feito em Bitcoin
+          combina <strong>acesso técnico facilitado</strong> com <strong>conformidade legal e tributária</strong>
+          — orientação que só um advogado especializado pode oferecer caso a caso, considerando o estado, o
+          regime de bens e a composição do patrimônio total.
+        </p>
+      </div>
+
+      <h2>O risco que muda de lugar: do sistema para você</h2>
+
+      <p>
+        É preciso ser honesto sobre o outro lado da moeda. No sistema fiduciário, o risco de "perder
+        acesso" é institucional — fica com o banco, o cartório, o judiciário — mas a <strong>burocracia</strong>
+        é o preço dessa proteção. Na autocustódia, o risco se desloca: se as chaves se perdem, ou se ninguém
+        além do titular sabe onde encontrá-las, <strong>o patrimônio pode se tornar permanentemente
+        inacessível</strong> — para sempre, sem nenhum tribunal capaz de "recuperar" o acesso.
+      </p>
+
+      <p>
+        Por isso, vantagens sucessórias da autocustódia <strong>só existem se houver planejamento</strong>.
+        Backup de seed phrase, instruções claras para herdeiros, possivelmente um esquema multisig ou
+        herança programada (timelock) — sem isso, o Bitcoin que deveria ser uma vantagem sucessória se torna
+        o oposto: um patrimônio perdido para sempre.
+      </p>
+
+      <h2>O que isso significa na prática</h2>
+
+      <p>
+        Para quem já possui Bitcoin em autocustódia — ou está construindo posição via DCA ao longo dos anos
+        — o planejamento sucessório não deveria ser um tópico para "pensar depois". A vantagem estrutural
+        que esse ativo oferece em relação à transmissão patrimonial só se concretiza se houver:
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-text">
+            <p><strong>Documentação de acesso.</strong> Instruções claras, guardadas em local seguro, sobre
+            como localizar e acessar as chaves — sem expor a seed phrase em texto claro a quem não deveria
+            ter acesso em vida.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-text">
+            <p><strong>Estrutura compatível com múltiplos herdeiros.</strong> Multisig ou divisão planejada
+            evita que um único herdeiro tenha controle unilateral antes do momento adequado.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-text">
+            <p><strong>Orientação jurídica para conformidade.</strong> Inclusão do Bitcoin na declaração
+            patrimonial e no planejamento de inventário, com avaliação tributária adequada — alinhando
+            soberania técnica com segurança jurídica para a família.</p>
+          </div>
+        </div>
+      </div>
+
+      <p>
+        A combinação dessas três camadas é o que transforma a autocustódia de um "risco de perda" em uma
+        <strong>vantagem real de transmissão</strong>: patrimônio que não fica preso em filas de cartório,
+        que não perde valor para honorários e taxas durante anos de espera, e que chega à família exatamente
+        quando ela mais precisa — sem depender da boa vontade ou da velocidade de nenhuma instituição.
+      </p>
+
+      <p>
+        Isso não é uma recomendação jurídica individual, nem substitui consulta com profissional
+        especializado em direito sucessório e tributário. Cada família tem composição patrimonial,
+        regime de bens e contexto fiscal próprios — o que aqui se apresenta são princípios estruturais
+        para reflexão, não um roteiro pronto.
+      </p>
+
+      <div class="cta">
+        <h3>Acompanhe e organize seu patrimônio em Bitcoin</h3>
+        <p>
+          Use a ferramenta de monitoramento de carteira da BSafe para acompanhar seus aportes, saldo e
+          performance — o primeiro passo para um planejamento sucessório organizado começa por saber
+          exatamente o que você possui.
+        </p>
+        <a href="https://bsafebitcoin.org" class="cta-button">Acessar BSafe Bitcoin →</a>
+      </div>
+
+      <div class="author-box">
+        <div class="author-avatar">RB</div>
+        <div class="author-info">
+          <p class="name">Rafael Bered</p>
+          <p class="role">Advogado previdenciarista, educador de mercado de capitais e fundador da BSafe Bitcoin</p>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        Este conteúdo tem caráter exclusivamente educacional e não constitui aconselhamento jurídico,
+        tributário ou de investimento. Questões sucessórias envolvem legislação específica de cada estado
+        e circunstâncias individuais de cada família. Consulte um advogado especializado em direito
+        sucessório e tributário antes de tomar qualquer decisão de planejamento patrimonial.
+      </div>
+
+    </article>
+  </div>
+
+  <script>
+    const shareData = {
+      title: document.title,
+      text: 'Sucessão patrimonial: as vantagens do Bitcoin em autocustódia em comparação ao patrimônio fiduciário. Confira este artigo da BSafe Bitcoin.',
+      url: window.location.href
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById('share-toast');
+      if (message) toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(shareData.url).then(() => {
+        showToast('Link copiado!');
+      }).catch(() => {
+        showToast('Não foi possível copiar o link');
+      });
+    }
+
+    function toggleShareMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('share-menu');
+      menu.classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('share-menu');
+      if (menu.classList.contains('open') && !menu.contains(e.target) && !e.target.closest('.share-btn')) {
+        menu.classList.remove('open');
+      }
+    });
+
+    function shareTo(target) {
+      const menu = document.getElementById('share-menu');
+      menu.classList.remove('open');
+
+      const url = encodeURIComponent(shareData.url);
+      const text = encodeURIComponent(shareData.text);
+
+      switch (target) {
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${text}%20${url}`, '_blank', 'noopener');
+          break;
+        case 'x':
+          window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
+          break;
+        case 'instagram':
+          navigator.clipboard.writeText(shareData.url).then(() => {
+            showToast('Link copiado! Cole no Instagram (Stories, bio ou DM)');
+            window.open('https://www.instagram.com/', '_blank', 'noopener');
+          }).catch(() => {
+            showToast('Não foi possível copiar o link');
+          });
+          break;
+        case 'copy':
+          copyLink();
+          break;
+      }
+    }
+  </script>
+
+</body>
+</html>
