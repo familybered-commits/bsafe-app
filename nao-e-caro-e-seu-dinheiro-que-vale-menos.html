@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Não é que as Coisas Estão Caras. É o Seu Dinheiro Que Está Encolhendo | BSafe Bitcoin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080808;
+    --bg-card: #141414;
+    --accent: #F7931A;
+    --accent-soft: rgba(247,147,26,0.10);
+    --text: #e8e8e0;
+    --text-muted: #9a9a90;
+    --border: rgba(255,255,255,0.07);
+    --green: #22c55e;
+    --red: #ef4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.01em;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 60px 24px 50px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft) 0%, transparent 60%);
+  }
+
+  .hero .tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-size: clamp(32px, 6vw, 52px);
+    font-weight: 400;
+    line-height: 1.15;
+    margin-bottom: 18px;
+    letter-spacing: 0.01em;
+  }
+
+  .hero h1 span {
+    color: var(--accent);
+  }
+
+  .hero .subtitle {
+    font-size: 17px;
+    font-weight: 300;
+    color: var(--text-muted);
+    max-width: 600px;
+    line-height: 1.65;
+    margin: 0 auto 20px;
+  }
+
+  .hero .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* CONTENT */
+  article {
+    padding-top: 48px;
+  }
+
+  article h2 {
+    font-size: clamp(24px, 4vw, 34px);
+    font-weight: 400;
+    line-height: 1.1;
+    margin: 52px 0 18px;
+    letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  article h2::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 26px;
+    background: var(--accent);
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  article h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    margin: 30px 0 12px;
+    color: var(--accent);
+    line-height: 1.4;
+  }
+
+  article p {
+    font-size: 17px;
+    color: var(--text);
+    line-height: 1.8;
+    margin-bottom: 20px;
+    text-align: left;
+  }
+
+  article strong {
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  article a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+  }
+
+  article a:hover {
+    border-bottom-color: var(--accent);
+  }
+
+  /* HIGHLIGHT BOX */
+  .highlight-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 28px 0;
+  }
+
+  .highlight-box .label {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .highlight-box p {
+    margin-bottom: 0;
+    font-size: 17px;
+  }
+
+  /* PERSPECTIVE FLIP CARDS */
+  .flip {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    margin: 24px 0 32px;
+  }
+
+  @media (max-width: 600px) {
+    .flip { grid-template-columns: 1fr; }
+    .flip .arrow { transform: rotate(90deg); margin: 0 auto; }
+  }
+
+  .flip-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    text-align: center;
+  }
+
+  .flip-card.wrong { border-top: 3px solid var(--red); }
+  .flip-card.right { border-top: 3px solid var(--accent); }
+
+  .flip-card .small {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .flip-card.wrong .small { color: var(--red); }
+  .flip-card.right .small { color: var(--accent); }
+
+  .flip-card p {
+    font-size: 16px;
+    margin-bottom: 0;
+    color: var(--text);
+  }
+
+  .flip .arrow {
+    color: var(--text-muted);
+    font-size: 28px;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  /* PRICE TABLE */
+  .price-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 15px;
+  }
+
+  .price-table th, .price-table td {
+    padding: 14px 18px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .price-table th {
+    color: var(--accent);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 800;
+  }
+
+  .price-table td {
+    color: var(--text-muted);
+  }
+
+  .price-table td.now {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .price-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* SHRINK VISUAL */
+  .shrink-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 28px 0;
+    padding: 24px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .shrink-bill {
+    background: linear-gradient(135deg, var(--red), #8c1f26);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .shrink-strip .arrow-down {
+    color: var(--text-muted);
+    font-size: 22px;
+  }
+
+  .shrink-caption {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: -10px;
+    margin-bottom: 28px;
+  }
+
+  /* QUOTE */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 6px 0 6px 24px;
+    margin: 28px 0;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--text);
+  }
+
+  blockquote cite {
+    display: block;
+    margin-top: 8px;
+    font-size: 14px;
+    font-style: normal;
+    color: var(--text-muted);
+  }
+
+  /* CTA */
+  .cta {
+    background: linear-gradient(135deg, var(--accent-soft), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin: 48px 0 12px;
+  }
+
+  .cta h3 {
+    color: var(--text);
+    font-size: 26px;
+    font-weight: 400;
+    margin-bottom: 10px;
+  }
+
+  .cta p {
+    color: var(--text-muted);
+    margin-bottom: 22px;
+  }
+
+  .cta-button {
+    display: inline-block;
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+  }
+
+  .cta-button:hover {
+    transform: translateY(-2px);
+  }
+
+  /* FOOTER NOTE */
+  .disclaimer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .author-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 40px;
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    color: #1a1300;
+    flex-shrink: 0;
+  }
+
+  .author-info p {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .author-info .name {
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .author-info .role {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar a.back {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .topbar a.back:hover { color: var(--text); }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    font-family: inherit;
+  }
+
+  .share-btn:hover {
+    background: var(--accent);
+    color: #1a1300;
+    transform: translateY(-1px);
+  }
+
+  .share-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 100;
+  }
+
+  .share-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="educacao.html" class="back">← Voltar ao site</a>
+    <button class="share-btn" onclick="shareArticle()">↗ Compartilhar</button>
+  </div>
+
+  <div class="share-toast" id="share-toast">Link copiado!</div>
+
+  <div class="hero">
+    <span class="tag">Educação Financeira · BSafe</span>
+    <h1>Não é o pão que ficou caro. <span>É o real que ficou pequeno.</span></h1>
+    <p class="subtitle">
+      A maioria das pessoas olha para os preços subindo e pensa "tudo está mais caro". Mas existe uma
+      forma muito mais precisa — e muito mais útil — de entender o que está acontecendo.
+    </p>
+    <div class="meta">
+      <span>📚 Educação Financeira</span>
+      <span>⏱ 6 min de leitura</span>
+      <span>🟠 bsafebitcoin.org</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <article>
+
+      <p>
+        Pare um segundo e pense em como você normalmente descreve a inflação. Provavelmente algo como:
+        "a carne está cara", "o aluguel está caro", "tudo está caro". É a forma natural de falar — mas é
+        também uma forma que <strong>coloca o problema no lugar errado</strong>.
+      </p>
+
+      <p>
+        A carne de hoje não é mais nutritiva, mais rara ou mais difícil de produzir do que era há dez anos.
+        O imóvel não ficou mais útil. O litro de gasolina não mudou de composição. O que mudou foi outra
+        coisa: <strong>a régua que você está usando para medir o valor das coisas perdeu tamanho.</strong>
+      </p>
+
+      <div class="flip">
+        <div class="flip-card wrong">
+          <div class="small">Visão comum</div>
+          <p>"As coisas estão ficando mais caras."</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="flip-card right">
+          <div class="small">Visão precisa</div>
+          <p>"O meu dinheiro está comprando cada vez menos."</p>
+        </div>
+      </div>
+
+      <h2>A régua que encolhe</h2>
+
+      <p>
+        Imagine que você mede a altura das pessoas com uma fita métrica. Só que, todo ano, alguém encolhe
+        essa fita métrica um pouco — sem avisar. As pessoas continuam do mesmo tamanho, mas, com a fita
+        menor, todo mundo "parece" estar crescendo. Cada vez que você mede alguém, o número aumenta — não
+        porque a pessoa cresceu, mas porque a sua ferramenta de medição encolheu.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">O ponto central</span>
+        <p>
+          O real, o dólar e qualquer outra moeda fiduciária são essa fita métrica. Quando o governo emite
+          mais moeda do que a economia produz de bens e serviços novos, cada unidade dessa moeda passa a
+          representar uma fração menor da riqueza real do mundo. O preço dos bens, medido nessa moeda,
+          sobe — não porque os bens valem mais, mas porque <strong>a moeda vale menos</strong>.
+        </p>
+      </div>
+
+      <h3>Um exemplo concreto: o preço do pão</h3>
+
+      <p>
+        Pense em um pão francês. Em termos de farinha, fermento, energia e trabalho necessários para
+        produzi-lo, esse pão é, no fundo, basicamente o mesmo produto há décadas. O que muda é quantas
+        unidades da moeda local você precisa entregar para obtê-lo:
+      </p>
+
+      <table class="price-table">
+        <tr>
+          <th>O que permanece igual</th>
+          <th>O que muda</th>
+        </tr>
+        <tr>
+          <td>O pão (farinha, fermento, mão de obra, energia)</td>
+          <td class="now">A quantidade de reais necessária para comprá-lo</td>
+        </tr>
+        <tr>
+          <td>O valor real do trabalho de quem produz</td>
+          <td class="now">O poder de compra de cada unidade de moeda</td>
+        </tr>
+        <tr>
+          <td>A utilidade do produto na sua vida</td>
+          <td class="now">O número impresso na etiqueta de preço</td>
+        </tr>
+      </table>
+
+      <p>
+        O pão não "decidiu" valer mais. A moeda é que foi diluída — e, quanto mais unidades dela existem
+        em circulação, menos cada unidade representa da riqueza real disponível no mundo.
+      </p>
+
+      <div class="shrink-strip">
+        <div class="shrink-bill" style="width: 90px; height: 50px; font-size: 16px;">R$ 1</div>
+        <div class="arrow-down">→</div>
+        <div class="shrink-bill" style="width: 70px; height: 40px; font-size: 13px;">R$ 1</div>
+        <div class="arrow-down">→</div>
+        <div class="shrink-bill" style="width: 50px; height: 30px; font-size: 11px;">R$ 1</div>
+        <div class="arrow-down">→</div>
+        <div class="shrink-bill" style="width: 32px; height: 20px; font-size: 9px;">R$ 1</div>
+      </div>
+      <p class="shrink-caption">
+        Representação ilustrativa: o número "R$ 1" nunca muda — mas o que ele consegue comprar encolhe
+        com o passar do tempo.
+      </p>
+
+      <h2>Por que essa mudança de perspectiva importa</h2>
+
+      <p>
+        Essa não é só uma questão filosófica de semântica. Mudar o jeito de enxergar isso muda completamente
+        as decisões que você toma com o seu dinheiro:
+      </p>
+
+      <p>
+        Se você acha que <strong>"as coisas estão ficando caras"</strong>, a reação natural é tentar comprar
+        menos, esperar, cortar gastos, e guardar o dinheiro que sobra na conta corrente ou na poupança —
+        torcendo para que as coisas "baixem" de novo.
+      </p>
+
+      <p>
+        Se você entende que <strong>"o meu dinheiro está perdendo valor com o tempo"</strong>, a lógica se
+        inverte: guardar dinheiro parado em uma moeda que está sendo diluída é, na prática, perder poder de
+        compra todos os dias — mesmo que o número na sua conta nunca diminua. A pergunta deixa de ser
+        "o que vai ficar caro?" e passa a ser <strong>"em qual ativo eu guardo valor que não pode ser
+        diluído?"</strong>
+      </p>
+
+      <blockquote>
+        O saldo da sua conta pode permanecer exatamente igual ao longo dos anos — e, ainda assim, você
+        estar mais pobre. Porque o que importa não é o número, é o que esse número consegue comprar.
+      </blockquote>
+
+      <h2>Onde o Bitcoin entra nessa história</h2>
+
+      <p>
+        É exatamente aqui que a comparação com o Bitcoin se torna útil. Diferente do real, do dólar ou de
+        qualquer moeda emitida por um banco central, o Bitcoin tem uma <strong>oferta máxima fixa de 21
+        milhões de unidades</strong>, definida por código desde 2009 e impossível de ser alterada por
+        decisão política.
+      </p>
+
+      <p>
+        Isso significa que, enquanto a "fita métrica" das moedas fiduciárias continua encolhendo ano após
+        ano, a unidade de medida do Bitcoin permanece <strong>fixa</strong>. Por isso, quando se mede o
+        preço de bens, imóveis ou até de outras moedas em Bitcoin ao longo de ciclos longos, o padrão que
+        aparece é justamente o inverso do que vemos com o real: o número tende a <strong>cair</strong>,
+        porque é a unidade de medida que está se mantendo escassa — e tudo o mais está sendo medido por
+        moedas que se diluem.
+      </p>
+
+      <p>
+        Isso não significa que o preço do Bitcoin em reais não oscile no curto prazo — ele oscila, e
+        bastante. Mas a tese de fundo é diferente da tese de qualquer moeda fiduciária: de um lado, uma
+        unidade de conta com oferta crescente e sem limite; do outro, uma com oferta fixa e auditável por
+        qualquer pessoa.
+      </p>
+
+      <h3>Acompanhando isso na prática</h3>
+
+      <p>
+        Uma forma de visualizar esse fenômeno na sua própria vida financeira é acompanhar, ao longo do
+        tempo, quanto do seu patrimônio está em ativos com oferta fixa (como Bitcoin) versus quanto está
+        em moeda corrente perdendo poder de compra. Comparar a evolução do seu preço médio de aporte em
+        reais e em dólares com a evolução de outros ativos — ouro, CDI, S&amp;P 500, Ibovespa — ajuda a
+        tornar visível, com números reais, o que normalmente fica escondido dentro do "preço das coisas".
+      </p>
+
+      <h2>O que fazer com essa informação</h2>
+
+      <p>
+        Da próxima vez que você sentir que "tudo está caro", vale a pena fazer essa pequena troca mental:
+        em vez de perguntar <em>"por que isso ficou tão caro?"</em>, pergunte <em>"o que aconteceu com o
+        meu dinheiro para que ele precise de mais unidades para comprar a mesma coisa?"</em>
+      </p>
+
+      <p>
+        Isso não é uma recomendação de investimento, nem promessa de retorno — é um convite à reflexão
+        sobre como medimos valor e sobre os incentivos estruturais de cada sistema monetário. Cabe a cada
+        pessoa estudar, entender os riscos e tomar suas próprias decisões com responsabilidade.
+      </p>
+
+      <div class="cta">
+        <h3>Acompanhe a evolução real do seu patrimônio</h3>
+        <p>
+          Use a ferramenta de monitoramento de carteira da BSafe para acompanhar seus aportes, preço médio
+          em USD e BRL, e comparar sua performance com Bitcoin, ouro, CDI, Ibovespa e S&amp;P 500.
+        </p>
+        <a href="https://bsafebitcoin.org" class="cta-button">Acessar BSafe Bitcoin →</a>
+      </div>
+
+      <div class="author-box">
+        <div class="author-avatar">RB</div>
+        <div class="author-info">
+          <p class="name">Rafael Bered</p>
+          <p class="role">Advogado previdenciarista, educador de mercado de capitais e fundador da BSafe Bitcoin</p>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        Este conteúdo tem caráter exclusivamente educacional e não constitui recomendação de investimento.
+        Bitcoin é um ativo de alta volatilidade e envolve riscos. Faça sua própria pesquisa antes de tomar
+        qualquer decisão financeira.
+      </div>
+
+    </article>
+  </div>
+
+  <script>
+    function shareArticle() {
+      const data = {
+        title: document.title,
+        text: 'Não é que as coisas estão caras. É o seu dinheiro que está encolhendo. Confira este artigo da BSafe Bitcoin.',
+        url: window.location.href
+      };
+      if (navigator.share) {
+        navigator.share(data).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(data.url).then(() => {
+          const toast = document.getElementById('share-toast');
+          toast.classList.add('show');
+          setTimeout(() => toast.classList.remove('show'), 2200);
+        });
+      }
+    }
+  </script>
+
+</body>
+</html>
