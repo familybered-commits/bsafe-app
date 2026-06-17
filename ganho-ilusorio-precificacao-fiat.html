@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seu Investimento Rende 12%? Descubra o Que Sobra de Verdade | BSafe Bitcoin</title>
+<style>
+  :root {
+    --bg: #0b0e11;
+    --bg-card: #14181d;
+    --accent: #f7931a;
+    --accent-soft: #f7931a22;
+    --text: #e8eaed;
+    --text-muted: #9aa3ad;
+    --border: #232a31;
+    --green: #16c784;
+    --red: #ea3943;
+    --yellow: #f5c518;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 40px 96px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 64px 40px 52px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft) 0%, transparent 60%);
+  }
+
+  .hero .tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero .subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 20px;
+  }
+
+  .hero .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* CONTENT */
+  article { padding-top: 52px; }
+
+  article h2 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 52px 0 20px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  article h2::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 26px;
+    background: var(--accent);
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  article h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 32px 0 14px;
+    color: var(--accent);
+  }
+
+  article p {
+    font-size: 17px;
+    color: #d4d8dc;
+    margin-bottom: 22px;
+  }
+
+  article strong { color: #fff; font-weight: 700; }
+
+  article a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+  }
+
+  article a:hover { border-bottom-color: var(--accent); }
+
+  /* HIGHLIGHT BOX */
+  .highlight-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 32px 0;
+  }
+
+  .highlight-box .label {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .highlight-box p { margin-bottom: 0; font-size: 17px; }
+
+  /* QUOTE */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 8px 0 8px 28px;
+    margin: 32px 0;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.65;
+  }
+
+  /* COMPARISON CARDS */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0 32px;
+  }
+
+  @media (max-width: 640px) {
+    .container { padding: 0 20px 80px; }
+    .hero { padding: 48px 20px 40px; }
+    .hero h1 { font-size: 26px; }
+    .hero .subtitle { font-size: 16px; }
+    article h2 { font-size: 22px; }
+    .compare { grid-template-columns: 1fr; }
+    .math-card { padding: 20px; }
+    .ruler-label { min-width: 130px; font-size: 11px; }
+    .basket-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  }
+
+  .compare-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .compare-card.fiat { border-top: 3px solid var(--red); }
+  .compare-card.btc { border-top: 3px solid var(--accent); }
+
+  .compare-card h4 {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .compare-card.fiat h4 { color: var(--red); }
+  .compare-card.btc h4 { color: var(--accent); }
+
+  .compare-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .compare-card li {
+    font-size: 15px;
+    color: var(--text-muted);
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .compare-card.fiat li::before {
+    content: "↓";
+    position: absolute;
+    left: 0;
+    color: var(--red);
+    font-weight: 800;
+  }
+
+  .compare-card.btc li::before {
+    content: "↑";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  /* MATH CARD */
+  .math-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 28px 0;
+    font-family: 'Courier New', Courier, monospace;
+  }
+
+  .math-card .math-title {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .math-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 16px;
+  }
+
+  .math-row:last-child { border-bottom: none; }
+
+  .math-row .label-m {
+    color: var(--text-muted);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+  }
+
+  .math-row .value { font-weight: 700; font-size: 18px; }
+  .math-row .value.green { color: var(--green); }
+  .math-row .value.red { color: var(--red); }
+  .math-row .value.orange { color: var(--accent); }
+  .math-row .value.yellow { color: var(--yellow); }
+
+  .math-divider {
+    border: none;
+    border-top: 2px solid var(--accent);
+    margin: 8px 0;
+  }
+
+  /* THERMOMETER / VISUAL */
+  .ruler-visual {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 28px 0;
+  }
+
+  .ruler-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+  }
+
+  .ruler-label {
+    min-width: 160px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .ruler-bar-wrap {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border-radius: 999px;
+    height: 14px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ruler-bar {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.8s ease;
+  }
+
+  .ruler-bar.nominal { background: linear-gradient(90deg, #f7931a, #c9740a); }
+  .ruler-bar.inflation { background: linear-gradient(90deg, #ea3943, #a02530); }
+  .ruler-bar.real { background: linear-gradient(90deg, #16c784, #0e8c5c); }
+  .ruler-bar.shadow { background: linear-gradient(90deg, #ea3943cc, #a02530cc); }
+  .ruler-bar.real-shadow { background: linear-gradient(90deg, #6b6b6b, #3a3a3a); }
+
+  .ruler-pct {
+    min-width: 54px;
+    text-align: right;
+    font-weight: 800;
+    font-size: 16px;
+  }
+
+  /* FAMILY BASKET */
+  .basket-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 24px 0 32px;
+  }
+
+  .basket-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+
+  .basket-item .bi-icon { font-size: 26px; margin-bottom: 8px; }
+
+  .basket-item .bi-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .basket-item .bi-pct {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--red);
+  }
+
+  .basket-item .bi-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* CTA */
+  .cta {
+    background: linear-gradient(135deg, var(--accent-soft), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin: 48px 0 12px;
+  }
+
+  .cta h3 { color: var(--text); font-size: 22px; margin-bottom: 10px; }
+  .cta p { color: var(--text-muted); margin-bottom: 22px; }
+
+  .cta-button {
+    display: inline-block;
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+    border: none;
+  }
+
+  .cta-button:hover { transform: translateY(-2px); }
+
+  /* DISCLAIMER */
+  .disclaimer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .author-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 40px;
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    color: #1a1300;
+    flex-shrink: 0;
+  }
+
+  .author-info p { margin: 0; font-size: 14px; }
+  .author-info .name { font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .author-info .role { color: var(--text-muted); font-size: 13px; }
+
+  /* TOP BAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar a.back {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: none;
+  }
+
+  .topbar a.back:hover { color: var(--text); }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    font-family: inherit;
+  }
+
+  .share-btn:hover {
+    background: var(--accent);
+    color: #1a1300;
+    transform: translateY(-1px);
+  }
+
+  .share-wrap { position: relative; }
+
+  .share-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 190px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    z-index: 60;
+  }
+
+  .share-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .share-menu a,
+  .share-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .share-menu a:hover,
+  .share-menu button:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .share-menu .share-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .share-menu .share-icon svg { width: 100%; height: 100%; }
+
+  .share-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 100;
+  }
+
+  .share-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="educacao.html" class="back">← Voltar ao site</a>
+    <div class="share-wrap">
+      <button class="share-btn" onclick="toggleShareMenu(event)">↗ Compartilhar</button>
+      <div class="share-menu" id="share-menu">
+        <a href="#" onclick="shareTo('whatsapp');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.86.5 3.6 1.43 5.1L2 22l5.16-1.5a9.84 9.84 0 0 0 4.87 1.28h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.13-2.9-7-1.88-1.88-4.36-2.87-7.01-2.87Zm0 18.06h-.01a8.18 8.18 0 0 1-4.17-1.14l-.3-.18-3.05.89.91-2.98-.2-.31a8.16 8.16 0 0 1-1.26-4.43c0-4.52 3.68-8.2 8.21-8.2 2.19 0 4.25.86 5.8 2.41a8.13 8.13 0 0 1 2.4 5.79c0 4.53-3.68 8.15-8.33 8.15Zm4.49-6.13c-.25-.12-1.45-.72-1.68-.8-.22-.08-.39-.12-.55.12-.16.25-.63.8-.78.96-.14.16-.29.18-.53.06-1.45-.72-2.4-1.29-3.36-2.92-.25-.43.25-.4.72-1.34.08-.16.04-.3-.03-.43-.08-.12-.55-1.33-.76-1.83-.2-.48-.4-.42-.55-.42-.14-.01-.3-.01-.46-.01-.16 0-.42.06-.64.3-.22.25-.85.83-.85 2.02 0 1.19.87 2.34 1 2.5.12.16 1.7 2.59 4.12 3.53 2.04.79 2.45.66 2.9.62.45-.04 1.45-.59 1.65-1.17.2-.57.2-1.06.14-1.17-.06-.1-.22-.17-.4-.27Z"/></svg>
+          </span>
+          WhatsApp
+        </a>
+        <a href="#" onclick="shareTo('x');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231ZM17.083 19.77h1.833L7.084 4.126H5.117Z"/></svg>
+          </span>
+          X (Twitter)
+        </a>
+        <a href="#" onclick="shareTo('instagram');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg>
+          </span>
+          Instagram
+        </a>
+        <button onclick="shareTo('copy')">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </span>
+          Copiar link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="share-toast" id="share-toast">Link copiado!</div>
+
+  <div class="hero">
+    <span class="tag">Educação Financeira · BSafe</span>
+    <h1>Seu investimento rende 12%? <span>Descubra o que sobra de verdade.</span></h1>
+    <p class="subtitle">
+      Quando o rendimento é medido na mesma moeda que perde valor, o lucro no extrato pode ser
+      uma ilusão. Entenda como a régua torta da inflação real distorce qualquer análise de retorno.
+    </p>
+    <div class="meta">
+      <span>📚 Educação Financeira</span>
+      <span>⏱ 7 min de leitura</span>
+      <span>🟠 bsafebitcoin.org</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <article>
+
+      <p>
+        Imagine que você tem uma régua de madeira. Ela marca 30 centímetros e você a usa para medir
+        tudo: móveis, paredes, o crescimento do seu filho. Agora imagine que essa régua encolhe
+        silenciosamente todo ano — mas os números gravados nela não mudam. O que você mede continua
+        marcando "30 cm". Mas o objeto real ficou menor.
+      </p>
+
+      <p>
+        É exatamente isso que acontece quando você usa moeda fiduciária para medir a performance dos
+        seus investimentos. <strong>A régua está encolhendo. E a maioria das pessoas nunca percebe.</strong>
+      </p>
+
+      <h2>O problema da unidade de medida</h2>
+
+      <p>
+        Todo resultado financeiro é uma comparação: quanto entrou, quanto saiu, quanto ficou. Mas para
+        que essa comparação faça sentido, ela precisa ser feita com uma <strong>unidade de medida
+        estável</strong>. É aqui que o sistema monetário atual tem um problema estrutural que raramente
+        aparece nos extratos bancários.
+      </p>
+
+      <p>
+        Quando o seu fundo CDB rende 12% ao ano e o IPCA oficial diz que a inflação foi de 5%, o
+        senso comum conclui: "ganhei 7% de verdade". Mas essa conta tem, pelo menos, dois problemas
+        sérios.
+      </p>
+
+      <p>
+        O primeiro é matemático: não se subtrai percentuais diretamente. O rendimento real deve ser
+        calculado pela fórmula de Fischer — mas isso é apenas o começo. O segundo problema é mais
+        profundo: <strong>o IPCA não é a inflação da sua família. É uma média política.</strong>
+      </p>
+
+      <h2>O que o IPCA realmente mede — e o que ele ignora</h2>
+
+      <p>
+        O IPCA é calculado pelo IBGE com base em uma cesta de produtos e serviços consumidos por
+        famílias com renda entre 1 e 40 salários mínimos, em regiões metropolitanas específicas.
+        Isso já revela o primeiro viés: <strong>quem mora no interior, quem tem renda diferente desse
+        intervalo, ou quem tem um padrão de consumo fora dessa cesta não está sendo medido</strong> com
+        precisão.
+      </p>
+
+      <p>
+        Mas o problema vai além da amostragem. Há componentes metodológicos que tendem a suavizar
+        a inflação percebida:
+      </p>
+
+      <h3>Substituição de produto</h3>
+      <p>
+        Se a picanha ficou cara e a família passou a comprar fraldão, o índice pode registrar que
+        "carne" subiu menos — porque a composição do que as famílias compram mudou. O poder de compra
+        real caiu (você não come mais picanha), mas o índice registra uma alta menor.
+      </p>
+
+      <h3>Ajuste hedônico</h3>
+      <p>
+        Se um celular ficou 20% mais caro, mas o IBGE considera que ele "melhorou 15% em qualidade",
+        o índice computa uma alta de apenas 5%. O seu bolso pagou 20% a mais. O índice registrou 5%.
+      </p>
+
+      <h3>Itens com peso político</h3>
+      <p>
+        Energia elétrica e combustível têm enorme peso no custo de vida real — e ambos são diretamente
+        influenciados por políticas de subsídio e represamento de preços. Quando o governo segura
+        artificialmente o preço da gasolina às vésperas de uma eleição, o IPCA cai. A pressão
+        inflacionária não desaparece — ela é adiada.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">Ponto central</span>
+        <p>
+          O IPCA é uma ferramenta útil como referência macroeconômica. Mas ele <strong>nunca foi
+          desenhado para medir a inflação da sua família específica</strong>. Usar o IPCA como
+          deflator do seu investimento é como calcular sua temperatura corporal com a média
+          de temperatura da sua cidade.
+        </p>
+      </div>
+
+      <h2>A inflação da sua família: o que o extrato não mostra</h2>
+
+      <p>
+        Cada família tem uma cesta de consumo própria — e portanto, uma inflação própria. Considere
+        alguns dos itens que pesam mais no orçamento real das famílias brasileiras e veja como eles
+        se comportaram nos últimos anos:
+      </p>
+
+      <div class="basket-grid">
+        <div class="basket-item">
+          <div class="bi-icon">🏠</div>
+          <div class="bi-label">Aluguel</div>
+          <div class="bi-pct">+30–50%</div>
+          <div class="bi-note">em grandes cidades (2021–2024)</div>
+        </div>
+        <div class="basket-item">
+          <div class="bi-icon">🛒</div>
+          <div class="bi-label">Alimentação</div>
+          <div class="bi-pct">+60%</div>
+          <div class="bi-note">acumulado em 5 anos</div>
+        </div>
+        <div class="basket-item">
+          <div class="bi-icon">🏥</div>
+          <div class="bi-label">Plano de saúde</div>
+          <div class="bi-pct">+80%</div>
+          <div class="bi-note">reajustes desde 2019</div>
+        </div>
+        <div class="basket-item">
+          <div class="bi-icon">🎓</div>
+          <div class="bi-label">Educação</div>
+          <div class="bi-pct">+40–70%</div>
+          <div class="bi-note">mensalidades privadas</div>
+        </div>
+        <div class="basket-item">
+          <div class="bi-icon">⚡</div>
+          <div class="bi-label">Energia elétrica</div>
+          <div class="bi-pct">+50%</div>
+          <div class="bi-note">incluindo bandeiras</div>
+        </div>
+        <div class="basket-item">
+          <div class="bi-icon">🚗</div>
+          <div class="bi-label">Combustível</div>
+          <div class="bi-pct">+45%</div>
+          <div class="bi-note">gasolina comum (5 anos)</div>
+        </div>
+      </div>
+
+      <p>
+        Enquanto isso, o IPCA acumulado no mesmo período registrou algo em torno de 35–40%. A
+        diferença entre o que o índice oficial aponta e o que as famílias sentiram no bolso é o
+        que podemos chamar de <strong>inflação sombra</strong> — real, cotidiana, mas invisível
+        nos extratos.
+      </p>
+
+      <h2>A conta que os extratos não fazem por você</h2>
+
+      <p>
+        Vamos ao exercício central deste artigo. Considere um investimento rendendo 12% ao ano
+        em termos nominais — resultado sólido para a maioria dos produtos de renda fixa. Agora
+        aplique os diferentes deflators possíveis:
+      </p>
+
+      <div class="ruler-visual">
+        <div class="ruler-row">
+          <div class="ruler-label">Rendimento nominal</div>
+          <div class="ruler-bar-wrap">
+            <div class="ruler-bar nominal" style="width: 100%"></div>
+          </div>
+          <div class="ruler-pct" style="color: var(--accent)">+12%</div>
+        </div>
+        <div class="ruler-row">
+          <div class="ruler-label">IPCA oficial (~5%)</div>
+          <div class="ruler-bar-wrap">
+            <div class="ruler-bar inflation" style="width: 42%"></div>
+          </div>
+          <div class="ruler-pct" style="color: var(--red)">−5%</div>
+        </div>
+        <div class="ruler-row">
+          <div class="ruler-label">Ganho real (IPCA)</div>
+          <div class="ruler-bar-wrap">
+            <div class="ruler-bar real" style="width: 58%"></div>
+          </div>
+          <div class="ruler-pct" style="color: var(--green)">+6,7%</div>
+        </div>
+        <div class="ruler-row">
+          <div class="ruler-label">Inflação real (~15%)</div>
+          <div class="ruler-bar-wrap">
+            <div class="ruler-bar shadow" style="width: 100%"></div>
+          </div>
+          <div class="ruler-pct" style="color: var(--red)">−15%</div>
+        </div>
+        <div class="ruler-row">
+          <div class="ruler-label">Ganho real (sombra)</div>
+          <div class="ruler-bar-wrap">
+            <div class="ruler-bar real-shadow" style="width: 18%"></div>
+          </div>
+          <div class="ruler-pct" style="color: var(--text-muted)">−2,6%</div>
+        </div>
+      </div>
+
+      <p style="font-size:13px; color: var(--text-muted); margin-top:-16px; margin-bottom:28px; text-align:center;">
+        Representação visual aproximada. Ganho real calculado pela fórmula de Fischer: (1 + rendimento) / (1 + inflação) − 1.
+      </p>
+
+      <div class="math-card">
+        <div class="math-title">Simulação — R$ 100.000 investidos por 10 anos</div>
+        <div class="math-row">
+          <span class="label-m">Capital inicial</span>
+          <span class="value">R$ 100.000</span>
+        </div>
+        <div class="math-row">
+          <span class="label-m">Valor nominal após 10 anos (12% a.a.)</span>
+          <span class="value orange">R$ 310.585</span>
+        </div>
+        <hr class="math-divider">
+        <div class="math-row">
+          <span class="label-m">Poder de compra real (IPCA 5%)</span>
+          <span class="value green">R$ 190.300 aprox.</span>
+        </div>
+        <div class="math-row">
+          <span class="label-m">Poder de compra real (inflação 15%)</span>
+          <span class="value red">R$ 76.800 aprox.</span>
+        </div>
+        <hr class="math-divider">
+        <div class="math-row">
+          <span class="label-m">Diferença entre as duas leituras</span>
+          <span class="value yellow">R$ 113.500</span>
+        </div>
+      </div>
+
+      <p>
+        No segundo cenário, o extrato mostra triplicação do patrimônio. Mas em poder de compra real —
+        medido pelo custo efetivo da vida da família — o investidor perdeu poder de compra ao longo
+        da década. <strong>O número cresceu. O patrimônio real não.</strong>
+      </p>
+
+      <blockquote>
+        Enriquecer nominalmente enquanto empobrece em poder de compra é o paradoxo central
+        de qualquer sistema que usa moeda inflacionável como unidade de medida do sucesso.
+      </blockquote>
+
+      <h2>Por que isso acontece estruturalmente</h2>
+
+      <p>
+        Não se trata de má-fé de bancos ou gestoras. A questão é estrutural: quando a unidade de conta
+        — o real, o dólar, o euro — pode ser emitida em quantidades ilimitadas por decisão de um banco
+        central, ela inevitavelmente perde poder de compra ao longo do tempo. É a dinâmica do
+        <strong>dinheiro infinito frente a bens e serviços finitos</strong>.
+      </p>
+
+      <p>
+        Ao precificar tudo em moeda fiduciária, o sistema automaticamente ancora qualquer análise de
+        retorno em uma régua que encolhe. Quem ganha mais do que a inflação oficial preserva parte
+        do poder de compra. Quem ganha menos — ou cuja inflação real é maior que o rendimento —
+        perde poder de compra, mesmo que o saldo em conta esteja crescendo.
+      </p>
+
+      <h3>O imposto invisível: IR e IOF sobre rendimentos nominais</h3>
+
+      <p>
+        Há um agravante raramente considerado: o Imposto de Renda incide sobre o <strong>ganho
+        nominal</strong>, não sobre o ganho real. Se você ganhou 12% nominais e a inflação foi 10%,
+        você pagará IR sobre 12% — mesmo que seu ganho real tenha sido de apenas 1,8%. Em alguns
+        cenários, é matematicamente possível pagar imposto sobre um rendimento que, em termos reais,
+        foi negativo.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">Exemplo prático</span>
+        <p>
+          Rendimento nominal: <strong>12%</strong>. IR (alíquota 15%): <strong>−1,8%</strong>.
+          Rendimento líquido: <strong>10,2%</strong>. Inflação real estimada: <strong>13%</strong>.
+          Resultado real após IR: <strong>−2,5%</strong>. O extrato mostra crescimento.
+          O poder de compra caiu.
+        </p>
+      </div>
+
+      <h2>Como Bitcoin muda a unidade de medida</h2>
+
+      <p>
+        Uma alternativa que tem crescido entre investidores que pensam em preservação de poder de
+        compra de longo prazo é precisamente <strong>mudar a unidade de conta</strong>. Em vez de
+        perguntar "meu patrimônio cresceu em reais?", a pergunta passa a ser: "minha fração do
+        estoque monetário global cresceu?"
+      </p>
+
+      <p>
+        O Bitcoin tem oferta máxima de 21 milhões de unidades — e essa regra é definida por código,
+        não por decreto. Isso significa que, diferentemente de qualquer moeda fiduciária, a unidade
+        não pode ser diluída por decisão política. Avaliar o patrimônio em BTC, ou acompanhar o
+        desempenho de investimentos em termos de poder de compra em BTC, oferece uma perspectiva
+        completamente diferente da que os extratos em reais apresentam.
+      </p>
+
+      <div class="compare">
+        <div class="compare-card fiat">
+          <h4>Precificação em Fiat</h4>
+          <ul>
+            <li>Unidade de conta emitida sem limite</li>
+            <li>Inflação corrói rendimentos em silêncio</li>
+            <li>IPCA pode não refletir sua realidade</li>
+            <li>IR incide sobre ganhos nominais</li>
+            <li>Rendimento real positivo exige bater inflação real</li>
+          </ul>
+        </div>
+        <div class="compare-card btc">
+          <h4>Precificação em BTC</h4>
+          <ul>
+            <li>Oferta máxima de 21 milhões — imutável</li>
+            <li>Não pode ser diluído por política monetária</li>
+            <li>Crescimento medido em fração de estoque fixo</li>
+            <li>Proteção estrutural contra expansão monetária</li>
+            <li>Unidade de medida que não encolhe</li>
+          </ul>
+        </div>
+      </div>
+
+      <p>
+        Isso não significa que Bitcoin não tenha volatilidade — tem, e é significativa no curto
+        prazo. O ponto aqui é epistemológico: <strong>qual régua você está usando para medir seu
+        patrimônio?</strong> Uma régua que encolhe todo ano, ou uma que tem comprimento fixo
+        definido por matemática?
+      </p>
+
+      <h2>O que fazer com essa informação</h2>
+
+      <p>
+        A reflexão não é necessariamente "saia de todos os investimentos tradicionais". É mais
+        simples e mais poderosa: <strong>exija clareza sobre o que o rendimento realmente
+        representa</strong>. Quando um gerente de banco ou assessor apresenta um produto com
+        "12% ao ano", pergunte:
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">As perguntas que o extrato não responde</span>
+        <p>
+          → Esse rendimento é bruto ou líquido de IR e IOF?<br><br>
+          → Qual inflação está sendo usada para calcular o ganho real?<br><br>
+          → Esse índice reflete o custo de vida da minha família?<br><br>
+          → Em termos de poder de compra real, estou ganhando ou perdendo?<br><br>
+          → Existe alguma parcela do patrimônio em um ativo que não pode ser diluído?
+        </p>
+      </div>
+
+      <p>
+        Não existe investimento perfeito. Mas existe uma diferença fundamental entre
+        investir compreendendo a realidade — com suas distorções, seus limites e seus riscos —
+        e investir acreditando que o número no extrato conta toda a história.
+      </p>
+
+      <p>
+        A régua pode estar encolhendo. Saber disso já é um passo enorme.
+      </p>
+
+      <div class="cta">
+        <h3>Acompanhe seu patrimônio além do extrato em reais</h3>
+        <p>
+          O dashboard da BSafe Bitcoin permite monitorar seus aportes, seu preço médio em BRL e USD,
+          e comparar a performance do Bitcoin com S&P 500, ouro, CDI e Ibovespa — uma forma de
+          enxergar seu patrimônio com outra régua.
+        </p>
+        <a href="https://bsafebitcoin.org" class="cta-button">Acessar BSafe Bitcoin →</a>
+      </div>
+
+      <div class="author-box">
+        <div class="author-avatar">RB</div>
+        <div class="author-info">
+          <p class="name">Rafael Bered</p>
+          <p class="role">Advogado previdenciarista, educador de mercado de capitais e fundador da BSafe Bitcoin</p>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        Este conteúdo tem caráter exclusivamente educacional e não constitui recomendação de
+        investimento. Os valores e percentuais apresentados são ilustrativos e baseados em
+        referências públicas; cada investidor deve avaliar sua situação específica. Investimentos
+        envolvem riscos, incluindo perda de capital. Consulte profissionais qualificados antes de
+        tomar decisões financeiras.
+      </div>
+
+    </article>
+  </div>
+
+  <script>
+    const shareData = {
+      title: document.title,
+      text: 'Seu investimento rende 12%? Descubra o que sobra de verdade depois da inflação real. BSafe Bitcoin.',
+      url: window.location.href
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById('share-toast');
+      if (message) toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(shareData.url).then(() => {
+        showToast('Link copiado!');
+      }).catch(() => {
+        showToast('Não foi possível copiar o link');
+      });
+    }
+
+    function toggleShareMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('share-menu');
+      menu.classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('share-menu');
+      if (menu.classList.contains('open') && !menu.contains(e.target) && !e.target.closest('.share-btn')) {
+        menu.classList.remove('open');
+      }
+    });
+
+    function shareTo(target) {
+      const menu = document.getElementById('share-menu');
+      menu.classList.remove('open');
+
+      const url = encodeURIComponent(shareData.url);
+      const text = encodeURIComponent(shareData.text);
+
+      switch (target) {
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${text}%20${url}`, '_blank', 'noopener');
+          break;
+        case 'x':
+          window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
+          break;
+        case 'instagram':
+          navigator.clipboard.writeText(shareData.url).then(() => {
+            showToast('Link copiado! Cole no Instagram (Stories, bio ou DM)');
+            window.open('https://www.instagram.com/', '_blank', 'noopener');
+          }).catch(() => {
+            showToast('Não foi possível copiar o link');
+          });
+          break;
+        case 'copy':
+          copyLink();
+          break;
+      }
+    }
+
+    // Animate ruler bars on scroll
+    const bars = document.querySelectorAll('.ruler-bar');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.transition = 'width 1s ease';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    bars.forEach(bar => observer.observe(bar));
+  </script>
+
+</body>
+</html>
