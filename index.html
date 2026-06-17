@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BSafe Bitcoin — Soberania Financeira com Bitcoin</title>
-<meta name="description" content="Aprenda a fazer sua própria autocustódia de Bitcoin com mentoria 1:1, Tapsigner inclusa e configuração guiada da Nunchuk.">
+<meta name="description" content="Aprenda a proteger seu patrimônio com Bitcoin em custódia própria. Hardware wallet configurada, Bitcoin na carteira e consultoria especializada.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -151,22 +151,19 @@ canvas#btcChart{width:100%!important;height:190px!important}
 
 /* PLANOS */
 #planos{background:var(--bg1);border-top:1px solid var(--border)}
-.planos{display:grid;grid-template-columns:1fr;max-width:520px;margin:56px auto 0;gap:22px}
-.plano{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:38px;transition:var(--ease);position:relative;overflow:hidden}
+.planos{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:56px}
+@media(max-width:1100px){.planos{grid-template-columns:1fr 1fr}}
+.plano{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:30px 24px;transition:var(--ease);position:relative;overflow:hidden}
 .plano-feat{border-color:var(--btc);background:linear-gradient(135deg,rgba(247,147,26,.04) 0%,var(--bg) 55%)}
-.plano-feat::before{content:'MAIS POPULAR';position:absolute;top:22px;right:-30px;background:var(--btc);color:#000;font-size:9px;font-weight:700;letter-spacing:.1em;padding:4px 42px;transform:rotate(45deg);font-family:'DM Mono',monospace}
+.plano-feat::before{content:'MAIS POPULAR';position:absolute;top:18px;right:-34px;background:var(--btc);color:#000;font-size:8px;font-weight:700;letter-spacing:.1em;padding:4px 42px;transform:rotate(45deg);font-family:'DM Mono',monospace}
 .plano:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .plano-feat:hover{box-shadow:0 20px 60px rgba(247,147,26,.12)}
 .ptag{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.1em;margin-bottom:14px}
-.pname{font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--white);letter-spacing:.02em;margin-bottom:6px}
+.pname{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--white);letter-spacing:.02em;margin-bottom:6px}
 .pprice{font-family:'DM Mono',monospace;margin-bottom:28px}
-.pprice .amt{font-size:44px;font-weight:500;color:var(--btc)}
+.pprice .amt{font-size:36px;font-weight:500;color:var(--btc)}
 .pprice .cur{font-size:18px;color:var(--muted);margin-right:3px}
 .pprice .per{font-size:13px;color:var(--muted);margin-left:3px}
-.pprice .old{font-size:20px;color:var(--muted2);text-decoration:line-through;margin-right:10px;font-weight:400}
-.launch-tag{display:inline-flex;align-items:center;gap:7px;background:var(--btc-dim);border:1px solid var(--border-btc);border-radius:100px;padding:5px 14px;font-size:10px;font-family:'DM Mono',monospace;color:var(--btc);letter-spacing:.08em;margin-bottom:16px}
-.launch-tag .dot{width:6px;height:6px;background:var(--btc);border-radius:50%;animation:pulse 2s ease infinite}
-.launch-note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5}
 .pdiv{height:1px;background:var(--border);margin:24px 0}
 .pfeats{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
 .pfeats li{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text);line-height:1.5}
@@ -411,7 +408,7 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
   <div class="hero-acts">
     <a href="#planos" class="btn-p">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-      Ver mentoria
+      Ver planos
     </a>
     <a href="#bitcoin" class="btn-g">Entender o Bitcoin →</a>
   </div>
@@ -511,10 +508,10 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
     <p class="slead rev rd2">Deixar Bitcoin na exchange é como guardar ouro na casa do outro. A custódia própria é o passo que transforma você de usuário em soberano financeiro.</p>
     <div class="steps">
       <div class="step rev"><div class="sn">01</div><div class="sc"><h3>Entenda as chaves privadas</h3><p>Seu Bitcoin não está "na carteira" — ele está na blockchain. O que você guarda é uma chave privada: 256 bits que provam que você é o dono. Quem tem a chave, tem o Bitcoin.</p><span class="stag2">CONCEITO FUNDAMENTAL</span></div></div>
-      <div class="step rev rd1"><div class="sn">02</div><div class="sc"><h3>Nunchuk + Tapsigner</h3><p>Nossa recomendação para começar: a Tapsigner, uma carteira de assinatura no formato de cartão que se conecta por NFC ao app Nunchuk. Simples, acessível e com curva de aprendizado suave — ideal para o primeiro passo na autocustódia.</p><span class="stag2">RECOMENDAÇÃO BSAFE</span></div></div>
+      <div class="step rev rd1"><div class="sn">02</div><div class="sc"><h3>A Blockstream Jade</h3><p>Nossa recomendação: open source, firmware auditável publicamente no GitHub, sem chip seguro proprietário opaco. Uma das poucas hardware wallets verdadeiramente transparentes do mercado, com custo-benefício imbatível.</p><span class="stag2">RECOMENDAÇÃO BSAFE</span></div></div>
       <div class="step rev rd2"><div class="sn">03</div><div class="sc"><h3>Seed phrase: o segredo supremo</h3><p>Na inicialização, a carteira gera 24 palavras — a seed phrase. Essas palavras são seu Bitcoin. Grave em metal (nunca papel), guarde em local seguro, jamais fotografe ou digite online em hipótese alguma.</p><span class="stag2">SEGURANÇA CRÍTICA</span></div></div>
-      <div class="step rev"><div class="sn">04</div><div class="sc"><h3>Receba e verifique</h3><p>Gere um endereço, envie um teste pequeno primeiro, confirme na blockchain. Só então mova o restante. Cada etapa guiada pela nossa mentoria — você nunca está sozinho nesse processo.</p><span class="stag2">MENTORIA INCLUSA</span></div></div>
-      <div class="step rev rd1"><div class="sn">05</div><div class="sc"><h3>Você mesmo configurando, com acompanhamento</h3><p>Na mentoria BSafe, você recebe a Tapsigner e configura a Nunchuk junto comigo, ao vivo. Soberania real — e o conhecimento para repetir o processo sozinho sempre que precisar.</p><span class="stag2">MENTORIA BSAFE</span></div></div>
+      <div class="step rev"><div class="sn">04</div><div class="sc"><h3>Receba e verifique</h3><p>Gere um endereço, envie um teste pequeno primeiro, confirme na blockchain. Só então mova o restante. Cada etapa guiada pela nossa consultoria — você nunca está sozinho nesse processo.</p><span class="stag2">CONSULTORIA INCLUSA</span></div></div>
+      <div class="step rev rd1"><div class="sn">05</div><div class="sc"><h3>Tudo pronto na caixa</h3><p>Nosso plano Premium inclui a Jade já configurada e testada, e consultoria 1:1 completa. Soberania real, sem a curva de aprendizado técnico.</p><span class="stag2">PLANO PREMIUM</span></div></div>
     </div>
     <div class="warn rev">
       <div class="wi">⚠️</div>
@@ -526,36 +523,119 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
 <!-- PLANOS -->
 <section id="planos">
   <div class="wrap">
-    <div class="stag rev">PLANO E PREÇO</div>
-    <h2 class="stitle rev rd1">Sua autocustódia,<br>na prática</h2>
-    <p class="slead rev rd2">Mentoria assistida 1:1: você sai sabendo proteger seu próprio Bitcoin, com uma Tapsigner e a Nunchuk configuradas pelas suas próprias mãos.</p>
+    <div class="stag rev">PLANOS E PREÇOS</div>
+    <h2 class="stitle rev rd1">Escolha seu<br>nível de soberania</h2>
+    <p class="slead rev rd2">Do primeiro passo na autocustódia até proteção multisig de nível avançado — com consultoria especializada em cada etapa.</p>
     <div class="planos">
+
+      <!-- PLANO 1: SINGLESIG -->
       <div class="plano plano-feat rev">
-        <div class="ptag">MENTORIA AUTOCUSTÓDIA</div>
-        <div class="pname">BSafe Mentoria</div>
-        <div class="launch-tag"><span class="dot"></span>PREÇO DE LANÇAMENTO</div>
-        <div class="pprice"><span class="old">R$ 997</span><span class="cur">R$</span><span class="amt">697</span><span class="per">único</span></div>
+        <div class="ptag">SINGLESIG · 1 CHAVE</div>
+        <div class="pname">BSafe Solo</div>
+        <div class="pprice"><span class="cur">R$</span><span class="amt">700</span><span class="per">único</span></div>
         <div class="pdiv"></div>
         <ul class="pfeats">
-          <li><strong style="color:var(--off)">1 Tapsigner inclusa</strong> — carteira NFC do tamanho de um cartão</li>
-          <li>Mentoria 1:1 por vídeo (até 90 min, ao vivo)</li>
-          <li>Configuração da Nunchuk + Tapsigner feita por você, com acompanhamento</li>
-          <li>Geração e backup seguro da sua seed phrase</li>
-          <li>Checklist de segurança operacional pós-mentoria</li>
-          <li>Material de apoio (passo a passo em PDF/vídeo)</li>
+          <li><strong style="color:var(--off)">1 Tapsigner inclusa</strong> — carteira NFC no formato cartão</li>
+          <li>Configuração singlesig na Nunchuk</li>
+          <li>Geração e backup seguro da seed phrase</li>
+          <li>Consultoria 1:1 por vídeo (60 min)</li>
+          <li>Checklist de segurança operacional</li>
           <li>Suporte por e-mail por 30 dias</li>
           <li>Acesso ao dashboard BSafe</li>
+          <li class="no">Proteção multisig</li>
+          <li class="no">Chave de recuperação assistida</li>
         </ul>
-        <button class="pbtn pbtn-p" onclick="abrirModal('mentoria')">Quero começar minha autocustódia →</button>
-        <div class="launch-note">Vagas limitadas no preço de lançamento — valor sobe para R$ 997 nas próximas turmas.</div>
+        <button class="pbtn pbtn-p" onclick="abrirModal('solo')">Começar minha autocustódia →</button>
         <div class="mk5box">
           <div class="mk5i">🃏</div>
           <div class="mk5t">
-            <h4>Tapsigner — carteira NFC discreta</h4>
-            <p>Do tamanho de um cartão de crédito. Toque no celular para assinar transações com a Nunchuk.</p>
+            <h4>Primeiro passo na soberania</h4>
+            <p>Uma chave, um dispositivo, total controle. Ideal para quem está saindo das exchanges pela primeira vez.</p>
           </div>
         </div>
       </div>
+
+      <!-- PLANO 2: MULTISIG 2-DE-2 -->
+      <div class="plano rev rd1">
+        <div class="ptag">MULTISIG 2-DE-2 · 2 CHAVES</div>
+        <div class="pname">BSafe Dual</div>
+        <div class="pprice"><span class="cur">R$</span><span class="amt">1.400</span><span class="per">único</span></div>
+        <div class="pdiv"></div>
+        <ul class="pfeats">
+          <li><strong style="color:var(--off)">2 Tapsigners inclusas</strong> — cada uma guarda uma chave</li>
+          <li>Configuração multisig 2-de-2 na Nunchuk</li>
+          <li>Ambas as chaves necessárias para assinar</li>
+          <li>Chaves guardadas em locais físicos distintos</li>
+          <li>Consultoria 1:1 por vídeo (90 min)</li>
+          <li>Estratégia de guarda e backup das chaves</li>
+          <li>Suporte por e-mail por 30 dias</li>
+          <li>Acesso ao dashboard BSafe</li>
+          <li class="no">Chave de recuperação assistida</li>
+        </ul>
+        <button class="pbtn pbtn-g" onclick="abrirModal('dual')">Quero o Dual →</button>
+        <div class="mk5box">
+          <div class="mk5i">🔑</div>
+          <div class="mk5t">
+            <h4>Sem ponto único de falha</h4>
+            <p>Nenhuma Tapsigner sozinha move seus fundos. Se uma for perdida ou roubada, seu Bitcoin permanece seguro.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLANO 3: MULTISIG 2-DE-3 (3 TAPSIGNERS, TODA SOBERANIA SUA) -->
+      <div class="plano rev rd2">
+        <div class="ptag">MULTISIG 2-DE-3 · 3 CHAVES</div>
+        <div class="pname">BSafe Vault</div>
+        <div class="pprice"><span class="cur">R$</span><span class="amt">2.100</span><span class="per">único</span></div>
+        <div class="pdiv"></div>
+        <ul class="pfeats">
+          <li><strong style="color:var(--off)">3 Tapsigners inclusas</strong> — você guarda as três</li>
+          <li>Configuração multisig 2-de-3 na Nunchuk</li>
+          <li>Qualquer 2 das 3 chaves assinam — 1 pode ser perdida</li>
+          <li>Tolerância a falha sem depender de terceiros</li>
+          <li>Chaves distribuídas em até 3 locais distintos</li>
+          <li>Consultoria 1:1 por vídeo (90 min)</li>
+          <li>Guia de sucessão patrimonial orientado</li>
+          <li>Suporte prioritário por 60 dias</li>
+          <li>Acesso ao dashboard BSafe</li>
+        </ul>
+        <button class="pbtn pbtn-g" onclick="abrirModal('vault')">Quero o Vault →</button>
+        <div class="mk5box">
+          <div class="mk5i">🏛️</div>
+          <div class="mk5t">
+            <h4>Soberania total com redundância</h4>
+            <p>Perder uma chave não significa perder o Bitcoin. Máxima segurança sem depender de ninguém.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLANO 4: MULTISIG ASSISTIDO 2-DE-3 (2 TAPSIGNERS + 3ª CHAVE BSAFE) -->
+      <div class="plano rev rd3">
+        <div class="ptag">MULTISIG ASSISTIDO · CARTEIRA BSAFE</div>
+        <div class="pname">BSafe Shield</div>
+        <div class="pprice"><span class="cur">R$</span><span class="amt">2.800</span><span class="per">único</span></div>
+        <div class="pdiv"></div>
+        <ul class="pfeats">
+          <li><strong style="color:var(--off)">2 Tapsigners inclusas</strong> — você guarda as duas</li>
+          <li><strong style="color:var(--off)">BSafe guarda a 3ª chave</strong> — chave de recuperação</li>
+          <li>Configuração multisig 2-de-3 na Nunchuk</li>
+          <li>BSafe nunca move seus fundos sozinha</li>
+          <li>Recuperação assistida se perder um dispositivo</li>
+          <li>Consultoria 1:1 por vídeo (120 min)</li>
+          <li>Plano de sucessão documental orientado</li>
+          <li>Suporte VIP por 90 dias + revisão anual</li>
+          <li>Acesso ao dashboard BSafe</li>
+        </ul>
+        <button class="pbtn pbtn-p" onclick="abrirModal('shield')">Quero o Shield →</button>
+        <div class="mk5box">
+          <div class="mk5i">🛡️</div>
+          <div class="mk5t">
+            <h4>Soberania + rede de segurança</h4>
+            <p>Você controla com 2 chaves. A BSafe só intervém como resgate — jamais como custodiante.</p>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="guar rev">
       <div class="gitem"><span>📧</span>Confirmação imediata por e-mail</div>
@@ -593,7 +673,7 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
           <div class="sbadge">₿ Bitcoin em autocustódia</div>
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap">
-          <a href="#planos" class="btn-p">Conhecer a mentoria →</a>
+          <a href="#planos" class="btn-p">Conhecer os planos →</a>
           <a href="https://wa.me/5551999853576" class="btn-g" target="_blank">📱 WhatsApp</a>
         </div>
       </div>
@@ -758,7 +838,10 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
         <input type="email" placeholder="E-mail" id="me">
         <input type="tel" placeholder="WhatsApp (opcional)" id="mw">
         <select id="mpl">
-          <option value="mentoria">BSafe Mentoria — R$ 697 (lançamento)</option>
+          <option value="solo">BSafe Solo — R$ 700 (Singlesig · 1 Tapsigner)</option>
+          <option value="dual">BSafe Dual — R$ 1.400 (Multisig 2-de-2 · 2 Tapsigners)</option>
+          <option value="vault">BSafe Vault — R$ 2.100 (Multisig 2-de-3 · 3 Tapsigners)</option>
+          <option value="shield">BSafe Shield — R$ 2.800 (Multisig Assistido · Carteira BSafe)</option>
         </select>
         <button class="btn-p" onclick="submeter()" style="width:100%;justify-content:center;margin-top:6px">Confirmar pedido →</button>
         <p style="font-size:10px;color:var(--muted);text-align:center;line-height:1.5">Após confirmar, você receberá as instruções de pagamento por e-mail. Aceitamos PIX, transferência e cartão.</p>
@@ -775,13 +858,13 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 const FAQS=[
-  {q:'Preciso de conhecimento técnico para a mentoria BSafe?',a:'Não. A mentoria foi desenhada para começar do zero. Em uma sessão ao vivo de até 90 minutos, você configura a Nunchuk e a Tapsigner com meu acompanhamento, gera sua seed phrase e aprende a operar com segurança. Você nunca está sozinho no processo.'},
-  {q:'O que é a Tapsigner e por que ela?',a:'A Tapsigner é uma carteira de assinatura no formato de um cartão, que se comunica por NFC com o app Nunchuk no seu celular. É discreta, durável e acessível — uma excelente porta de entrada para quem está começando a autocustódia.'},
-  {q:'Por que usar a Nunchuk?',a:'A Nunchuk é um aplicativo de carteira completo, com interface em português, que suporta hardware wallets como a Tapsigner e permite configurações single-sig e multisig. É uma das opções mais didáticas do mercado para quem está aprendendo.'},
-  {q:'Posso perder meu Bitcoin se o celular quebrar ou eu perder a Tapsigner?',a:'Não, se você guardou a seed phrase corretamente durante a mentoria. Ela é o backup mestre — com as 24 palavras, você recupera tudo em qualquer carteira compatível. Por isso ensinamos a registrar e guardar a seed com segurança.'},
+  {q:'Preciso de conhecimento técnico para adquirir os planos BSafe?',a:'Não. Esse é exatamente o propósito dos nossos planos: a consultoria 1:1 cobre todos os conceitos do zero. No Básico você recebe as duas Tapsigners e saí configurado em 60 minutos. No Premium, a Jade já vem configurada e a consultoria é ainda mais aprofundada. Você nunca está sozinho no processo.'},
+  {q:'O Bitcoin pré-carregado é meu desde o início?',a:'Sim. O Bitcoin é transferido para uma carteira cujas chaves privadas são exclusivamente SUAS — geradas pela sua hardware wallet. Nem a BSafe nem ninguém mais tem acesso após a entrega. Esse é o princípio fundamental da custódia própria.'},
+  {q:'O que é a Blockstream Jade e por que essa?',a:'Uma das poucas hardware wallets verdadeiramente open source do mercado. O firmware é auditável publicamente no GitHub, não usa chip seguro proprietário opaco, e conta com display integrado para verificação de transações. A Blockstream é uma das empresas mais respeitadas do ecossistema Bitcoin.'},
+  {q:'Posso perder meu Bitcoin se a carteira quebrar?',a:'Não, se você guardou a seed phrase corretamente. A hardware wallet é apenas uma interface para suas chaves — que existem nas 24 palavras. Com elas, você recupera tudo em qualquer outra carteira compatível. Por isso ensinamos a gravar a seed em metal, não em papel.'},
   {q:'Isso é seguro? Posso confiar na BSafe?',a:'O BSafe Bitcoin faz parte do ecossistema BSafe, ativo desde 2022 educando brasileiros sobre investimentos internacionais. Todo nosso conteúdo é educacional. Nunca pedimos, gerenciamos ou temos acesso ao seu patrimônio. Soberania significa que você controla tudo.'},
-  {q:'O que está incluso no preço de lançamento?',a:'1 Tapsigner física, mentoria 1:1 ao vivo de até 90 minutos, material de apoio em PDF/vídeo, checklist de segurança e suporte por e-mail por 30 dias. O preço de lançamento é por tempo limitado — depois retorna ao valor cheio de R$ 997.'},
-  {q:'Como funciona o pagamento?',a:'Após preencher o formulário, você recebe as instruções por e-mail (PIX, transferência ou cartão). Em seguida entramos em contato para agendar a mentoria e combinar o envio da Tapsigner.'},
+  {q:'Qual a diferença entre o plano Básico e o Premium?',a:'O Básico inclui 2 Tapsigners (carteiras NFC discretas) + consultoria 1:1 de 60 min — ideal para quem quer autocustódia com custo acessível. O Premium inclui a Jade (hardware wallet com display, open source) já configurada + consultoria 1:1 de 90 min e suporte prioritário por 90 dias.'},
+  {q:'Como funciona o pagamento?',a:'Após preencher o formulário, você recebe as instruções por e-mail (PIX, transferência ou cartão). Essencial: acesso liberado em até 2h. Premium: entramos em contato para agendar a consultoria e combinar a entrega da hardware wallet.'},
   {q:'Bitcoin é legal no Brasil?',a:'Sim. Bitcoin é um ativo legal no Brasil, regulado pela Receita Federal como ativo financeiro sujeito a declaração no IR. A Lei nº 14.478/2022 regulamentou os serviços de criptoativos no país. Comprá-lo, guardá-lo e vendê-lo é completamente legal.'},
 ];
 
@@ -884,13 +967,20 @@ async function fetchBlock(){
 }
 
 // MODAL
+const MODAL_CFG={
+  solo:{title:'BSafe Solo',sub:'1 Tapsigner inclusa + Consultoria 1:1 (60 min). Singlesig — seu primeiro passo na autocustódia real.'},
+  dual:{title:'BSafe Dual',sub:'2 Tapsigners inclusas + Consultoria 1:1 (90 min). Multisig 2-de-2 — sem ponto único de falha.'},
+  vault:{title:'BSafe Vault',sub:'3 Tapsigners inclusas + Consultoria 1:1 (90 min). Multisig 2-de-3 — soberania total com tolerância a falha.'},
+  shield:{title:'BSafe Shield',sub:'2 Tapsigners inclusas + BSafe guarda a 3ª chave. Multisig 2-de-3 assistido com recuperação e plano de sucessão.'},
+};
 function abrirModal(p){
   document.getElementById('mov').classList.add('open');
   document.getElementById('mok').style.display='none';
   document.getElementById('mc').style.display='block';
-  document.getElementById('mpl').value='mentoria';
-  document.getElementById('mt').textContent='BSafe Mentoria';
-  document.getElementById('ms').textContent='Tapsigner inclusa + Mentoria assistida 1:1 (até 90 min). Você sai sabendo proteger seu próprio Bitcoin.';
+  const cfg=MODAL_CFG[p]||MODAL_CFG['solo'];
+  document.getElementById('mpl').value=p;
+  document.getElementById('mt').textContent=cfg.title;
+  document.getElementById('ms').textContent=cfg.sub;
   document.body.style.overflow='hidden';
 }
 function fm(e){
