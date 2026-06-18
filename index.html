@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BSafe Bitcoin — Soberania Financeira com Bitcoin</title>
-<meta name="description" content="Aprenda a proteger seu patrimônio com Bitcoin em custódia própria. Singlesig ou multisig com Tapsigner, consultoria especializada e suporte completo.">
+<meta name="description" content="Aprenda a proteger seu patrimônio com Bitcoin em custódia própria. Hardware wallet configurada, Bitcoin na carteira e consultoria especializada.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -151,17 +151,16 @@ canvas#btcChart{width:100%!important;height:190px!important}
 
 /* PLANOS */
 #planos{background:var(--bg1);border-top:1px solid var(--border)}
-.planos{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:56px}
-@media(max-width:1100px){.planos{grid-template-columns:1fr 1fr}}
-.plano{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:30px 24px;transition:var(--ease);position:relative;overflow:hidden}
+.planos{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:56px}
+.plano{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:28px;transition:var(--ease);position:relative;overflow:hidden;display:flex;flex-direction:column}
 .plano-feat{border-color:var(--btc);background:linear-gradient(135deg,rgba(247,147,26,.04) 0%,var(--bg) 55%)}
-.plano-feat::before{content:'MAIS POPULAR';position:absolute;top:18px;right:-34px;background:var(--btc);color:#000;font-size:8px;font-weight:700;letter-spacing:.1em;padding:4px 42px;transform:rotate(45deg);font-family:'DM Mono',monospace}
+.plano-feat::before{content:'MAIS VENDIDO';position:absolute;top:22px;right:-30px;background:var(--btc);color:#000;font-size:9px;font-weight:700;letter-spacing:.1em;padding:4px 42px;transform:rotate(45deg);font-family:'DM Mono',monospace}
 .plano:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .plano-feat:hover{box-shadow:0 20px 60px rgba(247,147,26,.12)}
 .ptag{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.1em;margin-bottom:14px}
-.pname{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--white);letter-spacing:.02em;margin-bottom:6px}
+.pname{font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--white);letter-spacing:.02em;margin-bottom:6px}
 .pprice{font-family:'DM Mono',monospace;margin-bottom:28px}
-.pprice .amt{font-size:36px;font-weight:500;color:var(--btc)}
+.pprice .amt{font-size:44px;font-weight:500;color:var(--btc)}
 .pprice .cur{font-size:18px;color:var(--muted);margin-right:3px}
 .pprice .per{font-size:13px;color:var(--muted);margin-left:3px}
 .pdiv{height:1px;background:var(--border);margin:24px 0}
@@ -170,7 +169,8 @@ canvas#btcChart{width:100%!important;height:190px!important}
 .pfeats li::before{content:'✓';color:var(--btc);font-weight:700;flex-shrink:0;margin-top:1px}
 .pfeats li.no::before{content:'—';color:var(--muted2)}
 .pfeats li.no{color:var(--muted2)}
-.pbtn{display:block;width:100%;text-align:center;padding:15px;border-radius:var(--rsm);font-weight:700;font-size:14px;letter-spacing:.03em;text-decoration:none;transition:var(--ease);cursor:pointer;border:none;font-family:'DM Sans',sans-serif}
+.pfeats{flex:1}
+.pbtn{display:block;width:100%;text-align:center;padding:13px;border-radius:var(--rsm);font-weight:700;font-size:13px;letter-spacing:.03em;text-decoration:none;transition:var(--ease);cursor:pointer;border:none;font-family:'DM Sans',sans-serif;margin-top:auto}
 .pbtn-g{background:transparent;color:var(--off);border:1px solid var(--border)}
 .pbtn-g:hover{border-color:var(--btc);color:var(--btc)}
 .pbtn-p{background:var(--btc);color:#000}
@@ -304,6 +304,7 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
 .msuccess p{font-size:13px;color:var(--text);line-height:1.6}
 
 /* RESPONSIVE */
+@media(max-width:1100px){.planos{grid-template-columns:1fr 1fr}}
 @media(max-width:768px){
   nav{padding:0 20px;height:100px}
   .mob-menu{top:100px}
@@ -507,11 +508,11 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
     <h2 class="stitle rev rd1">Not your keys,<br>not your coins.</h2>
     <p class="slead rev rd2">Deixar Bitcoin na exchange é como guardar ouro na casa do outro. A custódia própria é o passo que transforma você de usuário em soberano financeiro.</p>
     <div class="steps">
-      <div class="step rev"><div class="sn">01</div><div class="sc"><h3>Entenda as chaves privadas</h3><p>Seu Bitcoin não está "na carteira" — ele está na blockchain. O que você guarda é uma chave privada: 256 bits que provam que você é o dono. Quem tem a chave, tem o Bitcoin. Sem intermediários, sem permissão, sem terceiros.</p><span class="stag2">CONCEITO FUNDAMENTAL</span></div></div>
-      <div class="step rev rd1"><div class="sn">02</div><div class="sc"><h3>A Tapsigner — chave no bolso</h3><p>Nossa recomendação para todos os planos BSafe: do tamanho de um cartão de crédito, opera por NFC direto no celular. Discreta, robusta e acessível — a porta de entrada ideal para quem está saindo da exchange. Todos os planos BSafe incluem pelo menos uma Tapsigner.</p><span class="stag2">RECOMENDAÇÃO BSAFE</span></div></div>
-      <div class="step rev rd2"><div class="sn">03</div><div class="sc"><h3>Multisig: sem ponto único de falha</h3><p>Com duas ou três Tapsigners em locais distintos, nenhuma carteira sozinha pode mover seus fundos. Uma perdida ou roubada não significa Bitcoin perdido. A partir do plano Dual, você opera com essa camada extra de proteção.</p><span class="stag2">PROTEÇÃO AVANÇADA</span></div></div>
-      <div class="step rev"><div class="sn">04</div><div class="sc"><h3>Seed phrase: o segredo supremo</h3><p>Na inicialização, a carteira gera 24 palavras — a seed phrase. Essas palavras são seu Bitcoin. Grave em metal (nunca papel), guarde em local seguro, jamais fotografe ou digite online em hipótese alguma.</p><span class="stag2">SEGURANÇA CRÍTICA</span></div></div>
-      <div class="step rev rd1"><div class="sn">05</div><div class="sc"><h3>Jade e Coldcard: para setups avançados</h3><p>Para quem já domina o básico e busca hardware com display ou recursos de air-gap, a Blockstream Jade e a Coldcard MK5 são excelentes opções. Open source, auditáveis e amplamente adotadas por bitcoiners experientes. Podemos orientar nesses setups mediante consultoria.</p><span class="stag2">NÍVEL AVANÇADO</span></div></div>
+      <div class="step rev"><div class="sn">01</div><div class="sc"><h3>Entenda as chaves privadas</h3><p>Seu Bitcoin não está "na carteira" — ele está na blockchain. O que você guarda é uma chave privada: 256 bits que provam que você é o dono. Quem tem a chave, tem o Bitcoin.</p><span class="stag2">CONCEITO FUNDAMENTAL</span></div></div>
+      <div class="step rev rd1"><div class="sn">02</div><div class="sc"><h3>A Tapsigner — sua primeira chave</h3><p>Uma hardware wallet no formato de cartão de crédito. Toque no celular para assinar transações via NFC — sem cabos, sem drivers. A porta de entrada mais acessível para a autocustódia fria.</p><span class="stag2">INCLUÍDA EM TODOS OS PLANOS</span></div></div>
+      <div class="step rev rd2"><div class="sn">03</div><div class="sc"><h3>Seed phrase: o segredo supremo</h3><p>Na inicialização, a carteira gera 24 palavras — a seed phrase. Essas palavras são seu Bitcoin. Grave em metal (nunca papel), guarde em local seguro, jamais fotografe ou digite online em hipótese alguma.</p><span class="stag2">SEGURANÇA CRÍTICA</span></div></div>
+      <div class="step rev"><div class="sn">04</div><div class="sc"><h3>Receba e verifique</h3><p>Gere um endereço, envie um teste pequeno primeiro, confirme na blockchain. Só então mova o restante. Cada etapa guiada pela nossa consultoria — você nunca está sozinho nesse processo.</p><span class="stag2">CONSULTORIA INCLUSA</span></div></div>
+      <div class="step rev rd1"><div class="sn">05</div><div class="sc"><h3>Acompanhe com o BSafe Dashboard</h3><p>Após configurar, importe seu xpub no dashboard BSafe para monitorar saldo, aportes e performance em tempo real — sem expor suas chaves. Watch-only, 100% seguro.</p><span class="stag2">INCLUSO EM TODOS OS PLANOS</span></div></div>
     </div>
     <div class="warn rev">
       <div class="wi">⚠️</div>
@@ -525,123 +526,121 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
   <div class="wrap">
     <div class="stag rev">PLANOS E PREÇOS</div>
     <h2 class="stitle rev rd1">Escolha seu<br>nível de soberania</h2>
-    <p class="slead rev rd2">Do primeiro passo na autocustódia até proteção multisig de nível avançado — com consultoria especializada em cada etapa.</p>
+    <p class="slead rev rd2">Do primeiro passo até a máxima segurança — cada plano inclui hardware wallet, tutorial gravado e suporte para sair da corretora de vez.</p>
     <div class="planos">
 
-      <!-- PLANO 1: SINGLESIG -->
-      <div class="plano plano-feat rev">
-        <div class="ptag">SINGLESIG · 1 CHAVE</div>
-        <div class="pname">BSafe Solo</div>
-        <div class="pprice"><span class="cur">R$</span><span class="amt">700</span><span class="per">único</span></div>
+      <!-- KIT -->
+      <div class="plano rev">
+        <div class="ptag">PORTA DE ENTRADA</div>
+        <div class="pname">Kit Autocustódia</div>
+        <div class="pprice"><span class="cur">R$</span><span class="amt">397</span><span class="per">único</span></div>
         <div class="pdiv"></div>
         <ul class="pfeats">
-          <li><strong style="color:var(--off)">1 Tapsigner inclusa</strong> — carteira NFC no formato cartão</li>
-          <li>Configuração singlesig na Nunchuk</li>
-          <li>Geração e backup seguro da seed phrase</li>
-          <li>Consultoria 1:1 por vídeo (60 min)</li>
-          <li>Checklist de segurança operacional</li>
-          <li>Suporte por e-mail por 30 dias</li>
+          <li><strong style="color:var(--off)">1 Tapsigner incluída</strong> — carteira NFC no bolso</li>
+          <li>Tutorial gravado completo (6 módulos)</li>
+          <li>Configuração com Nunchuk passo a passo</li>
           <li>Acesso ao dashboard BSafe</li>
-          <li class="no">Proteção multisig</li>
-          <li class="no">Chave de recuperação assistida</li>
+          <li>Grupo fechado no Telegram</li>
+          <li class="no">2ª Tapsigner de backup</li>
+          <li class="no">Consultoria 1:1 ao vivo</li>
+          <li class="no">Configuração multisig</li>
         </ul>
-        <button class="pbtn pbtn-p" onclick="abrirModal('solo')">Começar minha autocustódia →</button>
+        <button class="pbtn pbtn-g" onclick="abrirModal('kit')">Quero o Kit →</button>
         <div class="mk5box">
           <div class="mk5i">🃏</div>
           <div class="mk5t">
-            <h4>Primeiro passo na soberania</h4>
-            <p>Uma chave, um dispositivo, total controle. Ideal para quem está saindo das exchanges pela primeira vez.</p>
+            <h4>Tapsigner — autocustódia no bolso</h4>
+            <p>Toque o cartão no celular para assinar transações. Simples como um pagamento por aproximação.</p>
           </div>
         </div>
       </div>
 
-      <!-- PLANO 2: MULTISIG 2-DE-2 -->
-      <div class="plano rev rd1">
-        <div class="ptag">MULTISIG 2-DE-2 · 2 CHAVES</div>
-        <div class="pname">BSafe Dual</div>
-        <div class="pprice"><span class="cur">R$</span><span class="amt">1.400</span><span class="per">único</span></div>
+      <!-- SINGLESIG -->
+      <div class="plano plano-feat rev rd1">
+        <div class="ptag">SINGLESIG · RECOMENDADO</div>
+        <div class="pname">BSafe Singlesig</div>
+        <div class="pprice"><span class="cur">R$</span><span class="amt">697</span><span class="per">único</span></div>
         <div class="pdiv"></div>
         <ul class="pfeats">
-          <li><strong style="color:var(--off)">2 Tapsigners inclusas</strong> — cada uma guarda uma chave</li>
-          <li>Configuração multisig 2-de-2 na Nunchuk</li>
-          <li>Ambas as chaves necessárias para assinar</li>
-          <li>Chaves guardadas em locais físicos distintos</li>
-          <li>Consultoria 1:1 por vídeo (90 min)</li>
-          <li>Estratégia de guarda e backup das chaves</li>
+          <li><strong style="color:var(--off)">2 Tapsigners incluídas</strong> — carteira + backup físico</li>
+          <li>Tutorial gravado completo (6 módulos)</li>
+          <li>Consultoria 1:1 por vídeo (45 min)</li>
+          <li>Configuração com Nunchuk passo a passo</li>
+          <li>Seed phrase: como gerar e guardar</li>
           <li>Suporte por e-mail por 30 dias</li>
           <li>Acesso ao dashboard BSafe</li>
-          <li class="no">Chave de recuperação assistida</li>
+          <li>Grupo fechado no Telegram</li>
+          <li class="no">Configuração multisig</li>
         </ul>
-        <button class="pbtn pbtn-g" onclick="abrirModal('dual')">Quero o Dual →</button>
+        <button class="pbtn pbtn-p" onclick="abrirModal('singlesig')">Quero o Singlesig →</button>
         <div class="mk5box">
           <div class="mk5i">🔑</div>
           <div class="mk5t">
-            <h4>Sem ponto único de falha</h4>
-            <p>Nenhuma Tapsigner sozinha move seus fundos. Se uma for perdida ou roubada, seu Bitcoin permanece seguro.</p>
+            <h4>2 chaves, soberania total</h4>
+            <p>Uma Tapsigner para usar, outra guardada em segurança. Você nunca perde o acesso ao seu Bitcoin.</p>
           </div>
         </div>
       </div>
 
-      <!-- PLANO 3: MULTISIG 2-DE-3 (3 TAPSIGNERS, TODA SOBERANIA SUA) -->
+      <!-- MULTISIG -->
       <div class="plano rev rd2">
-        <div class="ptag">MULTISIG 2-DE-3 · 3 CHAVES</div>
-        <div class="pname">BSafe Vault</div>
-        <div class="pprice"><span class="cur">R$</span><span class="amt">2.100</span><span class="per">único</span></div>
+        <div class="ptag">MULTISIG · SEGURANÇA MÁXIMA</div>
+        <div class="pname">BSafe Multisig</div>
+        <div class="pprice"><span class="cur">R$</span><span class="amt">997</span><span class="per">único</span></div>
         <div class="pdiv"></div>
         <ul class="pfeats">
-          <li><strong style="color:var(--off)">3 Tapsigners inclusas</strong> — você guarda as três</li>
-          <li>Configuração multisig 2-de-3 na Nunchuk</li>
-          <li>Qualquer 2 das 3 chaves assinam — 1 pode ser perdida</li>
-          <li>Tolerância a falha sem depender de terceiros</li>
-          <li>Chaves distribuídas em até 3 locais distintos</li>
-          <li>Consultoria 1:1 por vídeo (90 min)</li>
-          <li>Guia de sucessão patrimonial orientado</li>
-          <li>Suporte prioritário por 60 dias</li>
+          <li><strong style="color:var(--off)">3 Tapsigners incluídas</strong> — configuração 2-de-3</li>
+          <li>Tutorial gravado completo (6 módulos)</li>
+          <li>Consultoria 1:1 por vídeo (60 min)</li>
+          <li>Configuração multisig 2-de-3 com Nunchuk</li>
+          <li>Seed phrase: como gerar e guardar</li>
+          <li>Suporte por e-mail por 60 dias</li>
           <li>Acesso ao dashboard BSafe</li>
+          <li>Grupo fechado no Telegram</li>
         </ul>
-        <button class="pbtn pbtn-g" onclick="abrirModal('vault')">Quero o Vault →</button>
-        <div class="mk5box">
-          <div class="mk5i">🏛️</div>
-          <div class="mk5t">
-            <h4>Soberania total com redundância</h4>
-            <p>Perder uma chave não significa perder o Bitcoin. Máxima segurança sem depender de ninguém.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- PLANO 4: MULTISIG ASSISTIDO 2-DE-3 (2 TAPSIGNERS + 3ª CHAVE BSAFE) -->
-      <div class="plano rev rd3">
-        <div class="ptag">MULTISIG ASSISTIDO · CARTEIRA BSAFE</div>
-        <div class="pname">BSafe Shield</div>
-        <div class="pprice"><span class="cur">R$</span><span class="amt">2.800</span><span class="per">único</span></div>
-        <div class="pdiv"></div>
-        <ul class="pfeats">
-          <li><strong style="color:var(--off)">2 Tapsigners inclusas</strong> — você guarda as duas</li>
-          <li><strong style="color:var(--off)">BSafe guarda a 3ª chave</strong> — chave de recuperação</li>
-          <li>Configuração multisig 2-de-3 na Nunchuk</li>
-          <li>BSafe nunca move seus fundos sozinha</li>
-          <li>Recuperação assistida se perder um dispositivo</li>
-          <li>Consultoria 1:1 por vídeo (120 min)</li>
-          <li>Plano de sucessão documental orientado</li>
-          <li>Suporte VIP por 90 dias + revisão anual</li>
-          <li>Acesso ao dashboard BSafe</li>
-        </ul>
-        <button class="pbtn pbtn-p" onclick="abrirModal('shield')">Quero o Shield →</button>
+        <button class="pbtn pbtn-g" onclick="abrirModal('multisig')">Quero o Multisig →</button>
         <div class="mk5box">
           <div class="mk5i">🛡️</div>
           <div class="mk5t">
-            <h4>Soberania + rede de segurança</h4>
-            <p>Você controla com 2 chaves. A BSafe só intervém como resgate — jamais como custodiante.</p>
+            <h4>3 chaves, 2 necessárias para gastar</h4>
+            <p>Uma chave pode ser perdida e seu Bitcoin continua 100% seguro e acessível. O padrão de quem leva a sério.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PREMIUM -->
+      <div class="plano rev rd3">
+        <div class="ptag">PREMIUM · PATRIMÔNIO RELEVANTE</div>
+        <div class="pname">BSafe Premium</div>
+        <div class="pprice"><span class="cur">R$</span><span class="amt">2.500</span><span class="per">único</span></div>
+        <div class="pdiv"></div>
+        <ul class="pfeats">
+          <li><strong style="color:var(--off)">Blockstream Jade inclusa</strong> — hardware com display</li>
+          <li><strong style="color:var(--off)">Configurada, testada e pronta para uso</strong></li>
+          <li>1 Tapsigner de backup inclusa</li>
+          <li>Tutorial gravado completo (6 módulos)</li>
+          <li>Consultoria 1:1 por vídeo (90 min)</li>
+          <li>Setup de seed phrase em metal</li>
+          <li>Guia personalizado de segurança operacional</li>
+          <li>Suporte prioritário por 90 dias</li>
+          <li>Acesso ao dashboard BSafe</li>
+        </ul>
+        <button class="pbtn pbtn-g" onclick="abrirModal('premium')">Quero o Premium →</button>
+        <div class="mk5box">
+          <div class="mk5i">🔒</div>
+          <div class="mk5t">
+            <h4>Jade inclusa e configurada</h4>
+            <p>Hardware wallet open source com display. Verifique cada transação na tela antes de assinar.</p>
           </div>
         </div>
       </div>
 
     </div>
     <div class="guar rev">
-      <div class="gitem"><span>📧</span>Confirmação imediata por e-mail</div>
+      <div class="gitem"><span>📦</span>Hardware enviada pelos Correios</div>
       <div class="gitem"><span>🔒</span>Pagamento 100% seguro</div>
       <div class="gitem"><span>🇧🇷</span>Entrega para todo o Brasil</div>
-      <div class="gitem"><span>✅</span>Consultoria especializada</div>
+      <div class="gitem"><span>✅</span>Tutorial gravado incluso em todos os planos</div>
     </div>
   </div>
 </section>
@@ -838,10 +837,10 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
         <input type="email" placeholder="E-mail" id="me">
         <input type="tel" placeholder="WhatsApp (opcional)" id="mw">
         <select id="mpl">
-          <option value="solo">BSafe Solo — R$ 700 (Singlesig · 1 Tapsigner)</option>
-          <option value="dual">BSafe Dual — R$ 1.400 (Multisig 2-de-2 · 2 Tapsigners)</option>
-          <option value="vault">BSafe Vault — R$ 2.100 (Multisig 2-de-3 · 3 Tapsigners)</option>
-          <option value="shield">BSafe Shield — R$ 2.800 (Multisig Assistido · Carteira BSafe)</option>
+          <option value="kit">Kit Autocustódia — R$ 397</option>
+          <option value="singlesig">BSafe Singlesig — R$ 697</option>
+          <option value="multisig">BSafe Multisig — R$ 997</option>
+          <option value="premium">BSafe Premium — R$ 2.500</option>
         </select>
         <button class="btn-p" onclick="submeter()" style="width:100%;justify-content:center;margin-top:6px">Confirmar pedido →</button>
         <p style="font-size:10px;color:var(--muted);text-align:center;line-height:1.5">Após confirmar, você receberá as instruções de pagamento por e-mail. Aceitamos PIX, transferência e cartão.</p>
@@ -858,13 +857,13 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 const FAQS=[
-  {q:'Preciso de conhecimento técnico para os planos BSafe?',a:'Não. A consultoria 1:1 cobre tudo do zero. No BSafe Solo você configura uma Tapsigner em 60 minutos. Nos planos Dual e Vault, expandimos para multisig com duas ou três Tapsigners. No Shield, a BSafe também guarda uma chave de recuperação. Você nunca está sozinho no processo.'},
-  {q:'O que é a Tapsigner e por que todos os planos usam ela?',a:'A Tapsigner é uma hardware wallet no formato de cartão de crédito que opera por NFC. Você encosta no celular para assinar transações — sem cabo, sem complicação. É discreta, robusta e desenvolvida pela Blockstream, uma das empresas mais respeitadas do ecossistema Bitcoin. Todos os planos BSafe são construídos sobre a Tapsigner porque ela oferece o melhor equilíbrio entre segurança e usabilidade para a maioria dos usuários.'},
-  {q:'Quando faz sentido usar Jade ou Coldcard?',a:'A Blockstream Jade e a Coldcard MK5 são excelentes opções para quem já domina o básico e deseja recursos adicionais: display integrado para verificação de transações, suporte a air-gap ou operação totalmente offline. São hardwares mais avançados, ideais para bitcoiners experientes. Podemos orientar nesses setups via consultoria personalizada — entre em contato.'},
-  {q:'Posso perder meu Bitcoin se a Tapsigner quebrar ou sumir?',a:'Não, se você guardou a seed phrase corretamente. A Tapsigner é apenas a interface para suas chaves — que existem nas 24 palavras. Com elas, você recupera tudo em qualquer carteira compatível. Nos planos multisig (Dual, Vault, Shield), perder uma chave é ainda menos crítico: você só precisa de 2 das 3 para operar.'},
-  {q:'O que é multisig e por que é mais seguro?',a:'Multisig (multi-assinatura) significa que mais de uma chave é necessária para mover seus fundos. No Dual (2-de-2), as duas Tapsigners precisam assinar. No Vault e no Shield (2-de-3), qualquer 2 das 3 chaves bastam — o que significa tolerância a perda de um dispositivo sem perder acesso ao Bitcoin.'},
-  {q:'No BSafe Shield, a BSafe pode mover meu Bitcoin sozinha?',a:'Não. No Shield, a BSafe guarda apenas uma das três chaves — a chave de recuperação. Como a carteira exige 2-de-3 assinaturas para qualquer transação, a BSafe sozinha não consegue movimentar nada. Só intervimos se você nos acionar para uma recuperação assistida. Você mantém a soberania completa.'},
-  {q:'Como funciona o pagamento?',a:'Após preencher o formulário, você recebe as instruções de pagamento por e-mail (PIX, transferência ou cartão). Em seguida agendamos a consultoria e combinamos o envio das Tapsigners para o seu endereço.'},
+  {q:'Preciso de conhecimento técnico para adquirir os planos BSafe?',a:'Não. O tutorial gravado cobre tudo do zero — desde o conceito de autocustódia até a configuração completa com Nunchuk e Tapsigner. Nos planos com consultoria 1:1, você ainda tem suporte ao vivo para tirar dúvidas. Você nunca está sozinho no processo.'},
+  {q:'Qual a diferença entre o Kit e o Singlesig?',a:'O Kit inclui 1 Tapsigner e o tutorial gravado — perfeito para quem quer dar o primeiro passo com menor investimento. O Singlesig inclui 2 Tapsigners (uma para usar, outra de backup físico) e ainda uma consultoria 1:1 de 45 minutos. Para a maioria das pessoas, o Singlesig é o plano ideal.'},
+  {q:'O que é o plano Multisig e para quem é indicado?',a:'O Multisig inclui 3 Tapsigners configuradas em esquema 2-de-3: você precisa de 2 das 3 chaves para autorizar qualquer transação. Mesmo que perca uma das chaves, seu Bitcoin continua 100% acessível. É o padrão recomendado para quem tem um patrimônio em Bitcoin crescendo e quer segurança máxima mantendo soberania total.'},
+  {q:'O que é a Blockstream Jade e por que o plano Premium a usa?',a:'A Jade é uma das poucas hardware wallets verdadeiramente open source do mercado. O firmware é auditável publicamente no GitHub, possui display integrado para verificar cada transação antes de assinar, e não usa chip seguro proprietário opaco. No plano Premium ela já vem configurada, testada e pronta para uso.'},
+  {q:'Posso perder meu Bitcoin se a Tapsigner for danificada ou perdida?',a:'Não, se você guardou a seed phrase corretamente. A Tapsigner é apenas uma interface para suas chaves — que existem nas palavras de recuperação. Com elas, você recupera tudo em qualquer carteira compatível. Por isso ensinamos como gerar e guardar a seed com segurança em todos os planos. No Multisig, uma chave pode até ser perdida permanentemente sem risco ao seu Bitcoin.'},
+  {q:'Isso é seguro? Posso confiar na BSafe?',a:'O BSafe Bitcoin faz parte do ecossistema BSafe, ativo desde 2022 educando brasileiros sobre proteção patrimonial. Todo nosso conteúdo é educacional. Nunca pedimos, gerenciamos ou temos acesso ao seu patrimônio. Soberania significa que você controla tudo — as chaves são suas e de mais ninguém.'},
+  {q:'Como funciona o pagamento e a entrega?',a:'Após preencher o formulário, você recebe as instruções de pagamento por e-mail (PIX, transferência ou cartão). O hardware (Tapsigner ou Jade) é enviado pelos Correios para todo o Brasil. O acesso ao tutorial gravado e ao dashboard BSafe é liberado por e-mail assim que o pagamento é confirmado.'},
   {q:'Bitcoin é legal no Brasil?',a:'Sim. Bitcoin é um ativo legal no Brasil, regulado pela Receita Federal como ativo financeiro sujeito a declaração no IR. A Lei nº 14.478/2022 regulamentou os serviços de criptoativos no país. Comprá-lo, guardá-lo e vendê-lo é completamente legal.'},
 ];
 
@@ -967,20 +966,20 @@ async function fetchBlock(){
 }
 
 // MODAL
-const MODAL_CFG={
-  solo:{title:'BSafe Solo',sub:'1 Tapsigner inclusa + Consultoria 1:1 (60 min). Singlesig — seu primeiro passo na autocustódia real.'},
-  dual:{title:'BSafe Dual',sub:'2 Tapsigners inclusas + Consultoria 1:1 (90 min). Multisig 2-de-2 — sem ponto único de falha.'},
-  vault:{title:'BSafe Vault',sub:'3 Tapsigners inclusas + Consultoria 1:1 (90 min). Multisig 2-de-3 — soberania total com tolerância a falha.'},
-  shield:{title:'BSafe Shield',sub:'2 Tapsigners inclusas + BSafe guarda a 3ª chave. Multisig 2-de-3 assistido com recuperação e plano de sucessão.'},
+const PLANOS_INFO={
+  kit:{nome:'Kit Autocustódia',sub:'1 Tapsigner + Tutorial gravado completo. O primeiro passo para sair da corretora.'},
+  singlesig:{nome:'BSafe Singlesig',sub:'2 Tapsigners + Tutorial + Consultoria 1:1 (45 min). Autocustódia completa com backup físico.'},
+  multisig:{nome:'BSafe Multisig',sub:'3 Tapsigners + Tutorial + Consultoria 1:1 (60 min). Segurança máxima em autocustódia.'},
+  premium:{nome:'BSafe Premium',sub:'Jade configurada + Tapsigner de backup + Consultoria 1:1 (90 min). O pacote completo de soberania.'}
 };
 function abrirModal(p){
   document.getElementById('mov').classList.add('open');
   document.getElementById('mok').style.display='none';
   document.getElementById('mc').style.display='block';
-  const cfg=MODAL_CFG[p]||MODAL_CFG['solo'];
   document.getElementById('mpl').value=p;
-  document.getElementById('mt').textContent=cfg.title;
-  document.getElementById('ms').textContent=cfg.sub;
+  const info=PLANOS_INFO[p]||PLANOS_INFO.singlesig;
+  document.getElementById('mt').textContent=info.nome;
+  document.getElementById('ms').textContent=info.sub;
   document.body.style.overflow='hidden';
 }
 function fm(e){
