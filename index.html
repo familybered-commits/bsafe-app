@@ -285,24 +285,6 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
 .rev.vis{opacity:1;transform:translateY(0)}
 .rd1{transition-delay:.1s}.rd2{transition-delay:.2s}.rd3{transition-delay:.3s}
 
-/* MODAL */
-.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:2000;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(10px)}
-.modal-ov.open{display:flex}
-.modal{background:var(--bg2);border:1px solid var(--border-btc);border-radius:var(--r);padding:44px 36px;max-width:500px;width:100%;position:relative;animation:fup .3s ease}
-.mcl{position:absolute;top:14px;right:14px;background:var(--bg3);border:1px solid var(--border);border-radius:50%;width:30px;height:30px;cursor:pointer;color:var(--muted);font-size:14px;display:flex;align-items:center;justify-content:center;transition:var(--ease)}
-.mcl:hover{border-color:var(--btc);color:var(--off)}
-.mtitle{font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--white);margin-bottom:7px}
-.msub{font-size:13px;color:var(--text);margin-bottom:28px;line-height:1.6}
-.mform{display:flex;flex-direction:column;gap:12px}
-.mform input,.mform select{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rsm);padding:13px 15px;font-size:13px;color:var(--white);font-family:'DM Sans',sans-serif;transition:border-color .2s;outline:none}
-.mform input:focus,.mform select:focus{border-color:var(--btc)}
-.mform select{appearance:none;cursor:pointer}
-.mform select option{background:var(--bg2)}
-.msuccess{display:none;text-align:center;padding:20px 0}
-.msuccess .mc{font-size:44px;margin-bottom:14px}
-.msuccess h3{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--btc);margin-bottom:7px}
-.msuccess p{font-size:13px;color:var(--text);line-height:1.6}
-
 /* RESPONSIVE */
 @media(max-width:1100px){.planos{grid-template-columns:1fr 1fr}}
 @media(max-width:768px){
@@ -545,7 +527,7 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
           <li class="no">Consultoria 1:1 ao vivo</li>
           <li class="no">Configuração multisig</li>
         </ul>
-        <button class="pbtn pbtn-g" onclick="abrirModal('kit')">Quero o Kit →</button>
+        <a class="pbtn pbtn-g" href="https://buy.stripe.com/test_28EfZh29T9te8qEfbE8Ra00" target="_blank" rel="noopener">Quero o Kit →</a>
         <div class="mk5box">
           <div class="mk5i">🃏</div>
           <div class="mk5t">
@@ -572,7 +554,7 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
           <li>Grupo fechado no Telegram</li>
           <li class="no">3ª Tapsigner (quórum 2-de-3)</li>
         </ul>
-        <button class="pbtn pbtn-p" onclick="abrirModal('singlesig')">Quero o BSafe Multisig →</button>
+        <a class="pbtn pbtn-p" href="https://buy.stripe.com/test_5kQ5kD7ud7l622g0gK8Ra01" target="_blank" rel="noopener">Quero o BSafe Multisig →</a>
         <div class="mk5box">
           <div class="mk5i">🔑</div>
           <div class="mk5t">
@@ -598,7 +580,7 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
           <li>Acesso ao dashboard BSafe</li>
           <li>Grupo fechado no Telegram</li>
         </ul>
-        <button class="pbtn pbtn-g" onclick="abrirModal('multisig')">Quero o Multisig Pro →</button>
+        <a class="pbtn pbtn-g" href="https://buy.stripe.com/test_aFa4gz6q9cFq4ao8Ng8Ra02" target="_blank" rel="noopener">Quero o Multisig Pro →</a>
         <div class="mk5box">
           <div class="mk5i">🛡️</div>
           <div class="mk5t">
@@ -625,7 +607,7 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
           <li>Suporte prioritário por 90 dias</li>
           <li>Acesso ao dashboard BSafe</li>
         </ul>
-        <button class="pbtn pbtn-g" onclick="abrirModal('premium')">Quero o Premium →</button>
+        <a class="pbtn pbtn-g" href="https://buy.stripe.com/test_aFa7sL3dX7l6ayM7Jc8Ra03" target="_blank" rel="noopener">Quero o Premium →</a>
         <div class="mk5box">
           <div class="mk5i">🔒</div>
           <div class="mk5t">
@@ -825,35 +807,6 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
   <div class="fcopy">© 2025 BSafe Bitcoin · bsafebitcoin.org · Conteúdo exclusivamente educacional</div>
 </footer>
 
-<!-- MODAL -->
-<div class="modal-ov" id="mov" onclick="fm(event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <button class="mcl" onclick="fm()">✕</button>
-    <div id="mc">
-      <div class="mtitle" id="mt">Garantir acesso</div>
-      <div class="msub" id="ms">Preencha seus dados e receba as instruções por e-mail.</div>
-      <div class="mform">
-        <input type="text" placeholder="Nome completo" id="mn">
-        <input type="email" placeholder="E-mail" id="me">
-        <input type="tel" placeholder="WhatsApp (opcional)" id="mw">
-        <select id="mpl">
-          <option value="kit">Kit Autocustódia — R$ 397</option>
-          <option value="singlesig">BSafe Multisig (1-de-2) — R$ 697</option>
-          <option value="multisig">BSafe Multisig Pro (2-de-3) — R$ 997</option>
-          <option value="premium">BSafe Premium — R$ 2.500</option>
-        </select>
-        <button class="btn-p" onclick="submeter()" style="width:100%;justify-content:center;margin-top:6px">Confirmar pedido →</button>
-        <p style="font-size:10px;color:var(--muted);text-align:center;line-height:1.5">Após confirmar, você receberá as instruções de pagamento por e-mail. Aceitamos PIX, transferência e cartão.</p>
-      </div>
-    </div>
-    <div class="msuccess" id="mok">
-      <div class="mc">₿</div>
-      <h3>Pedido recebido!</h3>
-      <p>Enviamos as instruções para seu e-mail.<br>Bem-vindo ao caminho da soberania financeira.</p>
-    </div>
-  </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 const FAQS=[
@@ -963,36 +916,6 @@ async function fetchBlock(){
     const sub=document.getElementById('d-bsub');
     if(sub)sub.textContent='Próx. halving em ~'+fmt(next-h)+' blocos';
   }catch(e){}
-}
-
-// MODAL
-const PLANOS_INFO={
-  kit:{nome:'Kit Autocustódia',sub:'1 Tapsigner + Tutorial gravado completo. Singlesig — sua primeira chave, sua custódia.'},
-  singlesig:{nome:'BSafe Multisig',sub:'2 Tapsigners + Tutorial + Consultoria 1:1 (45 min). Multisig 1-de-2 — qualquer uma das duas chaves basta para gastar.'},
-  multisig:{nome:'BSafe Multisig Pro',sub:'3 Tapsigners + Tutorial + Consultoria 1:1 (60 min). Multisig 2-de-3 — perde uma chave, seu Bitcoin continua seguro.'},
-  premium:{nome:'BSafe Premium',sub:'Jade configurada + Tapsigner de backup + Consultoria 1:1 (90 min). O pacote completo de soberania.'}
-};
-function abrirModal(p){
-  document.getElementById('mov').classList.add('open');
-  document.getElementById('mok').style.display='none';
-  document.getElementById('mc').style.display='block';
-  document.getElementById('mpl').value=p;
-  const info=PLANOS_INFO[p]||PLANOS_INFO.singlesig;
-  document.getElementById('mt').textContent=info.nome;
-  document.getElementById('ms').textContent=info.sub;
-  document.body.style.overflow='hidden';
-}
-function fm(e){
-  if(e&&e.target!==document.getElementById('mov'))return;
-  document.getElementById('mov').classList.remove('open');
-  document.body.style.overflow='';
-}
-function submeter(){
-  const n=document.getElementById('mn').value.trim(),e=document.getElementById('me').value.trim();
-  if(!n){alert('Informe seu nome.');return;}
-  if(!e.includes('@')){alert('E-mail inválido.');return;}
-  document.getElementById('mc').style.display='none';
-  document.getElementById('mok').style.display='block';
 }
 
 // CONTATO
