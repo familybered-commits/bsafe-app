@@ -1,0 +1,8 @@
+{
+  "name": "bsafe-bitcoin",
+  "version": "1.0.0",
+  "description": "BSafe Bitcoin - webhook handler",
+  "dependencies": {
+    "stripe": "^14.0.0"
+  }
+}

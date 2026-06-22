@@ -1,22 +1,8 @@
-# netlify.toml
-
 [build]
   publish = "."
   functions = "netlify/functions"
 
-[functions]
-  node_bundler = "esbuild"
-
-[context.production.environment]
-  NODE_VERSION = "18"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-
 [[redirects]]
-  from = "/api/xpub"
-  to = "/.netlify/functions/xpub"
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
   status = 200
