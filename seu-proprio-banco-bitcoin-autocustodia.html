@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seja Seu Próprio Banco: Vantagens e Responsabilidades da Autocustódia Bitcoin | BSafe Bitcoin</title>
+<style>
+  :root {
+    --bg: #0b0e11;
+    --bg-card: #14181d;
+    --accent: #f7931a;
+    --accent-soft: #f7931a22;
+    --text: #e8eaed;
+    --text-muted: #9aa3ad;
+    --border: #232a31;
+    --green: #16c784;
+    --red: #ea3943;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar a.back {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .topbar a.back:hover { color: var(--text); }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    font-family: inherit;
+  }
+
+  .share-btn:hover {
+    background: var(--accent);
+    color: #1a1300;
+    transform: translateY(-1px);
+  }
+
+  .share-wrap {
+    position: relative;
+  }
+
+  .share-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 190px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    z-index: 60;
+  }
+
+  .share-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .share-menu a,
+  .share-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .share-menu a:hover,
+  .share-menu button:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .share-menu .share-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .share-menu .share-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .share-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 100;
+  }
+
+  .share-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* HERO */
+  .hero {
+    padding: 60px 24px 50px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft) 0%, transparent 60%);
+  }
+
+  .hero .tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero h1 span {
+    color: var(--accent);
+  }
+
+  .hero .subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 20px;
+  }
+
+  .hero .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* CONTENT */
+  article {
+    padding-top: 48px;
+  }
+
+  article h2 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 48px 0 18px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  article h2::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 26px;
+    background: var(--accent);
+    border-radius: 3px;
+  }
+
+  article h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    color: var(--accent);
+  }
+
+  article p {
+    font-size: 17px;
+    color: #d4d8dc;
+    margin-bottom: 18px;
+  }
+
+  article strong {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  article a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+  }
+
+  article a:hover {
+    border-bottom-color: var(--accent);
+  }
+
+  /* HIGHLIGHT BOX */
+  .highlight-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 28px 0;
+  }
+
+  .highlight-box .label {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .highlight-box p {
+    margin-bottom: 0;
+    font-size: 17px;
+  }
+
+  /* COMPARISON TABLE */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0 32px;
+  }
+
+  @media (max-width: 600px) {
+    .compare { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 28px; }
+  }
+
+  .compare-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .compare-card.custodial { border-top: 3px solid var(--red); }
+  .compare-card.self { border-top: 3px solid var(--accent); }
+
+  .compare-card h4 {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .compare-card.custodial h4 { color: var(--red); }
+  .compare-card.self h4 { color: var(--accent); }
+
+  .compare-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .compare-card li {
+    font-size: 15px;
+    color: var(--text-muted);
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .compare-card.custodial li::before {
+    content: "✗";
+    position: absolute;
+    left: 0;
+    color: var(--red);
+    font-weight: 800;
+  }
+
+  .compare-card.self li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  /* RESPONSABILITIES GRID */
+  .resp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 28px 0 32px;
+  }
+
+  @media (max-width: 600px) {
+    .resp-grid { grid-template-columns: 1fr; }
+  }
+
+  .resp-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .resp-card .resp-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .resp-card h4 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .resp-card p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 0;
+    line-height: 1.6;
+  }
+
+  /* QUOTE */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 6px 0 6px 24px;
+    margin: 28px 0;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--text);
+  }
+
+  blockquote cite {
+    display: block;
+    margin-top: 8px;
+    font-size: 14px;
+    font-style: normal;
+    color: var(--text-muted);
+  }
+
+  /* STEPS */
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 24px 0 32px;
+  }
+
+  .step-item {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .step-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 900;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step-content h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .step-content p {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin-bottom: 0;
+    line-height: 1.6;
+  }
+
+  /* CTA */
+  .cta {
+    background: linear-gradient(135deg, var(--accent-soft), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin: 48px 0 12px;
+  }
+
+  .cta h3 {
+    color: var(--text);
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+
+  .cta p {
+    color: var(--text-muted);
+    margin-bottom: 22px;
+  }
+
+  .cta-button {
+    display: inline-block;
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+  }
+
+  .cta-button:hover {
+    transform: translateY(-2px);
+  }
+
+  /* FOOTER NOTE */
+  .disclaimer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .author-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 40px;
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    color: #1a1300;
+    flex-shrink: 0;
+  }
+
+  .author-info p {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .author-info .name {
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .author-info .role {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="educacao.html" class="back">← Voltar ao site</a>
+    <div class="share-wrap">
+      <button class="share-btn" onclick="toggleShareMenu(event)">↗ Compartilhar</button>
+      <div class="share-menu" id="share-menu">
+        <a href="#" onclick="shareTo('whatsapp');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.86.5 3.6 1.43 5.1L2 22l5.16-1.5a9.84 9.84 0 0 0 4.87 1.28h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.13-2.9-7-1.88-1.88-4.36-2.87-7.01-2.87Zm0 18.06h-.01a8.18 8.18 0 0 1-4.17-1.14l-.3-.18-3.05.89.91-2.98-.2-.31a8.16 8.16 0 0 1-1.26-4.43c0-4.52 3.68-8.2 8.21-8.2 2.19 0 4.25.86 5.8 2.41a8.13 8.13 0 0 1 2.4 5.79c0 4.53-3.68 8.15-8.33 8.15Zm4.49-6.13c-.25-.12-1.45-.72-1.68-.8-.22-.08-.39-.12-.55.12-.16.25-.63.8-.78.96-.14.16-.29.18-.53.06-1.45-.72-2.4-1.29-3.36-2.92-.25-.43.25-.4.72-1.34.08-.16.04-.3-.03-.43-.08-.12-.55-1.33-.76-1.83-.2-.48-.4-.42-.55-.42-.14-.01-.3-.01-.46-.01-.16 0-.42.06-.64.3-.22.25-.85.83-.85 2.02 0 1.19.87 2.34 1 2.5.12.16 1.7 2.59 4.12 3.53 2.04.79 2.45.66 2.9.62.45-.04 1.45-.59 1.65-1.17.2-.57.2-1.06.14-1.17-.06-.1-.22-.17-.4-.27Z"/></svg>
+          </span>
+          WhatsApp
+        </a>
+        <a href="#" onclick="shareTo('x');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231ZM17.083 19.77h1.833L7.084 4.126H5.117Z"/></svg>
+          </span>
+          X (Twitter)
+        </a>
+        <a href="#" onclick="shareTo('instagram');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg>
+          </span>
+          Instagram
+        </a>
+        <button onclick="shareTo('copy')">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </span>
+          Copiar link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="share-toast" id="share-toast">Link copiado!</div>
+
+  <div class="hero">
+    <span class="tag">Autocustódia · BSafe</span>
+    <h1>Ser seu próprio banco: <span>poder e responsabilidade.</span></h1>
+    <p class="subtitle">
+      O que significa realmente ter Bitcoin em autocustódia — as vantagens que nenhum banco pode oferecer
+      e as responsabilidades que nenhum banco vai assumir por você.
+    </p>
+    <div class="meta">
+      <span>🔑 Custódia Própria</span>
+      <span>⏱ 8 min de leitura</span>
+      <span>🟠 bsafebitcoin.org</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <article>
+
+      <p>
+        "Seja seu próprio banco." Essa é uma das frases mais repetidas no universo Bitcoin — e também uma das
+        mais mal compreendidas. Para muita gente, ela soa como slogan. Para quem já entende o que está por
+        trás, é uma das afirmações mais precisas e revolucionárias que existem sobre dinheiro.
+      </p>
+
+      <p>
+        Mas ser seu próprio banco não é um privilégio sem custo. É uma troca consciente: você abre mão da
+        comodidade de delegar para assumir algo muito mais valioso — <strong>controle soberano sobre o seu
+        patrimônio</strong>. E com esse controle vêm responsabilidades que, se ignoradas, podem custar caro.
+      </p>
+
+      <p>
+        Este artigo explora os dois lados dessa equação — o que você ganha e o que você passa a dever
+        a si mesmo.
+      </p>
+
+      <h2>O problema com guardar Bitcoin na exchange</h2>
+
+      <p>
+        Quando você compra Bitcoin em uma exchange e deixa lá, tecnicamente você não tem Bitcoin.
+        Você tem um crédito — uma promessa da exchange de que, quando você pedir, ela devolverá aquele valor.
+        Parece detalhe. Não é.
+      </p>
+
+      <p>
+        Há uma frase que resume tudo no ecossistema Bitcoin: <em>"Not your keys, not your coins."</em>
+        (Não são suas chaves, não são suas moedas.) Isso não é exagero — é uma descrição técnica precisa
+        da realidade. A posse real do Bitcoin é determinada por quem controla as <strong>chaves privadas</strong>
+        que autorizam as transações. Se você não guarda essas chaves, você não é o dono de fato.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">O que acontece quando você deixa na exchange</span>
+        <p>
+          Você depende da solvência da exchange, da política de saques, de regulações governamentais,
+          de decisões executivas e de ataques hackers. Em caso de falência — como ocorreu com a FTX em 2022,
+          que evaporou bilhões de dólares de clientes — você vira credor numa fila de recuperação judicial,
+          não dono de nada.
+        </p>
+      </div>
+
+      <div class="compare">
+        <div class="compare-card custodial">
+          <h4>Bitcoin na Exchange</h4>
+          <ul>
+            <li>Você tem um crédito, não Bitcoin de verdade</li>
+            <li>Saque pode ser bloqueado ou limitado</li>
+            <li>Sujeito à falência, hack ou bloqueio judicial</li>
+            <li>Governo pode exigir rastreamento e bloqueio</li>
+            <li>Você depende de terceiros para acessar seu valor</li>
+          </ul>
+        </div>
+        <div class="compare-card self">
+          <h4>Bitcoin em Autocustódia</h4>
+          <ul>
+            <li>Você controla as chaves privadas — logo, o Bitcoin</li>
+            <li>Nenhuma entidade pode bloquear ou confiscar</li>
+            <li>Falência de exchange não afeta sua carteira</li>
+            <li>Acesso disponível 24/7, sem intermediário</li>
+            <li>Soberania financeira real e verificável</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>As vantagens reais de ser seu próprio banco</h2>
+
+      <h3>1. Soberania sem precedente histórico</h3>
+
+      <p>
+        Pela primeira vez na história humana, é possível guardar qualquer quantidade de valor de forma que
+        nenhum governo, banco, juiz ou exército pode confiscar sem a sua cooperação. Isso não é anarquismo —
+        é matemática. Uma chave privada bem guardada é impenetrável por força bruta. O Bitcoin em
+        autocustódia é, na prática, um cofre que só abre com a sua permissão.
+      </p>
+
+      <p>
+        Para o contexto brasileiro — com um histórico de confisco de poupanças (Plano Collor, 1990),
+        inflação crônica, e um sistema financeiro que regularmente congela contas e bloqueia transferências
+        por ordem judicial ou erro operacional — esse atributo tem valor concreto, não apenas filosófico.
+      </p>
+
+      <h3>2. Resistência à censura e à confiscação</h3>
+
+      <p>
+        Quando você tem Bitcoin em autocustódia com uma hardware wallet, mover esse valor para qualquer
+        lugar do mundo não depende de aprovação de nenhuma instituição. A transação é transmitida
+        diretamente para a rede Bitcoin — descentralizada, sem um ponto central de controle — e confirmada
+        pelos mineradores em minutos.
+      </p>
+
+      <p>
+        Isso significa que <strong>nenhuma decisão política ou judicial pode, tecnicamente, impedir uma
+        transação que você já assinou com sua chave privada</strong>. A resistência à censura é uma
+        propriedade do protocolo, não uma promessa de empresa.
+      </p>
+
+      <h3>3. Acesso global, sem fronteiras</h3>
+
+      <p>
+        Um banco tradicional funciona dentro de fronteiras: horários de funcionamento, limites de câmbio,
+        restrições regulatórias por país, bloqueios de contas internacionais. Bitcoin em autocustódia
+        não conhece fronteiras geográficas. Com sua seed phrase memorizada ou guardada de forma segura,
+        você pode reconstruir sua carteira em qualquer lugar do mundo — literalmente carregando sua
+        riqueza sem nada físico.
+      </p>
+
+      <blockquote>
+        Imagine poder cruzar uma fronteira com todo o seu patrimônio armazenado em 24 palavras
+        guardadas na sua mente. Nenhum banco, fundo de investimento ou imóvel oferece essa
+        portabilidade.
+      </blockquote>
+
+      <h3>4. Eliminação do risco de contraparte</h3>
+
+      <p>
+        Em finanças, "risco de contraparte" é a chance de que a outra parte de uma transação não cumpra
+        sua obrigação. Quando você deposita dinheiro num banco, o banco é sua contraparte — e você confia
+        que ele vai honrar seu saldo. Quando você tem Bitcoin em autocustódia, <strong>não existe
+        contraparte</strong>. Você não está confiando em ninguém. O protocolo é determinístico:
+        quem tem a chave, controla o Bitcoin.
+      </p>
+
+      <h2>As responsabilidades que vêm com o poder</h2>
+
+      <p>
+        Aqui está o ponto que separa quem entende autocustódia de quem apenas ouviu falar: com soberania
+        total vem responsabilidade total. Não há suporte ao cliente. Não há recuperação de senha.
+        Não há "esqueci minha conta". Se você errar sozinho, arca sozinho.
+      </p>
+
+      <div class="resp-grid">
+        <div class="resp-card">
+          <span class="resp-icon">🔑</span>
+          <h4>Guardar a seed phrase</h4>
+          <p>As 24 palavras que geram sua chave privada são seu Bitcoin. Perdeu? Não há recuperação.
+          Deve ser guardada de forma física, segura e jamais digitalizada ou fotografada.</p>
+        </div>
+        <div class="resp-card">
+          <span class="resp-icon">🏗️</span>
+          <h4>Backup com redundância</h4>
+          <p>Um único ponto de falha é um ponto de falha. Incêndio, enchente, roubo. A seed deve existir
+          em pelo menos dois locais físicos distintos e seguros.</p>
+        </div>
+        <div class="resp-card">
+          <span class="resp-icon">🔒</span>
+          <h4>Segredo absoluto</h4>
+          <p>Quem sabe sua seed phrase tem acesso ao seu Bitcoin. Irreversivelmente. O segredo não deve
+          ser compartilhado com ninguém que não precise saber por razões de planejamento sucessório.</p>
+        </div>
+        <div class="resp-card">
+          <span class="resp-icon">🧾</span>
+          <h4>Planejamento sucessório</h4>
+          <p>Se você falecer sem deixar instruções, seu Bitcoin pode se perder para sempre. É preciso
+          documentar o acesso de forma segura — sem expor a chave — para que herdeiros possam acessar.</p>
+        </div>
+        <div class="resp-card">
+          <span class="resp-icon">✅</span>
+          <h4>Verificar endereços</h4>
+          <p>Antes de confirmar qualquer transação, verifique o endereço de destino no display físico
+          da hardware wallet — nunca apenas na tela do celular. Malware pode substituir endereços.</p>
+        </div>
+        <div class="resp-card">
+          <span class="resp-icon">📚</span>
+          <h4>Educação contínua</h4>
+          <p>O ecossistema evolui. Entender o básico — como funciona uma transação, o que é uma UTXO,
+          o que é uma taxa de mineração — evita erros caros.</p>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <span class="label">O risco mais subestimado</span>
+        <p>
+          A maior ameaça ao Bitcoin em autocustódia não é hacker, não é governo e não é volatilidade de
+          preço. É o próprio dono perdendo acesso por falta de backup, seed mal anotada, ou um falecimento
+          sem planejamento sucessório adequado. <strong>A custódia própria exige disciplina, não apenas
+          intenção.</strong>
+        </p>
+      </div>
+
+      <h2>Como começar: o caminho da autocustódia</h2>
+
+      <p>
+        A boa notícia é que a curva de aprendizado existe, mas é percorrível. E uma vez que você configura
+        corretamente sua estrutura de custódia, o processo do dia a dia é simples. O esforço está na
+        configuração inicial — não na manutenção.
+      </p>
+
+      <div class="steps-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Escolha uma hardware wallet confiável</h4>
+            <p>Dispositivos como a Tapsigner guardam sua chave privada offline, isolada da internet.
+            Nenhuma transação é assinada sem o dispositivo físico em mãos — um nível de segurança
+            que nenhum app de celular oferece.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Gere e anote a seed phrase com cuidado</h4>
+            <p>No momento da inicialização, a carteira gera 24 palavras. Essas palavras são seu Bitcoin.
+            Anote à mão, confirme a ordem, e guarde em local físico seguro — longe de câmeras, internet
+            e qualquer dispositivo conectado.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Crie backups redundantes</h4>
+            <p>Tenha cópias da seed em pelo menos dois locais distintos. Considere uma placa de metal
+            gravada para resistência a incêndios e enchentes — o papel não sobrevive a emergências.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Transfira seus Bitcoin da exchange para sua carteira</h4>
+            <p>Teste primeiro com uma quantia pequena. Confirme o endereço de destino no display físico
+            da hardware wallet antes de confirmar. Só então mova o restante.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h4>Planeje o acesso sucessório</h4>
+            <p>Deixe instruções documentadas para que seus herdeiros possam acessar o Bitcoin em caso
+            de necessidade — sem expor a seed phrase diretamente. Esse é o ponto onde um advogado
+            especializado faz a diferença.</p>
+          </div>
+        </div>
+      </div>
+
+      <h2>Autocustódia não é para heróis — é para pessoas comuns com patrimônio a proteger</h2>
+
+      <p>
+        Existe um equívoco comum de que autocustódia é coisa de entusiasta de tecnologia ou de quem
+        tem muito dinheiro. Não é. É para qualquer pessoa que entende que seu patrimônio merece
+        a mesma proteção que ela daria a documentos importantes, joias ou um imóvel.
+      </p>
+
+      <p>
+        A diferença é que, com Bitcoin, a proteção não depende de cofre bancário, seguradora ou cartório.
+        Depende de você — da sua organização, disciplina e compreensão das regras. E isso,
+        longe de ser um fardo, é o maior ativo de todos: <strong>autonomia financeira real</strong>.
+      </p>
+
+      <p>
+        A BSafe existe exatamente para tornar esse caminho acessível. Com kits de hardware wallet,
+        tutoriais estruturados e orientação especializada — incluindo planejamento sucessório —
+        o objetivo é que nenhuma pessoa perca Bitcoin por falta de informação ou de suporte
+        no momento em que mais precisava.
+      </p>
+
+      <div class="cta">
+        <h3>Pronto para assumir o controle?</h3>
+        <p>
+          Conheça os planos BSafe e dê o primeiro passo para a autocustódia com acompanhamento de
+          quem entende tanto de Bitcoin quanto de planejamento patrimonial.
+        </p>
+        <a href="https://bsafebitcoin.org" class="cta-button">Conhecer os planos BSafe →</a>
+      </div>
+
+      <div class="author-box">
+        <div class="author-avatar">RB</div>
+        <div class="author-info">
+          <p class="name">Rafael Bered</p>
+          <p class="role">Advogado previdenciarista, educador de mercado de capitais e fundador da BSafe Bitcoin</p>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        Este conteúdo tem caráter exclusivamente educacional e não constitui recomendação de investimento.
+        Bitcoin é um ativo de alta volatilidade e envolve riscos. Faça sua própria pesquisa antes de tomar
+        qualquer decisão financeira. A guarda de ativos digitais exige cuidados específicos — consulte
+        um profissional habilitado para orientação jurídica e financeira.
+      </div>
+
+    </article>
+  </div>
+
+  <script>
+    const shareData = {
+      title: document.title,
+      text: 'Ser seu próprio banco com Bitcoin: vantagens e responsabilidades da autocustódia. Confira este artigo da BSafe Bitcoin.',
+      url: window.location.href
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById('share-toast');
+      if (message) toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(shareData.url).then(() => {
+        showToast('Link copiado!');
+      }).catch(() => {
+        showToast('Não foi possível copiar o link');
+      });
+    }
+
+    function toggleShareMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('share-menu');
+      menu.classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('share-menu');
+      if (menu.classList.contains('open') && !menu.contains(e.target) && !e.target.closest('.share-btn')) {
+        menu.classList.remove('open');
+      }
+    });
+
+    function shareTo(target) {
+      const menu = document.getElementById('share-menu');
+      menu.classList.remove('open');
+
+      const url = encodeURIComponent(shareData.url);
+      const text = encodeURIComponent(shareData.text);
+
+      switch (target) {
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${text}%20${url}`, '_blank', 'noopener');
+          break;
+        case 'x':
+          window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
+          break;
+        case 'instagram':
+          navigator.clipboard.writeText(shareData.url).then(() => {
+            showToast('Link copiado! Cole no Instagram (Stories, bio ou DM)');
+            window.open('https://www.instagram.com/', '_blank', 'noopener');
+          }).catch(() => {
+            showToast('Não foi possível copiar o link');
+          });
+          break;
+        case 'copy':
+          copyLink();
+          break;
+      }
+    }
+  </script>
+
+</body>
+</html>
