@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Price of Freedom: Why Buying Bitcoin to Get Rich in Fiat Costs You Dearly | BSafe Bitcoin</title>
+<style>
+  :root {
+    --bg: #0b0e11;
+    --bg-card: #14181d;
+    --accent: #f7931a;
+    --accent-soft: #f7931a22;
+    --text: #e8eaed;
+    --text-muted: #9aa3ad;
+    --border: #232a31;
+    --green: #16c784;
+    --red: #ea3943;
+    --yellow: #f5c518;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 40px 96px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 64px 40px 52px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft) 0%, transparent 60%);
+  }
+
+  .hero .tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero .subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 20px;
+  }
+
+  .hero .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* CONTENT */
+  article { padding-top: 52px; }
+
+  article h2 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 52px 0 20px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  article h2::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 26px;
+    background: var(--accent);
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  article h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 32px 0 14px;
+    color: var(--accent);
+  }
+
+  article p {
+    font-size: 17px;
+    color: #d4d8dc;
+    margin-bottom: 22px;
+  }
+
+  article strong { color: #fff; font-weight: 700; }
+
+  article a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+  }
+
+  article a:hover { border-bottom-color: var(--accent); }
+
+  /* HIGHLIGHT BOX */
+  .highlight-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 32px 0;
+  }
+
+  .highlight-box .label {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .highlight-box p { margin-bottom: 0; font-size: 17px; }
+
+  /* QUOTE */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 8px 0 8px 28px;
+    margin: 32px 0;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.65;
+  }
+
+  /* COMPARISON CARDS */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0 32px;
+  }
+
+  @media (max-width: 640px) {
+    .container { padding: 0 20px 80px; }
+    .hero { padding: 48px 20px 40px; }
+    .hero h1 { font-size: 26px; }
+    .hero .subtitle { font-size: 16px; }
+    article h2 { font-size: 22px; }
+    .compare { grid-template-columns: 1fr; }
+    .math-card { padding: 20px; }
+    .basket-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  }
+
+  .compare-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .compare-card.fiat { border-top: 3px solid var(--red); }
+  .compare-card.btc { border-top: 3px solid var(--accent); }
+
+  .compare-card h4 {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .compare-card.fiat h4 { color: var(--red); }
+  .compare-card.btc h4 { color: var(--accent); }
+
+  .compare-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .compare-card li {
+    font-size: 15px;
+    color: var(--text-muted);
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .compare-card.fiat li::before {
+    content: "↓";
+    position: absolute;
+    left: 0;
+    color: var(--red);
+    font-weight: 800;
+  }
+
+  .compare-card.btc li::before {
+    content: "↑";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  /* MATH CARD */
+  .math-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 28px 0;
+    font-family: 'Courier New', Courier, monospace;
+  }
+
+  .math-card .math-title {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .math-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 16px;
+  }
+
+  .math-row:last-child { border-bottom: none; }
+
+  .math-row .label-m {
+    color: var(--text-muted);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+  }
+
+  .math-row .value { font-weight: 700; font-size: 18px; }
+  .math-row .value.green { color: var(--green); }
+  .math-row .value.red { color: var(--red); }
+  .math-row .value.orange { color: var(--accent); }
+  .math-row .value.yellow { color: var(--yellow); }
+
+  .math-divider {
+    border: none;
+    border-top: 2px solid var(--accent);
+    margin: 8px 0;
+  }
+
+  /* FAMILY BASKET / GRID */
+  .basket-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 24px 0 32px;
+  }
+
+  .basket-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+
+  .basket-item .bi-icon { font-size: 26px; margin-bottom: 8px; }
+
+  .basket-item .bi-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .basket-item .bi-pct {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .basket-item .bi-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* CTA */
+  .cta {
+    background: linear-gradient(135deg, var(--accent-soft), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin: 48px 0 12px;
+  }
+
+  .cta h3 { color: var(--text); font-size: 22px; margin-bottom: 10px; }
+  .cta p { color: var(--text-muted); margin-bottom: 22px; }
+
+  .cta-button {
+    display: inline-block;
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+    border: none;
+  }
+
+  .cta-button:hover { transform: translateY(-2px); }
+
+  /* DISCLAIMER */
+  .disclaimer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .author-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 40px;
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    color: #1a1300;
+    flex-shrink: 0;
+  }
+
+  .author-info p { margin: 0; font-size: 14px; }
+  .author-info .name { font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .author-info .role { color: var(--text-muted); font-size: 13px; }
+
+  /* TOP BAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar a.back {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: none;
+  }
+
+  .topbar a.back:hover { color: var(--text); }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    font-family: inherit;
+  }
+
+  .share-btn:hover {
+    background: var(--accent);
+    color: #1a1300;
+    transform: translateY(-1px);
+  }
+
+  .share-wrap { position: relative; }
+
+  .share-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 190px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    z-index: 60;
+  }
+
+  .share-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .share-menu a,
+  .share-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .share-menu a:hover,
+  .share-menu button:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .share-menu .share-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .share-menu .share-icon svg { width: 100%; height: 100%; }
+
+  .share-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 100;
+  }
+
+  .share-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="educacao.html" class="back">← Back to site</a>
+    <div class="share-wrap">
+      <button class="share-btn" onclick="toggleShareMenu(event)">↗ Share</button>
+      <div class="share-menu" id="share-menu">
+        <a href="#" onclick="shareTo('whatsapp');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.86.5 3.6 1.43 5.1L2 22l5.16-1.5a9.84 9.84 0 0 0 4.87 1.28h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.13-2.9-7-1.88-1.88-4.36-2.87-7.01-2.87Zm0 18.06h-.01a8.18 8.18 0 0 1-4.17-1.14l-.3-.18-3.05.89.91-2.98-.2-.31a8.16 8.16 0 0 1-1.26-4.43c0-4.52 3.68-8.2 8.21-8.2 2.19 0 4.25.86 5.8 2.41a8.13 8.13 0 0 1 2.4 5.79c0 4.53-3.68 8.15-8.33 8.15Zm4.49-6.13c-.25-.12-1.45-.72-1.68-.8-.22-.08-.39-.12-.55.12-.16.25-.63.8-.78.96-.14.16-.29.18-.53.06-1.45-.72-2.4-1.29-3.36-2.92-.25-.43.25-.4.72-1.34.08-.16.04-.3-.03-.43-.08-.12-.55-1.33-.76-1.83-.2-.48-.4-.42-.55-.42-.14-.01-.3-.01-.46-.01-.16 0-.42.06-.64.3-.22.25-.85.83-.85 2.02 0 1.19.87 2.34 1 2.5.12.16 1.7 2.59 4.12 3.53 2.04.79 2.45.66 2.9.62.45-.04 1.45-.59 1.65-1.17.2-.57.2-1.06.14-1.17-.06-.1-.22-.17-.4-.27Z"/></svg>
+          </span>
+          WhatsApp
+        </a>
+        <a href="#" onclick="shareTo('x');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231ZM17.083 19.77h1.833L7.084 4.126H5.117Z"/></svg>
+          </span>
+          X (Twitter)
+        </a>
+        <a href="#" onclick="shareTo('instagram');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg>
+          </span>
+          Instagram
+        </a>
+        <button onclick="shareTo('copy')">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </span>
+          Copy link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="share-toast" id="share-toast">Link copied!</div>
+
+  <div class="hero">
+    <span class="tag">Bitcoin Philosophy · BSafe</span>
+    <h1>Bought Bitcoin to get rich in fiat? <span>You may have bought the wrong thing.</span></h1>
+    <p class="subtitle">
+      Financial freedom has a price. Whoever buys Bitcoin expecting a shortcut to getting rich in
+      fiat ends up paying that price twice over once the market turns — and that's exactly what
+      we're seeing right now.
+    </p>
+    <div class="meta">
+      <span>📚 BSafe Philosophy</span>
+      <span>⏱ 8 min read</span>
+      <span>🟠 bsafebitcoin.org</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <article>
+
+      <p>
+        In a bull market, everyone understands Bitcoin. The price goes up, the fiat balance goes up,
+        and the feeling of being right is immediate. It's easy to confuse excitement with conviction
+        when the chart is green. The problem shows up later — in a bear market, when the same asset
+        that looked like a money-printing machine suddenly looks like a wealth-destroying one.
+      </p>
+
+      <p>
+        But the asset hasn't changed. <strong>What changed is the ruler being used to judge it.</strong>
+        And it's precisely at this moment — when the fiat price drops and the discomfort kicks in —
+        that it becomes clear who actually understood what they were buying, and who was just riding a
+        short-term wave of excitement.
+      </p>
+
+      <h2>The most expensive misunderstanding in the market</h2>
+
+      <p>
+        There's a fundamental difference between two people who buy the exact same amount of Bitcoin,
+        on the same day, at the same price. One bought a <strong>speculative asset</strong>, hoping the
+        fiat number multiplies quickly. The other bought a <strong>tool for monetary sovereignty</strong>,
+        understanding they're exiting an infinite-money system in favor of one with a fixed, verifiable
+        supply.
+      </p>
+
+      <p>
+        In practice, both people have the same wallet. But they'll react in completely different ways
+        to the first 30%, 50%, or 70% drop — because they're measuring the investment with different
+        rulers. Whoever bought hoping to get rich in fiat will panic. Whoever bought understanding what
+        Bitcoin actually is will, in most cases, keep accumulating.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">The central point</span>
+        <p>
+          The fiat price is the <strong>consequence</strong> of adoption, not the <strong>reason</strong>
+          it exists. Whoever buys for the wrong reason tends to sell at the wrong moment — exactly when
+          the asset is cheapest relative to the ruler that actually matters: the amount of satoshis
+          available per unit of purchasing power.
+        </p>
+      </div>
+
+      <h2>What you're actually buying when you buy Bitcoin</h2>
+
+      <p>
+        Bitcoin isn't a company's stock, a debt instrument, or a bet on some sector of the economy.
+        It's a monetary network with a maximum supply of 21 million units, no central bank, no
+        possibility of dilution by decree, and no need to trust an institution to store value. What
+        you're fundamentally buying is the <strong>option to exit</strong> a system in which the
+        currency loses purchasing power by design — not by accident.
+      </p>
+
+      <p>
+        Whoever understands this treats fiat-price volatility as short-term noise on top of a
+        long-term signal. Whoever doesn't understand it treats every red candle as an existential
+        threat to their wealth — because for them, wealth has always been measured in fiat, never in
+        satoshis.
+      </p>
+
+      <div class="compare">
+        <div class="compare-card fiat">
+          <h4>Bought the price</h4>
+          <ul>
+            <li>Measures success by the fiat balance on the exchange</li>
+            <li>Buys in euphoria, sells in panic</li>
+            <li>Sees a price drop as proof of having been wrong</li>
+            <li>Relies on the statement to decide how to feel</li>
+            <li>Exits the asset right when it's cheapest</li>
+          </ul>
+        </div>
+        <div class="compare-card btc">
+          <h4>Bought the freedom</h4>
+          <ul>
+            <li>Measures success by satoshis accumulated</li>
+            <li>Buys on a recurring schedule, regardless of market mood</li>
+            <li>Sees a price drop as a chance to accumulate cheaper</li>
+            <li>Understood the structural "why" before the price</li>
+            <li>Exits the fiat system instead of trying to beat it</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>Why bear markets expose those who never understood what they bought</h2>
+
+      <p>
+        During prolonged downturns, like the one we're in now, it's common to see headlines announcing
+        "the end of Bitcoin" and investors expressing regret. But look closely: almost always, the one
+        who's regretful is the one who bought expecting to quickly multiply fiat — not the one who
+        bought intending to permanently and gradually exit a currency that loses value structurally.
+      </p>
+
+      <p>
+        Let's walk through a simple exercise. Imagine two people who bought Bitcoin at the top of a
+        previous cycle, and the fiat price dropped 60% in the months that followed.
+      </p>
+
+      <div class="math-card">
+        <div class="math-title">Same price drop, opposite readings</div>
+        <div class="math-row">
+          <span class="label-m">Price drop in fiat (from the top)</span>
+          <span class="value red">−60%</span>
+        </div>
+        <div class="math-row">
+          <span class="label-m">Investor A — "I bought to get rich"</span>
+          <span class="value red">Sold at a loss, exited the market</span>
+        </div>
+        <hr class="math-divider">
+        <div class="math-row">
+          <span class="label-m">Investor B — "I bought to gain freedom"</span>
+          <span class="value green">Kept the monthly purchases going, plan unchanged</span>
+        </div>
+        <div class="math-row">
+          <span class="label-m">Satoshis accumulated by Investor B over the period</span>
+          <span class="value orange">+140% relative to the purchase at the top</span>
+        </div>
+      </div>
+
+      <p style="font-size:13px; color: var(--text-muted); margin-top:-16px; margin-bottom:28px; text-align:center;">
+        Illustrative representation of typical behavior during prolonged bear markets,
+        not a projection of future results.
+      </p>
+
+      <p>
+        Investor A didn't lose money just because of the market. They lost because the thesis behind
+        their purchase was never solid enough to survive the volatility — which is, and always has
+        been, an inherent part of any monetary asset in its adoption phase. Investor B bought exactly
+        the same thing, but with a thesis that <strong>anticipated</strong> the drop as part of the
+        process, not as proof they'd been wrong.
+      </p>
+
+      <blockquote>
+        It isn't the bear market that breaks the investor. It's the absence of a thesis that explained,
+        from the very first dollar invested, why that drop would one day arrive.
+      </blockquote>
+
+      <h2>Freedom has real costs — and that's not a flaw, it's honesty</h2>
+
+      <p>
+        One reason so many people buy Bitcoin for the wrong reason is that the "get rich quick" pitch
+        is easier to sell than the pitch of "exit a flawed monetary system at the cost of volatility
+        and personal responsibility." But the second version is the true one — and ignoring it is
+        costly.
+      </p>
+
+      <div class="basket-grid">
+        <div class="basket-item">
+          <div class="bi-icon">📉</div>
+          <div class="bi-label">Volatility</div>
+          <div class="bi-pct">High</div>
+          <div class="bi-note">fiat price swings while the market discovers the network's value</div>
+        </div>
+        <div class="basket-item">
+          <div class="bi-icon">🔑</div>
+          <div class="bi-label">Responsibility</div>
+          <div class="bi-pct">Yours</div>
+          <div class="bi-note">holding your own keys replaces trusting a third party</div>
+        </div>
+        <div class="basket-item">
+          <div class="bi-icon">⏳</div>
+          <div class="bi-label">Horizon</div>
+          <div class="bi-pct">Long</div>
+          <div class="bi-note">a monetary-sovereignty thesis isn't proven in weeks</div>
+        </div>
+        <div class="basket-item">
+          <div class="bi-icon">🧠</div>
+          <div class="bi-label">Discipline</div>
+          <div class="bi-pct">Constant</div>
+          <div class="bi-note">buying and sticking to the plan even when the statement stings</div>
+        </div>
+      </div>
+
+      <p>
+        None of these costs is a flaw in Bitcoin. They're the price of exiting a system where someone
+        else decides the value of your currency, in favor of a system where that decision is yours
+        again — from self-custody of the keys to the patience not to sell at the moment of greatest
+        discomfort.
+      </p>
+
+      <h2>Think in satoshis, not in fiat</h2>
+
+      <p>
+        That's why, at BSafe, we repeat this phrase so often: <strong>think in satoshis, not in
+        fiat</strong>. It's not an empty slogan — it's a practical change of ruler. When you track how
+        many satoshis you have, instead of what that "equals" in fiat today, a bear market stops being
+        a crisis and becomes just an opportunity to buy the same freedom at a lower price.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">Questions that separate the two mindsets</span>
+        <p>
+          → Would I buy more Bitcoin right now, at this price, if it never went up in fiat again?<br><br>
+          → Do I actually understand why the 21 million supply cap matters, or did I just memorize the
+          number?<br><br>
+          → Does my buying strategy change when the price drops, or did it already account for that?<br><br>
+          → Do I hold my own keys, or does my Bitcoin still depend on a third party?<br><br>
+          → Am I measuring my progress in satoshis accumulated, or in exchange balance?
+        </p>
+      </div>
+
+      <p>
+        If most of your answers reveal that your buying decisions still depend on the fiat price rising
+        fast, that's not a reason to panic — it's a reason to revisit your thesis before the next bout
+        of volatility, not in the middle of it.
+      </p>
+
+      <h2>What changes when the thesis is right</h2>
+
+      <p>
+        Whoever understands Bitcoin as a tool for financial sovereignty — rather than a lottery ticket
+        — tends to do three things differently: keeps Bitcoin in their own self-custody instead of
+        leaving it on an exchange, treats recurring purchases as routine rather than a one-off bet, and
+        plans Bitcoin estate transfer with the same seriousness as any other significant asset in their
+        estate.
+      </p>
+
+      <p>
+        None of these three behaviors depends on the price being up. They all keep making sense — and
+        actually make even more sense — during a bear market, because it's precisely when "easy money"
+        disappears that you see who actually built a position with purpose.
+      </p>
+
+      <p>
+        Financial freedom isn't free, and it isn't instant. It costs volatility, it costs
+        responsibility over your own keys, and it costs the patience not to confuse today's statement
+        with the value of a monetary network being built to last for decades. Whoever understands that
+        price from the start pays it willingly. Whoever doesn't ends up paying double — first in the
+        euphoria of the wrong purchase, then in the panic of the wrong sale.
+      </p>
+
+      <div class="cta">
+        <h3>Build a position with a thesis, not with euphoria</h3>
+        <p>
+          BSafe helps you move off exchanges safely, set up the right self-custody structure for your
+          profile, and plan your Bitcoin estate transfer — so your strategy survives every market
+          cycle.
+        </p>
+        <a href="https://bsafebitcoin.org" class="cta-button">Visit BSafe Bitcoin →</a>
+      </div>
+
+      <div class="author-box">
+        <div class="author-avatar">RB</div>
+        <div class="author-info">
+          <p class="name">Rafael Bered</p>
+          <p class="role">Succession &amp; asset-protection lawyer, capital markets educator, and founder of BSafe Bitcoin</p>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        This content is for educational purposes only and does not constitute investment advice. The
+        scenarios and percentages shown are illustrative and do not represent a projection of future
+        results. Bitcoin is a highly volatile asset and involves risk. Investments carry risk of
+        capital loss. Consult qualified professionals before making financial decisions.
+      </div>
+
+    </article>
+  </div>
+
+  <script>
+    const shareData = {
+      title: document.title,
+      text: 'Bought Bitcoin to get rich in fiat? You may have bought the wrong thing. Understand the real price of financial freedom. BSafe Bitcoin.',
+      url: window.location.href
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById('share-toast');
+      if (message) toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(shareData.url).then(() => {
+        showToast('Link copied!');
+      }).catch(() => {
+        showToast('Could not copy the link');
+      });
+    }
+
+    function toggleShareMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('share-menu');
+      menu.classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('share-menu');
+      if (menu.classList.contains('open') && !menu.contains(e.target) && !e.target.closest('.share-btn')) {
+        menu.classList.remove('open');
+      }
+    });
+
+    function shareTo(target) {
+      const menu = document.getElementById('share-menu');
+      menu.classList.remove('open');
+
+      const url = encodeURIComponent(shareData.url);
+      const text = encodeURIComponent(shareData.text);
+
+      switch (target) {
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${text}%20${url}`, '_blank', 'noopener');
+          break;
+        case 'x':
+          window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
+          break;
+        case 'instagram':
+          navigator.clipboard.writeText(shareData.url).then(() => {
+            showToast('Link copied! Paste it on Instagram (Stories, bio, or DM)');
+            window.open('https://www.instagram.com/', '_blank', 'noopener');
+          }).catch(() => {
+            showToast('Could not copy the link');
+          });
+          break;
+        case 'copy':
+          copyLink();
+          break;
+      }
+    }
+  </script>
+
+</body>
+</html>

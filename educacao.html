@@ -64,6 +64,11 @@ section{position:relative;z-index:1}
 
 /* EDUCAÇÃO GRID */
 #educacao{background:var(--bg)}
+.lang-toggle{display:inline-flex;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:4px;margin-bottom:8px}
+.lang-pill{border:none;background:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.06em;padding:8px 18px;border-radius:999px;cursor:pointer;transition:var(--ease)}
+.lang-pill.active{background:var(--btc);color:#000;font-weight:700}
+.lang-pill:not(.active):hover{color:var(--off)}
+.edu-card[data-lang="en"]{display:none}
 .edu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:48px}
 @media (max-width:760px){.edu-grid{grid-template-columns:1fr}}
 .edu-card{display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;text-decoration:none;transition:var(--ease);position:relative}
@@ -153,8 +158,12 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:48px 24p
 <!-- EDUCAÇÃO -->
 <section id="educacao">
   <div class="wrap" style="padding-top:64px">
+    <div class="lang-toggle" role="group" aria-label="Idioma dos artigos">
+      <button class="lang-pill active" data-lang="pt" onclick="setEduLang('pt')">🇧🇷 Português</button>
+      <button class="lang-pill" data-lang="en" onclick="setEduLang('en')">🇺🇸 English</button>
+    </div>
     <div class="edu-grid">
-      <a href="dinheiro-infinito-vs-bitcoin.html" class="edu-card rev">
+      <a href="dinheiro-infinito-vs-bitcoin.html" class="edu-card rev" data-lang="pt">
         <div class="edu-card-body">
           <span class="edu-tag">EDUCAÇÃO BITCOIN</span>
           <h3 class="edu-title">Dinheiro Infinito vs. Bitcoin</h3>
@@ -162,7 +171,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:48px 24p
           <div class="edu-meta"><span>⏱ 7 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
         </div>
       </a>
-      <a href="nao-e-caro-e-seu-dinheiro-que-vale-menos.html" class="edu-card rev rd1">
+      <a href="nao-e-caro-e-seu-dinheiro-que-vale-menos.html" class="edu-card rev rd1" data-lang="pt">
         <div class="edu-card-body">
           <span class="edu-tag">EDUCAÇÃO FINANCEIRA</span>
           <h3 class="edu-title">Não é caro. É o seu dinheiro que vale menos.</h3>
@@ -170,7 +179,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:48px 24p
           <div class="edu-meta"><span>⏱ 6 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
         </div>
       </a>
-      <a href="seu-proprio-banco-bitcoin-autocustodia.html" class="edu-card rev rd2">
+      <a href="seu-proprio-banco-bitcoin-autocustodia.html" class="edu-card rev rd2" data-lang="pt">
         <div class="edu-card-body">
           <span class="edu-tag">AUTOCUSTÓDIA</span>
           <h3 class="edu-title">Ser seu próprio banco: poder e responsabilidade.</h3>
@@ -178,7 +187,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:48px 24p
           <div class="edu-meta"><span>⏱ 8 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
         </div>
       </a>
-      <a href="dca-bitcoin-previdencia-soberana.html" class="edu-card rev">
+      <a href="dca-bitcoin-previdencia-soberana.html" class="edu-card rev" data-lang="pt">
         <div class="edu-card-body">
           <span class="edu-tag">PREVIDÊNCIA &amp; BITCOIN</span>
           <h3 class="edu-title">DCA em Bitcoin: sua previdência soberana além do INSS.</h3>
@@ -186,7 +195,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:48px 24p
           <div class="edu-meta"><span>⏱ 8 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
         </div>
       </a>
-      <a href="bitcoin-heranca-sucessao-vs-fiduciario.html" class="edu-card rev rd1">
+      <a href="bitcoin-heranca-sucessao-vs-fiduciario.html" class="edu-card rev rd1" data-lang="pt">
         <div class="edu-card-body">
           <span class="edu-tag">SUCESSÕES &amp; BITCOIN</span>
           <h3 class="edu-title">Quando você falta, seu patrimônio fica preso — ou herdado em minutos?</h3>
@@ -194,7 +203,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:48px 24p
           <div class="edu-meta"><span>⏱ 9 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
         </div>
       </a>
-      <a href="ganho-ilusorio-precificacao-fiat.html" class="edu-card rev rd2">
+      <a href="ganho-ilusorio-precificacao-fiat.html" class="edu-card rev rd2" data-lang="pt">
         <div class="edu-card-body">
           <span class="edu-tag">EDUCAÇÃO FINANCEIRA</span>
           <h3 class="edu-title">Seu investimento rende 12%? Descubra o que sobra de verdade.</h3>
@@ -202,12 +211,69 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:48px 24p
           <div class="edu-meta"><span>⏱ 7 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
         </div>
       </a>
-      <a href="o-preco-da-liberdade-bitcoin.html" class="edu-card rev">
+      <a href="o-preco-da-liberdade-bitcoin.html" class="edu-card rev" data-lang="pt">
         <div class="edu-card-body">
           <span class="edu-tag">FILOSOFIA BITCOIN</span>
           <h3 class="edu-title">Você comprou Bitcoin pra ficar rico em reais? Comprou a coisa errada.</h3>
           <p class="edu-desc">Liberdade financeira tem um preço. Quem entra no Bitcoin esperando um atalho para enriquecer em reais paga essa conta em dobro quando o mercado vira — e é isso que estamos vendo agora.</p>
           <div class="edu-meta"><span>⏱ 8 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
+        </div>
+      </a>
+
+      <a href="dinheiro-infinito-vs-bitcoin-en.html" class="edu-card rev" data-lang="en">
+        <div class="edu-card-body">
+          <span class="edu-tag">BITCOIN EDUCATION</span>
+          <h3 class="edu-title">Infinite Money vs. Bitcoin</h3>
+          <p class="edu-desc">Why infinite fiat issuance guarantees devaluation against Bitcoin — and why every price drop is, in practice, a sale.</p>
+          <div class="edu-meta"><span>⏱ 7 min read</span><span class="edu-arrow">Read article →</span></div>
+        </div>
+      </a>
+      <a href="nao-e-caro-e-seu-dinheiro-que-vale-menos-en.html" class="edu-card rev rd1" data-lang="en">
+        <div class="edu-card-body">
+          <span class="edu-tag">FINANCIAL EDUCATION</span>
+          <h3 class="edu-title">It's Not That Things Got Expensive. It's That Your Money Is Shrinking.</h3>
+          <p class="edu-desc">Most people see rising prices and think "everything is more expensive." There's a more precise — and more useful — way to understand what's happening.</p>
+          <div class="edu-meta"><span>⏱ 6 min read</span><span class="edu-arrow">Read article →</span></div>
+        </div>
+      </a>
+      <a href="seu-proprio-banco-bitcoin-autocustodia-en.html" class="edu-card rev rd2" data-lang="en">
+        <div class="edu-card-body">
+          <span class="edu-tag">SELF-CUSTODY</span>
+          <h3 class="edu-title">Being Your Own Bank: Power and Responsibility.</h3>
+          <p class="edu-desc">What it really means to hold Bitcoin in self-custody — the advantages no bank can offer and the responsibilities no bank will ever take on for you.</p>
+          <div class="edu-meta"><span>⏱ 8 min read</span><span class="edu-arrow">Read article →</span></div>
+        </div>
+      </a>
+      <a href="dca-bitcoin-previdencia-soberana-en.html" class="edu-card rev" data-lang="en">
+        <div class="edu-card-body">
+          <span class="edu-tag">RETIREMENT &amp; BITCOIN</span>
+          <h3 class="edu-title">DCA Into Bitcoin: Your Sovereign Retirement Plan Beyond Social Security.</h3>
+          <p class="edu-desc">How recurring purchases into a fixed-supply asset can become the foundation of a retirement plan that's truly your own — independent of formulas, reforms, and future benefit cuts.</p>
+          <div class="edu-meta"><span>⏱ 8 min read</span><span class="edu-arrow">Read article →</span></div>
+        </div>
+      </a>
+      <a href="bitcoin-heranca-sucessao-vs-fiduciario-en.html" class="edu-card rev rd1" data-lang="en">
+        <div class="edu-card-body">
+          <span class="edu-tag">ESTATE PLANNING &amp; BITCOIN</span>
+          <h3 class="edu-title">When You're Gone, Is Your Estate Stuck — or Inherited in Minutes?</h3>
+          <p class="edu-desc">How Bitcoin self-custody transforms wealth transfer for heirs, compared to bank accounts, investments, and assets in the traditional fiat system.</p>
+          <div class="edu-meta"><span>⏱ 9 min read</span><span class="edu-arrow">Read article →</span></div>
+        </div>
+      </a>
+      <a href="ganho-ilusorio-precificacao-fiat-en.html" class="edu-card rev rd2" data-lang="en">
+        <div class="edu-card-body">
+          <span class="edu-tag">FINANCIAL EDUCATION</span>
+          <h3 class="edu-title">Your Investment Returns 12%? Find Out What's Really Left.</h3>
+          <p class="edu-desc">When your return is measured in the same currency that's losing value, the gain on paper can be an illusion. See how real inflation distorts every return calculation.</p>
+          <div class="edu-meta"><span>⏱ 7 min read</span><span class="edu-arrow">Read article →</span></div>
+        </div>
+      </a>
+      <a href="o-preco-da-liberdade-bitcoin-en.html" class="edu-card rev" data-lang="en">
+        <div class="edu-card-body">
+          <span class="edu-tag">BITCOIN PHILOSOPHY</span>
+          <h3 class="edu-title">Bought Bitcoin to Get Rich in Fiat? You May Have Bought the Wrong Thing.</h3>
+          <p class="edu-desc">Financial freedom has a price. Whoever buys Bitcoin expecting a shortcut to getting rich in fiat pays that price twice over once the market turns — and that's what we're seeing now.</p>
+          <div class="edu-meta"><span>⏱ 8 min read</span><span class="edu-arrow">Read article →</span></div>
         </div>
       </a>
     </div>
@@ -234,6 +300,22 @@ function cm(){mopen=false;document.getElementById('mob-menu').classList.remove('
 // REVEAL
 const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')}),{threshold:.07});
 document.querySelectorAll('.rev').forEach(el=>obs.observe(el));
+
+// EDU LANGUAGE TOGGLE
+function setEduLang(lang){
+  document.querySelectorAll('.edu-card').forEach(c=>{
+    c.style.display = (c.dataset.lang===lang) ? '' : 'none';
+  });
+  document.querySelectorAll('.lang-pill').forEach(p=>{
+    p.classList.toggle('active', p.dataset.lang===lang);
+  });
+  try{ localStorage.setItem('bsafe_edu_lang', lang); }catch(e){}
+}
+(function(){
+  let saved = 'pt';
+  try{ saved = localStorage.getItem('bsafe_edu_lang') || 'pt'; }catch(e){}
+  setEduLang(saved);
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infinite Money vs. Bitcoin: Why Volatility Is Your Biggest Ally | BSafe Bitcoin</title>
+<style>
+  :root {
+    --bg: #0b0e11;
+    --bg-card: #14181d;
+    --accent: #f7931a;
+    --accent-soft: #f7931a22;
+    --text: #e8eaed;
+    --text-muted: #9aa3ad;
+    --border: #232a31;
+    --green: #16c784;
+    --red: #ea3943;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 60px 24px 50px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft) 0%, transparent 60%);
+  }
+
+  .hero .tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero h1 span {
+    color: var(--accent);
+  }
+
+  .hero .subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 20px;
+  }
+
+  .hero .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* CONTENT */
+  article {
+    padding-top: 48px;
+  }
+
+  article h2 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 48px 0 18px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  article h2::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 26px;
+    background: var(--accent);
+    border-radius: 3px;
+  }
+
+  article h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    color: var(--accent);
+  }
+
+  article p {
+    font-size: 17px;
+    color: #d4d8dc;
+    margin-bottom: 18px;
+  }
+
+  article strong {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  article a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+  }
+
+  article a:hover {
+    border-bottom-color: var(--accent);
+  }
+
+  /* HIGHLIGHT BOX */
+  .highlight-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 28px 0;
+  }
+
+  .highlight-box .label {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .highlight-box p {
+    margin-bottom: 0;
+    font-size: 17px;
+  }
+
+  /* COMPARISON TABLE */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0 32px;
+  }
+
+  @media (max-width: 600px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+
+  .compare-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .compare-card.fiat { border-top: 3px solid var(--red); }
+  .compare-card.btc { border-top: 3px solid var(--accent); }
+
+  .compare-card h4 {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .compare-card.fiat h4 { color: var(--red); }
+  .compare-card.btc h4 { color: var(--accent); }
+
+  .compare-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .compare-card li {
+    font-size: 15px;
+    color: var(--text-muted);
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .compare-card.fiat li::before {
+    content: "↓";
+    position: absolute;
+    left: 0;
+    color: var(--red);
+    font-weight: 800;
+  }
+
+  .compare-card.btc li::before {
+    content: "↑";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  /* QUOTE */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 6px 0 6px 24px;
+    margin: 28px 0;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--text);
+  }
+
+  blockquote cite {
+    display: block;
+    margin-top: 8px;
+    font-size: 14px;
+    font-style: normal;
+    color: var(--text-muted);
+  }
+
+  /* VOLATILITY SECTION VISUAL */
+  .volatility-strip {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 110px;
+    margin: 28px 0;
+    padding: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .bar {
+    flex: 1;
+    background: linear-gradient(180deg, var(--accent) 0%, #c9740a 100%);
+    border-radius: 4px 4px 0 0;
+    opacity: 0.85;
+  }
+
+  .bar.dip {
+    background: linear-gradient(180deg, var(--green) 0%, #0e8c5c 100%);
+  }
+
+  .volatility-caption {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: -10px;
+    margin-bottom: 28px;
+  }
+
+  /* CTA */
+  .cta {
+    background: linear-gradient(135deg, var(--accent-soft), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin: 48px 0 12px;
+  }
+
+  .cta h3 {
+    color: var(--text);
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+
+  .cta p {
+    color: var(--text-muted);
+    margin-bottom: 22px;
+  }
+
+  .cta-button {
+    display: inline-block;
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+  }
+
+  .cta-button:hover {
+    transform: translateY(-2px);
+  }
+
+  /* FOOTER NOTE */
+  .disclaimer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .author-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 40px;
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    color: #1a1300;
+    flex-shrink: 0;
+  }
+
+  .author-info p {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .author-info .name {
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .author-info .role {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="hero">
+    <span class="tag">Bitcoin Education · BSafe</span>
+    <h1>Money has a factory. <span>Bitcoin has a limit.</span></h1>
+    <p class="subtitle">
+      Why the infinite issuance of fiat currency guarantees devaluation against Bitcoin —
+      and why every price drop is, in practice, a sale.
+    </p>
+    <div class="meta">
+      <span>📚 Financial Education</span>
+      <span>⏱ 7 min read</span>
+      <span>🟠 bsafebitcoin.org</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <article>
+
+      <p>
+        There's a simple rule that governs every market, from a street fair to global finance:
+        <strong>anything that can be produced without limit tends to lose value over time.</strong>
+        Sand is worthless because there's too much of it. Diamonds are expensive because their supply
+        is controlled. And fiat currency — the dollar, the euro, the real — loses value for the same
+        reason: it can be created from nothing, in any quantity, at any moment.
+      </p>
+
+      <p>
+        Bitcoin was created precisely to solve this problem. And understanding this logic is the first
+        step toward seeing volatility not as a risk to be feared, but as the <strong>best friend of
+        anyone accumulating for the long term.</strong>
+      </p>
+
+      <h2>Infinite money always loses to scarce money</h2>
+
+      <p>
+        Central banks around the world have a powerful tool: the money printer — digital, these days.
+        In moments of crisis, rising public debt, or political necessity, new units of currency are
+        created and injected into the economy. The result is predictable: <strong>every existing unit
+        becomes worth a little less</strong>, because now more units are competing for the same goods
+        and services. That's inflation — and it isn't an accident, it's a structural feature of the
+        system.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">The central point</span>
+        <p>
+          If the supply of something can grow indefinitely, but demand for real goods (energy, food,
+          property, scarce assets) doesn't grow at the same pace, the price of those goods measured in
+          that currency has only one possible direction in the long run: <strong>up</strong>. In other
+          words, the currency devalues against everything that's scarce — and Bitcoin is, by design,
+          the scarcest asset ever created.
+        </p>
+      </div>
+
+      <h3>Bitcoin: the rule is the opposite</h3>
+
+      <p>
+        Bitcoin's protocol has set, since 2009, an absolute limit of <strong>21 million units</strong>.
+        There's no assembly, government, central bank, or committee with the power to change that
+        number. The issuance of new coins decreases progressively every four years (the so-called
+        <em>halving</em>) until it stops entirely. It's the first form of money in human history with
+        absolute, verifiable scarcity — verifiable by anyone, at any time, without relying on trust in
+        a third party.
+      </p>
+
+      <div class="compare">
+        <div class="compare-card fiat">
+          <h4>Fiat Currency</h4>
+          <ul>
+            <li>Supply can grow indefinitely</li>
+            <li>Issuance decisions are political and discretionary</li>
+            <li>Purchasing power eroded by inflation</li>
+            <li>Track record: every fiat currency has lost real value over the decades</li>
+          </ul>
+        </div>
+        <div class="compare-card btc">
+          <h4>Bitcoin</h4>
+          <ul>
+            <li>Fixed maximum supply: 21 million</li>
+            <li>Scheduled, predictable issuance, auditable by anyone</li>
+            <li>Growing scarcity with every halving</li>
+            <li>Track record: best-performing asset of the decade across every asset class</li>
+          </ul>
+        </div>
+      </div>
+
+      <p>
+        That doesn't mean Bitcoin's price only goes up day after day — and that's exactly where the
+        second part of this reasoning comes in.
+      </p>
+
+      <h2>Volatility isn't the problem. It's the opportunity.</h2>
+
+      <p>
+        Plenty of people look at Bitcoin's charts, see drops of 20%, 30%, sometimes 50%, and see risk.
+        But it's essential to separate two concepts that tend to get confused: <strong>short-term
+        volatility</strong> and <strong>long-term trend</strong>.
+      </p>
+
+      <div class="volatility-strip">
+        <div class="bar" style="height: 60%"></div>
+        <div class="bar" style="height: 85%"></div>
+        <div class="bar dip" style="height: 35%"></div>
+        <div class="bar dip" style="height: 25%"></div>
+        <div class="bar" style="height: 70%"></div>
+        <div class="bar" style="height: 95%"></div>
+        <div class="bar dip" style="height: 45%"></div>
+        <div class="bar" style="height: 100%"></div>
+      </div>
+      <p class="volatility-caption">
+        Illustrative representation: short-term swings (green = dips) inside an upward trajectory.
+      </p>
+
+      <p>
+        Volatility exists because Bitcoin is still an asset in the process of price discovery, growing
+        adoption, and subject to market sentiment cycles. But the <strong>underlying thesis doesn't
+        change</strong>: while Bitcoin's supply stays fixed, the supply of fiat currency keeps growing.
+        That means, statistically, every price drop tends to be temporary — and each one is a chance to
+        acquire the scarcest asset in the world for less of a currency that's being diluted every day.
+      </p>
+
+      <blockquote>
+        Buying Bitcoin during a dip isn't "trying to time the bottom." It's taking advantage of the
+        fact that the scarcest asset in the world is, momentarily, cheaper in a currency that's being
+        diluted every single day.
+      </blockquote>
+
+      <h3>Why DCA (recurring buys) makes so much sense here</h3>
+
+      <p>
+        It's precisely because of this volatility that the <strong>Dollar Cost Averaging (DCA)</strong>
+        strategy — recurring purchases, regardless of price — works so well with Bitcoin. By buying
+        regularly, you automatically buy more units when the price drops and fewer when it rises,
+        without needing to predict the future. Over time, this smooths your average entry price and
+        removes the anxiety of "trying to nail the perfect timing."
+      </p>
+
+      <p>
+        Tracking that average entry price over time, and comparing your portfolio's performance against
+        other assets — gold, the S&amp;P 500, or local benchmarks — is a powerful way to see, with real
+        data, how this discipline holds up against the constant devaluation of local currency.
+      </p>
+
+      <h2>What to do with this information</h2>
+
+      <p>
+        Understanding these two pillars — <strong>Bitcoin's absolute scarcity</strong> and the
+        <strong>continuous expansion of fiat currency</strong> — completely changes how you interpret
+        a price drop. It stops being a reason to panic and becomes a natural part of the process of
+        accumulating a superior monetary asset, with a long-term horizon.
+      </p>
+
+      <p>
+        This isn't investment advice, nor a promise of returns — it's an invitation to reflect on the
+        structural incentives of each monetary system. It's up to each person to study, understand the
+        risks, and make their own decisions responsibly.
+      </p>
+
+      <div class="cta">
+        <h3>Track your long-term strategy</h3>
+        <p>
+          Use BSafe's wallet monitoring tool to track your purchases, your average price in USD and
+          BRL, and compare your performance against Bitcoin, gold, and major market benchmarks.
+        </p>
+        <a href="https://bsafebitcoin.org" class="cta-button">Visit BSafe Bitcoin →</a>
+      </div>
+
+      <div class="author-box">
+        <div class="author-avatar">RB</div>
+        <div class="author-info">
+          <p class="name">Rafael Bered</p>
+          <p class="role">Succession &amp; asset-protection lawyer, capital markets educator, and founder of BSafe Bitcoin</p>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        This content is for educational purposes only and does not constitute investment advice.
+        Bitcoin is a highly volatile asset and involves risk. Do your own research before making any
+        financial decision.
+      </div>
+
+    </article>
+  </div>
+
+</body>
+</html>

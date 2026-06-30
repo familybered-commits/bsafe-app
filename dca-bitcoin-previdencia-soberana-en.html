@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA Into Bitcoin: Your Sovereign Retirement Plan Beyond Social Security | BSafe Bitcoin</title>
+<style>
+  :root {
+    --bg: #0b0e11;
+    --bg-card: #14181d;
+    --accent: #f7931a;
+    --accent-soft: #f7931a22;
+    --text: #e8eaed;
+    --text-muted: #9aa3ad;
+    --border: #232a31;
+    --green: #16c784;
+    --red: #ea3943;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 60px 24px 50px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft) 0%, transparent 60%);
+  }
+
+  .hero .tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero h1 span {
+    color: var(--accent);
+  }
+
+  .hero .subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 20px;
+  }
+
+  .hero .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* CONTENT */
+  article {
+    padding-top: 48px;
+  }
+
+  article h2 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 48px 0 18px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  article h2::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 26px;
+    background: var(--accent);
+    border-radius: 3px;
+  }
+
+  article h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    color: var(--accent);
+  }
+
+  article p {
+    font-size: 17px;
+    color: #d4d8dc;
+    margin-bottom: 18px;
+  }
+
+  article strong {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  article a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+  }
+
+  article a:hover {
+    border-bottom-color: var(--accent);
+  }
+
+  /* HIGHLIGHT BOX */
+  .highlight-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 28px 0;
+  }
+
+  .highlight-box .label {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .highlight-box p {
+    margin-bottom: 0;
+    font-size: 17px;
+  }
+
+  /* COMPARISON CARDS */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0 32px;
+  }
+
+  @media (max-width: 600px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+
+  .compare-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .compare-card.fiat { border-top: 3px solid var(--red); }
+  .compare-card.btc { border-top: 3px solid var(--accent); }
+
+  .compare-card h4 {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .compare-card.fiat h4 { color: var(--red); }
+  .compare-card.btc h4 { color: var(--accent); }
+
+  .compare-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .compare-card li {
+    font-size: 15px;
+    color: var(--text-muted);
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .compare-card.fiat li::before {
+    content: "↓";
+    position: absolute;
+    left: 0;
+    color: var(--red);
+    font-weight: 800;
+  }
+
+  .compare-card.btc li::before {
+    content: "↑";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  /* DCA STEPS */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 24px 0 32px;
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+
+  .step-number {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step-text p {
+    margin-bottom: 0;
+    font-size: 15px;
+    color: var(--text-muted);
+  }
+
+  .step-text strong {
+    color: var(--text);
+  }
+
+  /* QUOTE */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 6px 0 6px 24px;
+    margin: 28px 0;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--text);
+  }
+
+  /* VOLATILITY / DCA VISUAL */
+  .volatility-strip {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 110px;
+    margin: 28px 0;
+    padding: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .bar {
+    flex: 1;
+    background: linear-gradient(180deg, var(--accent) 0%, #c9740a 100%);
+    border-radius: 4px 4px 0 0;
+    opacity: 0.85;
+  }
+
+  .bar.dip {
+    background: linear-gradient(180deg, var(--green) 0%, #0e8c5c 100%);
+  }
+
+  .volatility-caption {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: -10px;
+    margin-bottom: 28px;
+  }
+
+  /* CTA */
+  .cta {
+    background: linear-gradient(135deg, var(--accent-soft), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin: 48px 0 12px;
+  }
+
+  .cta h3 {
+    color: var(--text);
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+
+  .cta p {
+    color: var(--text-muted);
+    margin-bottom: 22px;
+  }
+
+  .cta-button {
+    display: inline-block;
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+  }
+
+  .cta-button:hover {
+    transform: translateY(-2px);
+  }
+
+  /* FOOTER NOTE */
+  .disclaimer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .author-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 40px;
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    color: #1a1300;
+    flex-shrink: 0;
+  }
+
+  .author-info p {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .author-info .name {
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .author-info .role {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar a.back {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .topbar a.back:hover { color: var(--text); }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    font-family: inherit;
+  }
+
+  .share-btn:hover {
+    background: var(--accent);
+    color: #1a1300;
+    transform: translateY(-1px);
+  }
+
+  .share-wrap {
+    position: relative;
+  }
+
+  .share-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 190px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    z-index: 60;
+  }
+
+  .share-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .share-menu a,
+  .share-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .share-menu a:hover,
+  .share-menu button:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .share-menu .share-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .share-menu .share-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .share-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 100;
+  }
+
+  .share-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="educacao.html" class="back">← Back to site</a>
+    <div class="share-wrap">
+      <button class="share-btn" onclick="toggleShareMenu(event)">↗ Share</button>
+      <div class="share-menu" id="share-menu">
+        <a href="#" onclick="shareTo('whatsapp');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.86.5 3.6 1.43 5.1L2 22l5.16-1.5a9.84 9.84 0 0 0 4.87 1.28h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.13-2.9-7-1.88-1.88-4.36-2.87-7.01-2.87Zm0 18.06h-.01a8.18 8.18 0 0 1-4.17-1.14l-.3-.18-3.05.89.91-2.98-.2-.31a8.16 8.16 0 0 1-1.26-4.43c0-4.52 3.68-8.2 8.21-8.2 2.19 0 4.25.86 5.8 2.41a8.13 8.13 0 0 1 2.4 5.79c0 4.53-3.68 8.15-8.33 8.15Zm4.49-6.13c-.25-.12-1.45-.72-1.68-.8-.22-.08-.39-.12-.55.12-.16.25-.63.8-.78.96-.14.16-.29.18-.53.06-1.45-.72-2.4-1.29-3.36-2.92-.25-.43.25-.4.72-1.34.08-.16.04-.3-.03-.43-.08-.12-.55-1.33-.76-1.83-.2-.48-.4-.42-.55-.42-.14-.01-.3-.01-.46-.01-.16 0-.42.06-.64.3-.22.25-.85.83-.85 2.02 0 1.19.87 2.34 1 2.5.12.16 1.7 2.59 4.12 3.53 2.04.79 2.45.66 2.9.62.45-.04 1.45-.59 1.65-1.17.2-.57.2-1.06.14-1.17-.06-.1-.22-.17-.4-.27Z"/></svg>
+          </span>
+          WhatsApp
+        </a>
+        <a href="#" onclick="shareTo('x');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231ZM17.083 19.77h1.833L7.084 4.126H5.117Z"/></svg>
+          </span>
+          X (Twitter)
+        </a>
+        <a href="#" onclick="shareTo('instagram');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg>
+          </span>
+          Instagram
+        </a>
+        <button onclick="shareTo('copy')">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </span>
+          Copy link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="share-toast" id="share-toast">Link copied!</div>
+
+  <div class="hero">
+    <span class="tag">Retirement · BSafe</span>
+    <h1>Public pensions promise a ruler. <span>Bitcoin delivers scarcity.</span></h1>
+    <p class="subtitle">
+      How recurring purchases (DCA) into a fixed-supply asset can become the foundation of a
+      retirement plan that's truly your own — independent of formulas, reforms, and the future
+      purchasing power of a government benefit.
+    </p>
+    <div class="meta">
+      <span>📚 Retirement &amp; Bitcoin</span>
+      <span>⏱ 8 min read</span>
+      <span>🟠 bsafebitcoin.org</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <article>
+
+      <p>
+        If you're a salaried employee or contribute as a self-employed worker, a slice of your monthly
+        income is, by law, set aside for the public pension system. The promise is simple: contribute
+        during your working years and, in old age, receive a benefit that sustains your standard of
+        living. In theory, it's a pact between generations. In practice, it's a <strong>public promise,
+        paid in fiat currency, calculated under rules that have already been changed multiple times</strong>
+        — and that depend on the government's future ability to honor the commitment with a currency
+        that loses value every year.
+      </p>
+
+      <p>
+        This article isn't about abandoning your public pension system — it's about understanding its
+        structural limitations and presenting <strong>DCA (Dollar Cost Averaging) into Bitcoin</strong>
+        as a complementary layer of retirement planning, built on an asset whose rules
+        <em>can't be changed by decree, reform, or fiscal crisis</em>.
+      </p>
+
+      <h2>What DCA actually means</h2>
+
+      <p>
+        DCA stands for <strong>recurring purchases of a fixed amount, at regular intervals, regardless
+        of the asset's price at the time of purchase</strong>. Instead of trying to guess "the best
+        moment" to buy Bitcoin — something nobody can do consistently — you buy, say, $50 every month,
+        always on the same date, for years.
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-text">
+            <p><strong>Fixed amount, fixed frequency.</strong> You set an amount that fits your budget
+            (e.g., $20, $50, $100 a month) and a date — every month, no exceptions, without waiting for
+            "money left over."</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-text">
+            <p><strong>You buy more when it's cheap, less when it's expensive.</strong> Since the
+            amount is fixed, when Bitcoin's price drops, the same money buys more satoshis — and vice
+            versa. This automatically smooths your average entry price.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-text">
+            <p><strong>It removes the anxiety of "perfect timing."</strong> You don't need to nail the
+            bottom or predict the top. Long-term discipline replaces the attempt at short-term
+            guesswork.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-text">
+            <p><strong>You accumulate in a fixed-supply asset.</strong> Every satoshi bought today is a
+            fraction of a total that will <em>never</em> exceed 21 million units — unlike any pension
+            fund or fiat currency, whose "supply" can grow according to the political needs of the
+            moment.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="volatility-strip">
+        <div class="bar dip" style="height: 35%"></div>
+        <div class="bar" style="height: 60%"></div>
+        <div class="bar dip" style="height: 25%"></div>
+        <div class="bar" style="height: 70%"></div>
+        <div class="bar" style="height: 85%"></div>
+        <div class="bar dip" style="height: 45%"></div>
+        <div class="bar" style="height: 95%"></div>
+        <div class="bar" style="height: 100%"></div>
+      </div>
+      <p class="volatility-caption">
+        Illustrative representation: fixed-value monthly purchases (each bar = one purchase)
+        automatically capture both dips (green) and rallies, forming an average price over time.
+      </p>
+
+      <h2>The structural problems of fiat-based pension systems</h2>
+
+      <p>
+        To understand why DCA into Bitcoin works as a complement — not just as a "risky investment" —
+        you need to look honestly at the structural characteristics of public pension systems.
+      </p>
+
+      <h3>1. Rules that change over time</h3>
+
+      <p>
+        The benefit calculation formula, the minimum age, the required contribution period, and the
+        benefit cap have already been changed by multiple reforms over recent decades, and nothing
+        stops them from changing again. Whoever is contributing today is building a right under
+        <strong>rules that may be different</strong> by the time they go to use it.
+      </p>
+
+      <h3>2. The benefit's real value depends on the currency</h3>
+
+      <p>
+        Even if the nominal value of the benefit gets adjusted, what matters is the <strong>purchasing
+        power</strong> of that value at the moment it's received. As we saw in the "infinite vs. scarce
+        money" principle: a currency whose supply can grow indefinitely tends to buy less and less over
+        the decades. A benefit "preserved" in nominal terms isn't necessarily one that preserves
+        purchasing power.
+      </p>
+
+      <h3>3. Dependence on a pay-as-you-go system</h3>
+
+      <p>
+        The dominant model for public pensions is pay-as-you-go: today's workers fund today's retirees.
+        That means the system's sustainability depends directly on the ratio between active
+        contributors and beneficiaries — a ratio that, in many countries, is becoming structurally more
+        challenging over time.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">The central point</span>
+        <p>
+          None of this means the public pension system will "collapse" overnight, or that contributing
+          is pointless — it's an important, and for most people mandatory, social protection system.
+          The point is different: <strong>putting 100% of your retirement expectations into a single
+          promise, paid in a currency that's being diluted, calculated by rules that change, means
+          concentrating your entire future on variables you don't control.</strong>
+        </p>
+      </div>
+
+      <h2>DCA into Bitcoin as a complementary layer</h2>
+
+      <p>
+        This is where DCA into Bitcoin fits in — not as a replacement for your public pension, but as a
+        <strong>second leg</strong> of your long-term strategy, with complementary, and in several
+        respects opposite, characteristics:
+      </p>
+
+      <div class="compare">
+        <div class="compare-card fiat">
+          <h4>Fiat Pension System</h4>
+          <ul>
+            <li>Calculation rules already changed multiple times</li>
+            <li>Benefit paid in a currency that loses purchasing power</li>
+            <li>Depends on the ratio of contributors to beneficiaries</li>
+            <li>Management and rules set by a third party (the government)</li>
+            <li>Eligibility conditioned on contribution time and age</li>
+          </ul>
+        </div>
+        <div class="compare-card btc">
+          <h4>DCA Into Bitcoin</h4>
+          <ul>
+            <li>Issuance rules fixed since 2009, never changed</li>
+            <li>Wealth held in an asset with a maximum supply of 21 million</li>
+            <li>Doesn't depend on a ratio between generations</li>
+            <li>Custody and rules under the user's own control</li>
+            <li>Available at any time, with no minimum age</li>
+          </ul>
+        </div>
+      </div>
+
+      <p>
+        Combining the two isn't a coincidence: one is a <strong>collective safety net</strong>, subject
+        to a country's rules and fiscal health. The other is a <strong>personal store of value</strong>,
+        built satoshi by satoshi, under rules that no government, party, or crisis can renegotiate.
+      </p>
+
+      <h3>Why the long-term horizon favors DCA</h3>
+
+      <p>
+        Retirement planning, by definition, is a decades-long exercise. That's exactly the kind of
+        horizon where Bitcoin's short-term volatility loses relevance and the underlying thesis —
+        absolute scarcity against growing monetary issuance — gains weight. A purchase made today
+        doesn't need to "pay off" next month; it's one piece of a mosaic that only makes sense viewed
+        from a distance, over an interval of 10, 15, 20 years.
+      </p>
+
+      <blockquote>
+        A fiat pension is a third-party promise, paid in a currency that's being diluted.
+        DCA into Bitcoin is building your own wealth, in an asset that can't be diluted.
+        One doesn't replace the other — but ignoring the second means betting your entire future on a
+        single ruler.
+      </blockquote>
+
+      <h2>Tracking your "sovereign retirement plan"</h2>
+
+      <p>
+        Just like with any retirement plan, what matters isn't only contributing — it's
+        <strong>tracking the progress</strong>. How much BTC have you accumulated so far? What was your
+        average entry price, in USD and BRL? How is this strategy performing against other
+        store-of-value assets, like gold or major stock indices?
+      </p>
+
+      <p>
+        Visualizing these numbers over time turns DCA from an "act of faith" into a measurable process
+        — just like any retirement account statement, but with the difference that the underlying asset
+        has a fixed supply and is under your own custody.
+      </p>
+
+      <h2>What to do with this information</h2>
+
+      <p>
+        Continuing to contribute to your public pension system, when mandatory or strategically
+        advantageous, while also building, in a disciplined and recurring way, a Bitcoin reserve via
+        DCA — these aren't mutually exclusive choices. They're two layers of the same goal — security
+        in the future — resting on very different foundations: one on a collective, fiat-based promise,
+        the other on a mathematical, scarce protocol.
+      </p>
+
+      <p>
+        This isn't investment advice, nor a promise of returns — it's an invitation to reflect on the
+        structural incentives of each system. It's up to each person to study, understand the risks,
+        and make their own decisions responsibly.
+      </p>
+
+      <div class="cta">
+        <h3>Track your Bitcoin DCA like a retirement plan</h3>
+        <p>
+          Use BSafe's wallet monitoring tool to track your purchases, your average price in USD and
+          BRL, and compare your performance against Bitcoin, gold, and major market benchmarks.
+        </p>
+        <a href="https://bsafebitcoin.org" class="cta-button">Visit BSafe Bitcoin →</a>
+      </div>
+
+      <div class="author-box">
+        <div class="author-avatar">RB</div>
+        <div class="author-info">
+          <p class="name">Rafael Bered</p>
+          <p class="role">Succession &amp; asset-protection lawyer, capital markets educator, and founder of BSafe Bitcoin</p>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        This content is for educational purposes only and does not constitute investment or
+        retirement-planning advice. Bitcoin is a highly volatile asset and involves risk. Do your own
+        research and, if needed, consult qualified professionals before making any financial or
+        retirement-planning decision.
+      </div>
+
+    </article>
+  </div>
+
+  <script>
+    const shareData = {
+      title: document.title,
+      text: 'DCA into Bitcoin: your sovereign retirement plan beyond Social Security. Read this article from BSafe Bitcoin.',
+      url: window.location.href
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById('share-toast');
+      if (message) toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(shareData.url).then(() => {
+        showToast('Link copied!');
+      }).catch(() => {
+        showToast('Could not copy the link');
+      });
+    }
+
+    function toggleShareMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('share-menu');
+      menu.classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('share-menu');
+      if (menu.classList.contains('open') && !menu.contains(e.target) && !e.target.closest('.share-btn')) {
+        menu.classList.remove('open');
+      }
+    });
+
+    function shareTo(target) {
+      const menu = document.getElementById('share-menu');
+      menu.classList.remove('open');
+
+      const url = encodeURIComponent(shareData.url);
+      const text = encodeURIComponent(shareData.text);
+
+      switch (target) {
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${text}%20${url}`, '_blank', 'noopener');
+          break;
+        case 'x':
+          window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
+          break;
+        case 'instagram':
+          // Instagram has no direct web share URL; we copy the link
+          // for the user to paste into Stories, bio, or DM.
+          navigator.clipboard.writeText(shareData.url).then(() => {
+            showToast('Link copied! Paste it on Instagram (Stories, bio, or DM)');
+            window.open('https://www.instagram.com/', '_blank', 'noopener');
+          }).catch(() => {
+            showToast('Could not copy the link');
+          });
+          break;
+        case 'copy':
+          copyLink();
+          break;
+      }
+    }
+  </script>
+
+</body>
+</html>

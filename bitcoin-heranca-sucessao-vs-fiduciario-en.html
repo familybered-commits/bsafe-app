@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estate Planning: Bitcoin Self-Custody vs. Traditional Fiat Assets | BSafe Bitcoin</title>
+<style>
+  :root {
+    --bg: #0b0e11;
+    --bg-card: #14181d;
+    --accent: #f7931a;
+    --accent-soft: #f7931a22;
+    --text: #e8eaed;
+    --text-muted: #9aa3ad;
+    --border: #232a31;
+    --green: #16c784;
+    --red: #ea3943;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 60px 24px 50px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft) 0%, transparent 60%);
+  }
+
+  .hero .tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero h1 span {
+    color: var(--accent);
+  }
+
+  .hero .subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 20px;
+  }
+
+  .hero .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* CONTENT */
+  article {
+    padding-top: 48px;
+  }
+
+  article h2 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 48px 0 18px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  article h2::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 26px;
+    background: var(--accent);
+    border-radius: 3px;
+  }
+
+  article h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    color: var(--accent);
+  }
+
+  article p {
+    font-size: 17px;
+    color: #d4d8dc;
+    margin-bottom: 18px;
+  }
+
+  article strong {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  article a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+  }
+
+  article a:hover {
+    border-bottom-color: var(--accent);
+  }
+
+  /* HIGHLIGHT BOX */
+  .highlight-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 28px 0;
+  }
+
+  .highlight-box .label {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .highlight-box p {
+    margin-bottom: 0;
+    font-size: 17px;
+  }
+
+  /* COMPARISON CARDS */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0 32px;
+  }
+
+  @media (max-width: 600px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+
+  .compare-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .compare-card.fiat { border-top: 3px solid var(--red); }
+  .compare-card.btc { border-top: 3px solid var(--accent); }
+
+  .compare-card h4 {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .compare-card.fiat h4 { color: var(--red); }
+  .compare-card.btc h4 { color: var(--accent); }
+
+  .compare-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .compare-card li {
+    font-size: 15px;
+    color: var(--text-muted);
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .compare-card.fiat li::before {
+    content: "↓";
+    position: absolute;
+    left: 0;
+    color: var(--red);
+    font-weight: 800;
+  }
+
+  .compare-card.btc li::before {
+    content: "↑";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  /* STEPS */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 24px 0 32px;
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+
+  .step-number {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step-text p {
+    margin-bottom: 0;
+    font-size: 15px;
+    color: var(--text-muted);
+  }
+
+  .step-text strong {
+    color: var(--text);
+  }
+
+  /* QUOTE */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 6px 0 6px 24px;
+    margin: 28px 0;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--text);
+  }
+
+  /* CTA */
+  .cta {
+    background: linear-gradient(135deg, var(--accent-soft), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin: 48px 0 12px;
+  }
+
+  .cta h3 {
+    color: var(--text);
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+
+  .cta p {
+    color: var(--text-muted);
+    margin-bottom: 22px;
+  }
+
+  .cta-button {
+    display: inline-block;
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+  }
+
+  .cta-button:hover {
+    transform: translateY(-2px);
+  }
+
+  /* FOOTER NOTE */
+  .disclaimer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .author-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 40px;
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    color: #1a1300;
+    flex-shrink: 0;
+  }
+
+  .author-info p {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .author-info .name {
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .author-info .role {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar a.back {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .topbar a.back:hover { color: var(--text); }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    font-family: inherit;
+  }
+
+  .share-btn:hover {
+    background: var(--accent);
+    color: #1a1300;
+    transform: translateY(-1px);
+  }
+
+  .share-wrap {
+    position: relative;
+  }
+
+  .share-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 190px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    z-index: 60;
+  }
+
+  .share-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .share-menu a,
+  .share-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .share-menu a:hover,
+  .share-menu button:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .share-menu .share-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .share-menu .share-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .share-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 100;
+  }
+
+  .share-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="educacao.html" class="back">← Back to site</a>
+    <div class="share-wrap">
+      <button class="share-btn" onclick="toggleShareMenu(event)">↗ Share</button>
+      <div class="share-menu" id="share-menu">
+        <a href="#" onclick="shareTo('whatsapp');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.86.5 3.6 1.43 5.1L2 22l5.16-1.5a9.84 9.84 0 0 0 4.87 1.28h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.13-2.9-7-1.88-1.88-4.36-2.87-7.01-2.87Zm0 18.06h-.01a8.18 8.18 0 0 1-4.17-1.14l-.3-.18-3.05.89.91-2.98-.2-.31a8.16 8.16 0 0 1-1.26-4.43c0-4.52 3.68-8.2 8.21-8.2 2.19 0 4.25.86 5.8 2.41a8.13 8.13 0 0 1 2.4 5.79c0 4.53-3.68 8.15-8.33 8.15Zm4.49-6.13c-.25-.12-1.45-.72-1.68-.8-.22-.08-.39-.12-.55.12-.16.25-.63.8-.78.96-.14.16-.29.18-.53.06-1.45-.72-2.4-1.29-3.36-2.92-.25-.43.25-.4.72-1.34.08-.16.04-.3-.03-.43-.08-.12-.55-1.33-.76-1.83-.2-.48-.4-.42-.55-.42-.14-.01-.3-.01-.46-.01-.16 0-.42.06-.64.3-.22.25-.85.83-.85 2.02 0 1.19.87 2.34 1 2.5.12.16 1.7 2.59 4.12 3.53 2.04.79 2.45.66 2.9.62.45-.04 1.45-.59 1.65-1.17.2-.57.2-1.06.14-1.17-.06-.1-.22-.17-.4-.27Z"/></svg>
+          </span>
+          WhatsApp
+        </a>
+        <a href="#" onclick="shareTo('x');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231ZM17.083 19.77h1.833L7.084 4.126H5.117Z"/></svg>
+          </span>
+          X (Twitter)
+        </a>
+        <a href="#" onclick="shareTo('instagram');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg>
+          </span>
+          Instagram
+        </a>
+        <button onclick="shareTo('copy')">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </span>
+          Copy link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="share-toast" id="share-toast">Link copied!</div>
+
+  <div class="hero">
+    <span class="tag">Estate Planning · BSafe</span>
+    <h1>When you're gone, is your estate stuck —<span> or inherited in minutes?</span></h1>
+    <p class="subtitle">
+      How Bitcoin self-custody transforms the wealth-transfer process for heirs, compared to bank
+      accounts, investments, and assets registered within the traditional fiat system.
+    </p>
+    <div class="meta">
+      <span>⚖️ Estate Planning &amp; Bitcoin</span>
+      <span>⏱ 9 min read</span>
+      <span>🟠 bsafebitcoin.org</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <article>
+
+      <p>
+        Nobody likes thinking about their own death. But every lawyer who has handled an estate knows:
+        what separates a smooth wealth transfer from a years-long nightmare isn't the size of the
+        estate — it's <strong>how it's structured</strong>. Frozen bank accounts, brokerages that
+        require a court order, real estate that can't be sold without a formal partition: the
+        traditional fiat system was designed to <em>lock up</em> assets at the exact moment a family
+        most needs liquidity.
+      </p>
+
+      <p>
+        This article isn't about avoiding probate — in many cases it's necessary and legally required.
+        It's about understanding a structural difference rarely discussed: Bitcoin held in
+        <strong>self-custody</strong> is the only major asset in a person's estate whose transfer can
+        be planned to be <em>private, instant, and free of third-party dependence</em> — something
+        impossible to replicate with money in a bank, shares in a brokerage, or registered real estate.
+      </p>
+
+      <h2>The structural problem of inheriting fiat assets</h2>
+
+      <p>
+        When someone passes away, all of their financial assets — checking accounts, savings,
+        investments, brokerage holdings, funds — are <strong>automatically frozen</strong> by
+        institutions as soon as they learn of the death. From there, the legal path is familiar to any
+        family that's been through it:
+      </p>
+
+      <h3>1. Opening probate (judicial or notarial)</h3>
+
+      <p>
+        Every asset, debt, and heir must be identified before any distribution can happen — whether
+        through a notary (when there's consensus and all heirs are adults with full legal capacity) or
+        through the courts (when there's conflict, a minor heir, or a will to execute). Even in the
+        best-case scenario, this process typically takes <strong>months</strong>; in contested cases, it
+        can stretch on for <strong>years</strong>.
+      </p>
+
+      <h3>2. Frozen accounts and investments until distribution</h3>
+
+      <p>
+        Banks and brokerages won't release a cent without formal documentation — a death certificate,
+        an open probate case, a court order, or a deed of distribution. Even a spouse or children who
+        depend on that money for everyday expenses are left without access while the process runs its
+        course.
+      </p>
+
+      <h3>3. Costs that shrink the estate before it's even distributed</h3>
+
+      <p>
+        Inheritance tax (with rates that vary by jurisdiction), legal fees, notary and court costs —
+        all of this is deducted <strong>from the estate itself</strong>, before heirs receive anything.
+        In some jurisdictions, inheritance tax alone can run as high as 8% of the total value
+        transferred.
+      </p>
+
+      <h3>4. Public exposure of the estate</h3>
+
+      <p>
+        A probate proceeding is, by nature, <strong>public</strong>. Anyone can look up the court record
+        and find out what each heir received — sensitive information many families would rather keep
+        private.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">The central point</span>
+        <p>
+          The fiat system wasn't designed with wealth transfer in mind — it was designed to
+          <strong>protect the institution</strong> from being liable for handing assets to unauthorized
+          parties. The result is that, precisely at a moment of grief and need, the family faces months
+          (or years) of red tape to access what is, in practice, already theirs by right.
+        </p>
+      </div>
+
+      <h2>How Bitcoin self-custody works in practice</h2>
+
+      <p>
+        Bitcoin self-custody means <strong>you're the sole holder of the private keys</strong> that
+        control that wealth — no bank, brokerage, or intermediary institution involved. That feature,
+        which day-to-day is about financial sovereignty, takes on an entirely new dimension when we
+        think about estate planning:
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-text">
+            <p><strong>Whoever holds the key holds the asset — with nothing to prove to anyone.</strong>
+            Unlike a bank account, there's no institution to "notify" about a death. Whoever holds the
+            seed phrase (or the keys in a multisig setup) can move the funds immediately, with no court
+            order, no certificate, no proceeding.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-text">
+            <p><strong>Estate planning becomes about access to information, not a court process.</strong>
+            "Transferring" Bitcoin doesn't depend on a judge's ruling or a bank's system — it depends
+            only on the heir knowing where the keys are and how to access them. This can be arranged in
+            advance, privately, with clear instructions kept somewhere secure.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-text">
+            <p><strong>Multisig and programmable inheritance.</strong> Multi-signature wallet setups
+            (e.g., 2-of-3 keys) let you structure shared access between a spouse, heirs, or a trusted
+            third party — without any single party unilaterally controlling the estate during your
+            lifetime, while guaranteeing combined access in the event of death.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-text">
+            <p><strong>Real privacy.</strong> There's no public registry linking a Bitcoin key to an
+            identity. Self-custodied wealth doesn't automatically show up in any registry that third
+            parties could search — discretion is built into the architecture of the system itself.</p>
+          </div>
+        </div>
+      </div>
+
+      <blockquote>
+        With fiat assets, transfer depends on recognition by third parties — banks, notaries, courts.
+        With self-custodied Bitcoin, transfer depends only on information: whoever knows how to access
+        the keys, accesses the wealth. It's the difference between waiting for an institution to
+        "release" what's yours and simply already having it in hand.
+      </blockquote>
+
+      <h2>Comparing the two models side by side</h2>
+
+      <div class="compare">
+        <div class="compare-card fiat">
+          <h4>Fiat Estate</h4>
+          <ul>
+            <li>Accounts automatically frozen after death</li>
+            <li>Access depends on judicial or notarial probate</li>
+            <li>Process can take months or years</li>
+            <li>Taxes, legal fees, and court costs reduce the amount transferred</li>
+            <li>Probate proceedings are public</li>
+            <li>Total dependence on banks, brokerages, and notaries</li>
+          </ul>
+        </div>
+        <div class="compare-card btc">
+          <h4>Self-Custodied Bitcoin</h4>
+          <ul>
+            <li>Immediate access for whoever holds the keys</li>
+            <li>Transfer doesn't depend on third-party recognition</li>
+            <li>Can happen in minutes, at any time</li>
+            <li>No automatic freeze or institutional fees on transfer</li>
+            <li>No public registry tied to identity</li>
+            <li>100% control by the key holder, both in life and in succession</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>"But what about the legal duty to declare and pay inheritance tax?"</h2>
+
+      <p>
+        This is a point that deserves honesty: <strong>technical possession</strong> of the keys
+        doesn't eliminate the <strong>legal obligation</strong> to declare the estate in probate and
+        pay any taxes owed on inheritance, where applicable. Bitcoin is an asset like any other for
+        estate-law purposes — it must be reported and taxed under the laws in force.
+      </p>
+
+      <p>
+        The real difference isn't about "dodging" that obligation, but about <strong>who controls the
+        timing and the access</strong>. With fiat assets, the heir is at the mercy of the legal process
+        just to <em>access</em> the resource. With self-custodied Bitcoin, technical access is
+        available immediately — and compliance with tax and estate obligations becomes an organized
+        family choice, rather than a precondition imposed by a third party for the asset to even be
+        available.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">Important</span>
+        <p>
+          This isn't an invitation to evade taxes. Quite the opposite: good estate planning with
+          Bitcoin combines <strong>easier technical access</strong> with <strong>full legal and tax
+          compliance</strong> — guidance that only a specialized lawyer can provide case by case,
+          considering jurisdiction, marital property regime, and the composition of the total estate.
+        </p>
+      </div>
+
+      <h2>The risk that shifts: from the system to you</h2>
+
+      <p>
+        It's important to be honest about the other side of this coin. In the fiat system, the risk of
+        "losing access" is institutional — it sits with the bank, the notary, the courts — but
+        <strong>red tape</strong> is the price of that protection. In self-custody, the risk shifts: if
+        the keys are lost, or if no one besides the holder knows where to find them,
+        <strong>the wealth can become permanently inaccessible</strong> — forever, with no court able to
+        "restore" access.
+      </p>
+
+      <p>
+        That's why the estate-planning advantages of self-custody <strong>only exist with proper
+        planning</strong>. A seed phrase backup, clear instructions for heirs, possibly a multisig
+        setup or a time-locked inheritance scheme — without that, the Bitcoin that should be an estate
+        advantage becomes the opposite: wealth lost forever.
+      </p>
+
+      <h2>What this means in practice</h2>
+
+      <p>
+        For anyone who already holds Bitcoin in self-custody — or is building a position through DCA
+        over the years — estate planning shouldn't be a topic to "think about later." The structural
+        advantage this asset offers for wealth transfer only materializes if there is:
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-text">
+            <p><strong>Access documentation.</strong> Clear instructions, kept somewhere secure, on how
+            to locate and access the keys — without exposing the seed phrase in plain text to anyone
+            who shouldn't have access during your lifetime.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-text">
+            <p><strong>A structure compatible with multiple heirs.</strong> Multisig or planned
+            division prevents a single heir from having unilateral control before the right moment.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-text">
+            <p><strong>Legal guidance for compliance.</strong> Including Bitcoin in your wealth
+            declaration and in estate planning, with proper tax assessment — aligning technical
+            sovereignty with legal certainty for the family.</p>
+          </div>
+        </div>
+      </div>
+
+      <p>
+        Combining these three layers is what turns self-custody from a "risk of loss" into a
+        <strong>real transfer advantage</strong>: wealth that doesn't get stuck in court queues, that
+        doesn't lose value to fees during years of waiting, and that reaches the family exactly when
+        they need it most — without depending on the goodwill or speed of any institution.
+      </p>
+
+      <p>
+        This isn't individual legal advice, nor a substitute for consulting a specialized estate and
+        tax attorney. Every family has its own asset composition, marital property regime, and tax
+        context — what's presented here are structural principles for reflection, not a ready-made
+        script.
+      </p>
+
+      <div class="cta">
+        <h3>Track and organize your Bitcoin estate</h3>
+        <p>
+          Use BSafe's wallet monitoring tool to track your purchases, balance, and performance — the
+          first step toward organized estate planning starts with knowing exactly what you have.
+        </p>
+        <a href="https://bsafebitcoin.org" class="cta-button">Visit BSafe Bitcoin →</a>
+      </div>
+
+      <div class="author-box">
+        <div class="author-avatar">RB</div>
+        <div class="author-info">
+          <p class="name">Rafael Bered</p>
+          <p class="role">Succession &amp; asset-protection lawyer, capital markets educator, and founder of BSafe Bitcoin</p>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        This content is for educational purposes only and does not constitute legal, tax, or
+        investment advice. Estate matters involve specific legislation in each jurisdiction and each
+        family's individual circumstances. Consult a specialized estate and tax attorney before making
+        any estate-planning decision.
+      </div>
+
+    </article>
+  </div>
+
+  <script>
+    const shareData = {
+      title: document.title,
+      text: 'Estate planning: the advantages of Bitcoin self-custody compared to traditional fiat assets. Read this article from BSafe Bitcoin.',
+      url: window.location.href
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById('share-toast');
+      if (message) toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(shareData.url).then(() => {
+        showToast('Link copied!');
+      }).catch(() => {
+        showToast('Could not copy the link');
+      });
+    }
+
+    function toggleShareMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('share-menu');
+      menu.classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('share-menu');
+      if (menu.classList.contains('open') && !menu.contains(e.target) && !e.target.closest('.share-btn')) {
+        menu.classList.remove('open');
+      }
+    });
+
+    function shareTo(target) {
+      const menu = document.getElementById('share-menu');
+      menu.classList.remove('open');
+
+      const url = encodeURIComponent(shareData.url);
+      const text = encodeURIComponent(shareData.text);
+
+      switch (target) {
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${text}%20${url}`, '_blank', 'noopener');
+          break;
+        case 'x':
+          window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
+          break;
+        case 'instagram':
+          navigator.clipboard.writeText(shareData.url).then(() => {
+            showToast('Link copied! Paste it on Instagram (Stories, bio, or DM)');
+            window.open('https://www.instagram.com/', '_blank', 'noopener');
+          }).catch(() => {
+            showToast('Could not copy the link');
+          });
+          break;
+        case 'copy':
+          copyLink();
+          break;
+      }
+    }
+  </script>
+
+</body>
+</html>
