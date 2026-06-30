@@ -304,7 +304,9 @@ document.querySelectorAll('.rev').forEach(el=>obs.observe(el));
 // EDU LANGUAGE TOGGLE
 function setEduLang(lang){
   document.querySelectorAll('.edu-card').forEach(c=>{
-    c.style.display = (c.dataset.lang===lang) ? '' : 'none';
+    const match = c.dataset.lang===lang;
+    c.style.display = match ? '' : 'none';
+    if(match) c.classList.add('vis'); // força visível: o IntersectionObserver nunca detecta elementos que nasceram display:none
   });
   document.querySelectorAll('.lang-pill').forEach(p=>{
     p.classList.toggle('active', p.dataset.lang===lang);
