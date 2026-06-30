@@ -69,6 +69,8 @@ section{position:relative;z-index:1}
 .lang-pill.active{background:var(--btc);color:#000;font-weight:700}
 .lang-pill:not(.active):hover{color:var(--off)}
 .edu-card[data-lang="en"]{display:none}
+#educacao.lang-en .edu-card[data-lang="pt"]{display:none!important}
+#educacao.lang-en .edu-card[data-lang="en"]{display:flex!important;opacity:1!important;transform:none!important}
 .edu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:48px}
 @media (max-width:760px){.edu-grid{grid-template-columns:1fr}}
 .edu-card{display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;text-decoration:none;transition:var(--ease);position:relative}
@@ -303,11 +305,8 @@ document.querySelectorAll('.rev').forEach(el=>obs.observe(el));
 
 // EDU LANGUAGE TOGGLE
 function setEduLang(lang){
-  document.querySelectorAll('.edu-card').forEach(c=>{
-    const match = c.dataset.lang===lang;
-    c.style.display = match ? '' : 'none';
-    if(match) c.classList.add('vis'); // força visível: o IntersectionObserver nunca detecta elementos que nasceram display:none
-  });
+  const section = document.getElementById('educacao');
+  if(section) section.classList.toggle('lang-en', lang==='en');
   document.querySelectorAll('.lang-pill').forEach(p=>{
     p.classList.toggle('active', p.dataset.lang===lang);
   });
