@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitcoin Não Tem Valor? Nenhum Ativo Tem — A Escola Austríaca Já Explicava Isso | BSafe Bitcoin</title>
+<style>
+  :root {
+    --bg: #0b0e11;
+    --bg-card: #14181d;
+    --accent: #f7931a;
+    --accent-soft: #f7931a22;
+    --text: #e8eaed;
+    --text-muted: #9aa3ad;
+    --border: #232a31;
+    --green: #16c784;
+    --red: #ea3943;
+    --yellow: #f5c518;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 40px 96px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 64px 40px 52px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft) 0%, transparent 60%);
+  }
+
+  .hero .tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero .subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 20px;
+  }
+
+  .hero .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* CONTENT */
+  article { padding-top: 52px; }
+
+  article h2 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 52px 0 20px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  article h2::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 26px;
+    background: var(--accent);
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  article h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 32px 0 14px;
+    color: var(--accent);
+  }
+
+  article p {
+    font-size: 17px;
+    color: #d4d8dc;
+    margin-bottom: 22px;
+  }
+
+  article strong { color: #fff; font-weight: 700; }
+
+  article a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+  }
+
+  article a:hover { border-bottom-color: var(--accent); }
+
+  /* HIGHLIGHT BOX */
+  .highlight-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 32px 0;
+  }
+
+  .highlight-box .label {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .highlight-box p { margin-bottom: 0; font-size: 17px; }
+
+  /* QUOTE */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 8px 0 8px 28px;
+    margin: 32px 0;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.65;
+  }
+
+  /* COMPARISON CARDS */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0 32px;
+  }
+
+  @media (max-width: 640px) {
+    .container { padding: 0 20px 80px; }
+    .hero { padding: 48px 20px 40px; }
+    .hero h1 { font-size: 26px; }
+    .hero .subtitle { font-size: 16px; }
+    article h2 { font-size: 22px; }
+    .compare { grid-template-columns: 1fr; }
+    .math-card { padding: 20px; }
+    .basket-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  }
+
+  .compare-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .compare-card.fiat { border-top: 3px solid var(--red); }
+  .compare-card.btc { border-top: 3px solid var(--accent); }
+
+  .compare-card h4 {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .compare-card.fiat h4 { color: var(--red); }
+  .compare-card.btc h4 { color: var(--accent); }
+
+  .compare-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .compare-card li {
+    font-size: 15px;
+    color: var(--text-muted);
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .compare-card.fiat li::before {
+    content: "↓";
+    position: absolute;
+    left: 0;
+    color: var(--red);
+    font-weight: 800;
+  }
+
+  .compare-card.btc li::before {
+    content: "↑";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  /* MATH CARD */
+  .math-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 28px 0;
+    font-family: 'Courier New', Courier, monospace;
+  }
+
+  .math-card .math-title {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .math-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 16px;
+  }
+
+  .math-row:last-child { border-bottom: none; }
+
+  .math-row .label-m {
+    color: var(--text-muted);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+  }
+
+  .math-row .value { font-weight: 700; font-size: 18px; }
+  .math-row .value.green { color: var(--green); }
+  .math-row .value.red { color: var(--red); }
+  .math-row .value.orange { color: var(--accent); }
+  .math-row .value.yellow { color: var(--yellow); }
+
+  .math-divider {
+    border: none;
+    border-top: 2px solid var(--accent);
+    margin: 8px 0;
+  }
+
+  /* FAMILY BASKET / GRID */
+  .basket-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 24px 0 32px;
+  }
+
+  .basket-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+
+  .basket-item .bi-icon { font-size: 26px; margin-bottom: 8px; }
+
+  .basket-item .bi-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .basket-item .bi-pct {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .basket-item .bi-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* CTA */
+  .cta {
+    background: linear-gradient(135deg, var(--accent-soft), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin: 48px 0 12px;
+  }
+
+  .cta h3 { color: var(--text); font-size: 22px; margin-bottom: 10px; }
+  .cta p { color: var(--text-muted); margin-bottom: 22px; }
+
+  .cta-button {
+    display: inline-block;
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+    border: none;
+  }
+
+  .cta-button:hover { transform: translateY(-2px); }
+
+  /* DISCLAIMER */
+  .disclaimer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .author-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 40px;
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    color: #1a1300;
+    flex-shrink: 0;
+  }
+
+  .author-info p { margin: 0; font-size: 14px; }
+  .author-info .name { font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .author-info .role { color: var(--text-muted); font-size: 13px; }
+
+  /* TOP BAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar a.back {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: none;
+  }
+
+  .topbar a.back:hover { color: var(--text); }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    font-family: inherit;
+  }
+
+  .share-btn:hover {
+    background: var(--accent);
+    color: #1a1300;
+    transform: translateY(-1px);
+  }
+
+  .share-wrap { position: relative; }
+
+  .share-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 190px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    z-index: 60;
+  }
+
+  .share-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .share-menu a,
+  .share-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .share-menu a:hover,
+  .share-menu button:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .share-menu .share-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .share-menu .share-icon svg { width: 100%; height: 100%; }
+
+  .share-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 100;
+  }
+
+  .share-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="educacao.html" class="back">← Voltar ao site</a>
+    <div class="share-wrap">
+      <button class="share-btn" onclick="toggleShareMenu(event)">↗ Compartilhar</button>
+      <div class="share-menu" id="share-menu">
+        <a href="#" onclick="shareTo('whatsapp');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.86.5 3.6 1.43 5.1L2 22l5.16-1.5a9.84 9.84 0 0 0 4.87 1.28h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.13-2.9-7-1.88-1.88-4.36-2.87-7.01-2.87Zm0 18.06h-.01a8.18 8.18 0 0 1-4.17-1.14l-.3-.18-3.05.89.91-2.98-.2-.31a8.16 8.16 0 0 1-1.26-4.43c0-4.52 3.68-8.2 8.21-8.2 2.19 0 4.25.86 5.8 2.41a8.13 8.13 0 0 1 2.4 5.79c0 4.53-3.68 8.15-8.33 8.15Zm4.49-6.13c-.25-.12-1.45-.72-1.68-.8-.22-.08-.39-.12-.55.12-.16.25-.63.8-.78.96-.14.16-.29.18-.53.06-1.45-.72-2.4-1.29-3.36-2.92-.25-.43.25-.4.72-1.34.08-.16.04-.3-.03-.43-.08-.12-.55-1.33-.76-1.83-.2-.48-.4-.42-.55-.42-.14-.01-.3-.01-.46-.01-.16 0-.42.06-.64.3-.22.25-.85.83-.85 2.02 0 1.19.87 2.34 1 2.5.12.16 1.7 2.59 4.12 3.53 2.04.79 2.45.66 2.9.62.45-.04 1.45-.59 1.65-1.17.2-.57.2-1.06.14-1.17-.06-.1-.22-.17-.4-.27Z"/></svg>
+          </span>
+          WhatsApp
+        </a>
+        <a href="#" onclick="shareTo('x');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231ZM17.083 19.77h1.833L7.084 4.126H5.117Z"/></svg>
+          </span>
+          X (Twitter)
+        </a>
+        <a href="#" onclick="shareTo('instagram');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg>
+          </span>
+          Instagram
+        </a>
+        <button onclick="shareTo('copy')">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </span>
+          Copiar link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="share-toast" id="share-toast">Link copiado!</div>
+
+  <div class="hero">
+    <span class="tag">Filosofia Bitcoin · Escola Austríaca · BSafe</span>
+    <h1>Bitcoin não tem valor "de verdade"? <span>Nenhum ativo tem — e a Escola Austríaca já explicava isso há mais de 150 anos.</span></h1>
+    <p class="subtitle">
+      Valor não é uma propriedade física que existe dentro de um objeto — é um julgamento
+      subjetivo, feito na mente de quem avalia. Foi essa a revolução de Carl Menger em 1871.
+      Quem repete "Bitcoin não vale nada" sem saber disso não está sendo cético: está aplicando
+      uma teoria de valor que a própria ciência econômica abandonou há mais de um século.
+    </p>
+    <div class="meta">
+      <span>📚 Filosofia BSafe</span>
+      <span>⏱ 11 min de leitura</span>
+      <span>🟠 bsafebitcoin.org</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <article>
+
+      <p>
+        Antes de 1871, os economistas passaram quase cem anos tentando explicar valor a partir
+        do objeto: o custo de produção, a quantidade de trabalho investida, a matéria-prima
+        empregada. Essa é a chamada teoria objetiva do valor — e ela nunca conseguiu explicar
+        coisas simples, como o motivo de um diamante custar mais do que um copo d'água, mesmo a
+        água sendo infinitamente mais essencial à vida. Foi <strong>Carl Menger</strong>, fundador
+        da Escola Austríaca, quem resolveu esse enigma: valor não está no objeto, está no
+        <strong>juízo de quem avalia</strong>. Um copo d'água vale muito para quem está com sede
+        no deserto e quase nada para quem acabou de sair de uma piscina. O objeto é o mesmo. O
+        valor muda porque quem julga é diferente.
+      </p>
+
+      <p>
+        Essa é a chamada <strong>teoria subjetiva do valor</strong>, um dos pilares da Escola
+        Austríaca de Economia, e ela desmonta de saída a frase mais repetida por quem critica
+        Bitcoin sem ter estudado o assunto: "isso aí não vale nada". Valor "de verdade",
+        intrínseco, independente de quem avalia, não existe — nem em Bitcoin, nem no ouro, nem
+        no dólar, nem em nenhum outro ativo do planeta. A pergunta correta nunca foi "Bitcoin
+        tem valor intrínseco?". A pergunta correta é: <strong>quais características objetivas
+        deste ativo levam milhões de pessoas, de forma independente, a atribuir valor subjetivo
+        a ele?</strong>
+      </p>
+
+      <p>
+        Este artigo não é sobre convencer ninguém a especular. É sobre listar,
+        <strong>uma por uma</strong>, as propriedades técnicas e econômicas que fazem de Bitcoin
+        o primeiro ativo monetário da história a reunir tudo isso ao mesmo tempo — e desafiar
+        quem diz que "não vale nada" a apontar outro ativo que faça o mesmo.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">Menger explicaria assim</span>
+        <p>
+          Um bem só tem valor quando quatro condições se encontram ao mesmo tempo: existe uma
+          necessidade humana, o bem tem propriedades capazes de satisfazer essa necessidade, a
+          pessoa reconhece essa capacidade, e ela tem controle suficiente sobre o bem para
+          dispor dele. Bitcoin atende às quatro — a necessidade é a de guardar e transferir
+          valor sem depender de terceiros, e é isso que as sete características a seguir tornam
+          possível.
+        </p>
+      </div>
+
+      <h2>1. Nenhum risco de contraparte</h2>
+
+      <p>
+        Quando você tem dinheiro em conta corrente, você não tem dinheiro — você tem uma
+        <strong>promessa</strong> do banco de te devolver aquele valor. Essa promessa depende
+        da solvência do banco, da política do Banco Central, do Fundo Garantidor de Créditos
+        cobrir aquele valor específico e, em cenários extremos, da vontade política de
+        congelar ou não a conta de alguém. O Plano Collor é o exemplo brasileiro mais claro
+        disso: da noite para o dia, a poupança de milhões de pessoas ficou bloqueada por
+        decreto.
+      </p>
+
+      <p>
+        Bitcoin em autocustódia elimina essa camada inteira de risco. Não existe uma
+        instituição entre você e o seu saldo. Não existe um terceiro que precisa "honrar" o
+        que está no seu extrato, porque não existe extrato — existe um registro público,
+        verificável por qualquer pessoa, de que aquele saldo pertence à chave privada que
+        só você controla. <strong>Sem contraparte, sem promessa, sem risco de calote.</strong>
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">Ponto central</span>
+        <p>
+          Um ativo sem risco de contraparte não pode ser confiscado por decreto, não pode
+          quebrar porque o emissor quebrou, e não depende da boa-fé de ninguém para continuar
+          existindo. Isso não é uma característica marginal — é a diferença entre possuir
+          dinheiro e possuir uma <strong>expectativa</strong> de dinheiro.
+        </p>
+      </div>
+
+      <h2>2. Política monetária em código, não em comitê</h2>
+
+      <p>
+        Toda moeda fiduciária do mundo tem sua oferta decidida por um grupo pequeno de
+        pessoas, em reuniões fechadas, respondendo a pressões políticas e eleitorais de curto
+        prazo. O real, o dólar, o euro — todos podem ter sua emissão expandida a qualquer
+        momento, por decisão humana. Bitcoin é o primeiro ativo monetário da história cuja
+        política de emissão está escrita em código aberto, auditável por qualquer pessoa, e
+        que <strong>ninguém pode alterar unilateralmente</strong> — nem seu criador, nem o
+        maior minerador do mundo, nem nenhum governo.
+      </p>
+
+      <p>
+        A oferta máxima de 21 milhões de unidades não é uma meta, é uma regra matemática
+        embutida no protocolo. O ritmo de emissão cai pela metade a cada quatro anos, em um
+        evento chamado halving, seguindo um cronograma definido desde 2009 e cumprido à risca
+        até hoje. Não existe reunião de diretoria que possa mudar isso.
+      </p>
+
+      <div class="compare">
+        <div class="compare-card fiat">
+          <h4>Moeda fiduciária</h4>
+          <ul>
+            <li>Oferta decidida por comitê, sem teto definido</li>
+            <li>Emissão responde a pressão política e fiscal</li>
+            <li>Histórico de perda de poder de compra ao longo de décadas</li>
+            <li>Regras podem mudar de uma reunião para a outra</li>
+          </ul>
+        </div>
+        <div class="compare-card btc">
+          <h4>Bitcoin</h4>
+          <ul>
+            <li>Oferta máxima de 21 milhões, fixada em código</li>
+            <li>Emissão previsível, com halving a cada 4 anos</li>
+            <li>Escassez verificável por qualquer pessoa, a qualquer hora</li>
+            <li>Regra de emissão não muda sem consenso de toda a rede</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>3. Escassez programada, não prometida</h2>
+
+      <p>
+        Ouro é escasso porque é difícil de extrair — mas ninguém sabe ao certo quanto ouro
+        ainda existe para ser minerado, e uma nova descoberta geológica ou avanço tecnológico
+        de mineração pode alterar a oferta futura. Bitcoin é o único ativo cuja escassez é
+        <strong>matemática, não geológica</strong>: sabe-se exatamente quantos serão emitidos,
+        em que ritmo, e até quando — e essa previsibilidade pode ser verificada por qualquer
+        pessoa rodando um node, sem precisar confiar na palavra de ninguém.
+      </p>
+
+      <div class="math-card">
+        <div class="math-title">Escassez verificável vs. escassez prometida</div>
+        <div class="math-row">
+          <span class="label-m">Oferta máxima de Bitcoin</span>
+          <span class="value orange">21.000.000 (fixa em código)</span>
+        </div>
+        <div class="math-row">
+          <span class="label-m">Bitcoin já emitido (aprox.)</span>
+          <span class="value green">~94% do total já em circulação</span>
+        </div>
+        <hr class="math-divider">
+        <div class="math-row">
+          <span class="label-m">Meta de inflação do Banco Central</span>
+          <span class="value yellow">"Meta", não limite matemático</span>
+        </div>
+        <div class="math-row">
+          <span class="label-m">Capacidade de expansão da base monetária</span>
+          <span class="value red">Sem teto estrutural</span>
+        </div>
+      </div>
+
+      <p style="font-size:13px; color: var(--text-muted); margin-top:-16px; margin-bottom:28px; text-align:center;">
+        Valores aproximados e ilustrativos, com base no cronograma de emissão do protocolo
+        Bitcoin, para fins de comparação didática.
+      </p>
+
+      <h2>4. Mobilidade total do capital pelo mundo</h2>
+
+      <p>
+        Tente atravessar uma fronteira internacional com um imóvel. Tente vender uma fazenda
+        em um país e comprar outra no dia seguinte em outro continente. Tente movimentar uma
+        herança em ouro físico por vários países sem pagar taxas, sem declarar em alfândegas
+        e sem depender de corretoras de câmbio. Praticamente todo ativo relevante do mundo é
+        <strong>geograficamente preso</strong> — depende de infraestrutura física, jurídica e
+        bancária local para mudar de lugar.
+      </p>
+
+      <p>
+        Bitcoin não tem essa limitação. Uma quantia de qualquer tamanho pode ser transferida
+        de um país para outro em minutos, sem pedir permissão a nenhum governo, banco central
+        ou instituição financeira. Isso não é útil só para quem quer burlar controle de
+        capitais — é fundamental para qualquer pessoa que viva em um país com instabilidade
+        cambial, controle de câmbio ou risco de confisco patrimonial, o que descreve boa parte
+        da história econômica recente da América Latina.
+      </p>
+
+      <div class="basket-grid">
+        <div class="basket-item">
+          <div class="bi-icon">🌎</div>
+          <div class="bi-label">Sem fronteira</div>
+          <div class="bi-pct">24/7</div>
+          <div class="bi-note">movimenta-se entre países sem depender de banco correspondente</div>
+        </div>
+        <div class="basket-item">
+          <div class="bi-icon">🎒</div>
+          <div class="bi-label">Portabilidade</div>
+          <div class="bi-pct">Total</div>
+          <div class="bi-note">uma fortuna pode ser carregada de memória, em uma seed phrase</div>
+        </div>
+        <div class="basket-item">
+          <div class="bi-icon">🚫</div>
+          <div class="bi-label">Sem permissão</div>
+          <div class="bi-pct">Zero</div>
+          <div class="bi-note">nenhum intermediário pode barrar ou atrasar a transferência</div>
+        </div>
+        <div class="basket-item">
+          <div class="bi-icon">🔍</div>
+          <div class="bi-label">Verificável</div>
+          <div class="bi-pct">Público</div>
+          <div class="bi-note">qualquer pessoa pode auditar o saldo e o histórico na rede</div>
+        </div>
+      </div>
+
+      <h2>5. Facilidade sucessória que nenhum outro ativo oferece</h2>
+
+      <p>
+        Aqui entra a área que conheço mais de perto como advogado. Um processo de inventário
+        no Brasil, envolvendo imóveis, contas bancárias e participações societárias,
+        facilmente leva anos, custa uma fatia relevante do patrimônio em ITCMD, honorários e
+        taxas cartorárias, e expõe a família a disputas judiciais em um momento já doloroso.
+        Contas bancárias podem ser bloqueadas automaticamente após a comunicação de óbito, e
+        o acesso da família a esses recursos fica suspenso até a conclusão do processo formal.
+      </p>
+
+      <p>
+        Bitcoin permite algo que nenhum banco, corretora ou cartório consegue replicar: um
+        arranjo de <strong>multisig</strong> pode ser estruturado para que herdeiros tenham
+        acesso automático e programado ao patrimônio, sem depender de um processo judicial
+        completo para simplesmente conseguir movimentar os fundos. Isso não elimina a
+        necessidade de planejamento sucessório formal — pelo contrário, exige ainda mais
+        cuidado jurídico — mas muda completamente a velocidade e o custo de transmissão do
+        patrimônio entre gerações.
+      </p>
+
+      <blockquote>
+        Sucessão patrimonial tradicional transfere o patrimônio depois que o sistema
+        autoriza. Sucessão bem planejada em Bitcoin pode transferir o acesso no exato momento
+        em que a família precisa dele.
+      </blockquote>
+
+      <h2>6. Uma rede global de pagamentos que nunca fecha</h2>
+
+      <p>
+        O sistema bancário tradicional opera em horário comercial, fecha em feriados, e uma
+        transferência internacional via SWIFT pode levar de dois a cinco dias úteis para ser
+        liquidada, passando por múltiplos bancos correspondentes, cada um cobrando sua própria
+        taxa. A rede Bitcoin, incluindo a camada Lightning Network, não tem feriado, não tem
+        fuso horário e não tem horário de expediente: funciona 24 horas por dia, 365 dias por
+        ano, para qualquer valor, entre quaisquer dois pontos do planeta com acesso à
+        internet.
+      </p>
+
+      <div class="compare">
+        <div class="compare-card fiat">
+          <h4>Sistema bancário tradicional</h4>
+          <ul>
+            <li>Horário comercial, fecha em feriados e fins de semana</li>
+            <li>Transferências internacionais levam dias</li>
+            <li>Depende de bancos correspondentes em cada etapa</li>
+            <li>Sujeito a bloqueio, estorno ou retenção por terceiros</li>
+          </ul>
+        </div>
+        <div class="compare-card btc">
+          <h4>Rede Bitcoin</h4>
+          <ul>
+            <li>Funciona 24 horas por dia, todos os dias do ano</li>
+            <li>Liquidação em minutos (on-chain) ou segundos (Lightning)</li>
+            <li>Transação direta entre as partes, sem intermediário</li>
+            <li>Nenhum terceiro pode reverter uma transação confirmada</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>7. Inovação constante, em código aberto</h2>
+
+      <p>
+        Diferente de um sistema bancário fechado, cuja tecnologia interna você nunca vai ver,
+        o protocolo Bitcoin é <strong>open source</strong>: qualquer desenvolvedor no mundo
+        pode estudar o código, propor melhorias e construir em cima dele. Foi assim que
+        surgiu a Lightning Network, permitindo pagamentos quase instantâneos e com taxas
+        mínimas. Foi assim que surgiu o Taproot, melhorando privacidade e eficiência das
+        transações. E é assim que continuam surgindo novas camadas de custódia, novos
+        protocolos de multisig e novas ferramentas de auditoria, todas construídas de forma
+        aberta, sem depender de uma única empresa decidir sozinha o que será lançado.
+      </p>
+
+      <p>
+        Nenhum banco, nenhuma fintech e nenhum banco central opera com esse nível de
+        transparência sobre como o próprio sistema funciona por dentro. A inovação em Bitcoin
+        não depende de um roadmap corporativo fechado — depende de milhares de olhos
+        analisando o mesmo código, publicamente, o tempo todo.
+      </p>
+
+      <h2>Voltando a Menger: o que realmente sustenta o valor do Bitcoin</h2>
+
+      <p>
+        Nenhuma dessas sete características, isoladamente, é exclusiva de Bitcoin. Ouro tem
+        alguma escassez. Ações têm alguma liquidez. Determinados fundos têm alguma
+        portabilidade. O que torna Bitcoin único é ser o <strong>primeiro ativo da história
+        a reunir todas essas propriedades ao mesmo tempo</strong>, em um único instrumento,
+        acessível a qualquer pessoa com um celular e conexão à internet — sem exigir
+        patrimônio mínimo, aprovação de gerente ou aval de nenhuma instituição.
+      </p>
+
+      <p>
+        E é exatamente aqui que a teoria subjetiva do valor se encaixa: essas sete
+        características não <em>criam</em> valor sozinhas — elas são as propriedades objetivas
+        que permitem que milhões de pessoas, cada uma avaliando de forma independente e por
+        motivos próprios, cheguem à mesma conclusão subjetiva de que Bitcoin satisfaz uma
+        necessidade real. Quanto mais gente reconhece essas propriedades e passa a agir com
+        base nelas — comprando, guardando, aceitando como pagamento —, maior fica esse
+        consenso subjetivo, e é esse consenso, não uma fórmula de custo de produção, que forma
+        o preço de mercado.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">Perguntas para quem repete "não vale nada" sem ter estudado</span>
+        <p>
+          → Se valor fosse objetivo e intrínseco, por que o preço de tudo muda o tempo todo,
+          inclusive do ouro e do dólar?<br><br>
+          → Que outro ativo do mundo você consegue carregar de memória, em uma frase de 12
+          palavras?<br><br>
+          → Que outro ativo tem política de emissão auditável por qualquer pessoa, em tempo
+          real?<br><br>
+          → Que outro ativo permite planejamento sucessório programado, sem depender de um
+          processo judicial para ser acessado?<br><br>
+          → Se Bitcoin não vale nada, por que dezenas de países já discutem regulamentação,
+          bancos centrais já estudam sua adoção como reserva e empresas listadas em bolsa já
+          o incluem no balanço?
+        </p>
+      </div>
+
+      <p>
+        Dizer que Bitcoin "não tem valor" é, na melhor das hipóteses, uma forma abreviada de
+        dizer "eu, pessoalmente, não atribuo valor a isso" — o que é uma afirmação legítima
+        sobre a própria escala de valores de quem fala, mas não é um fato econômico sobre o
+        ativo. Para quem nunca precisou de um ativo sem risco de contraparte, nunca viveu sob
+        controle de capitais, nunca passou por um inventário arrastado e nunca teve poupança
+        confiscada por decreto, é compreensível não enxergar a necessidade. Para quem já
+        passou por qualquer uma dessas situações — e a história econômica brasileira e
+        latino-americana está cheia delas — a pergunta deixa de ser "por que Bitcoin vale
+        alguma coisa" e passa a ser "como eu não conhecia isso antes".
+      </p>
+
+      <div class="cta">
+        <h3>Entenda o que você está deixando de proteger</h3>
+        <p>
+          A BSafe ajuda você a sair das exchanges com segurança, estruturar a autocustódia
+          certa para o seu perfil e planejar a sucessão do seu Bitcoin com respaldo jurídico —
+          para transformar essas características em proteção real para o seu patrimônio.
+        </p>
+        <a href="https://bsafebitcoin.org" class="cta-button">Acessar BSafe Bitcoin →</a>
+      </div>
+
+      <div class="author-box">
+        <div class="author-avatar">RB</div>
+        <div class="author-info">
+          <p class="name">Rafael Bered</p>
+          <p class="role">Advogado previdenciarista, educador de mercado de capitais e fundador da BSafe Bitcoin</p>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        Este conteúdo tem caráter exclusivamente educacional e não constitui recomendação de
+        investimento. Os cenários, percentuais e comparações apresentados são ilustrativos e
+        não representam projeção de resultados futuros. Bitcoin é um ativo de alta
+        volatilidade e risco. Investimentos envolvem risco de perda de capital. Consulte
+        profissionais qualificados antes de tomar decisões financeiras, jurídicas ou
+        sucessórias.
+      </div>
+
+    </article>
+  </div>
+
+  <script>
+    const shareData = {
+      title: document.title,
+      text: 'Bitcoin não tem valor "de verdade"? Nenhum ativo tem — a Escola Austríaca já explicava isso. BSafe Bitcoin.',
+      url: window.location.href
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById('share-toast');
+      if (message) toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(shareData.url).then(() => {
+        showToast('Link copiado!');
+      }).catch(() => {
+        showToast('Não foi possível copiar o link');
+      });
+    }
+
+    function toggleShareMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('share-menu');
+      menu.classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('share-menu');
+      if (menu.classList.contains('open') && !menu.contains(e.target) && !e.target.closest('.share-btn')) {
+        menu.classList.remove('open');
+      }
+    });
+
+    function shareTo(target) {
+      const menu = document.getElementById('share-menu');
+      menu.classList.remove('open');
+
+      const url = encodeURIComponent(shareData.url);
+      const text = encodeURIComponent(shareData.text);
+
+      switch (target) {
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${text}%20${url}`, '_blank', 'noopener');
+          break;
+        case 'x':
+          window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
+          break;
+        case 'instagram':
+          navigator.clipboard.writeText(shareData.url).then(() => {
+            showToast('Link copiado! Cole no Instagram (Stories, bio ou DM)');
+            window.open('https://www.instagram.com/', '_blank', 'noopener');
+          }).catch(() => {
+            showToast('Não foi possível copiar o link');
+          });
+          break;
+        case 'copy':
+          copyLink();
+          break;
+      }
+    }
+  </script>
+
+</body>
+</html>
