@@ -77,6 +77,15 @@ section{position:relative;z-index:1}
 .edu-meta{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.06em}
 .edu-arrow{color:var(--btc);font-weight:700}
 
+/* LANGUAGE SWITCH */
+.lang-switch{display:inline-flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:4px;gap:2px;margin-bottom:28px}
+.lang-btn{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;font-weight:500;color:var(--muted);background:transparent;border:none;border-radius:999px;padding:7px 18px;cursor:pointer;transition:var(--ease)}
+.lang-btn:hover{color:var(--off)}
+.lang-btn.active{background:var(--btc);color:#0d0d0d;font-weight:700}
+.i18n-en{display:none}
+body.lang-en .i18n-pt{display:none !important}
+body.lang-en .i18n-en{display:inline !important}
+
 /* REVEAL */
 .rev{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s ease}
 .rev.vis{opacity:1;transform:translateY(0)}
@@ -144,9 +153,13 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:48px 24p
 <!-- HERO -->
 <section id="edu-hero">
   <div class="wrap" style="padding-bottom:64px">
-    <div class="stag rev">CONTEÚDO EDUCACIONAL</div>
-    <h2 class="stitle rev rd1">Aprenda antes<br>de investir</h2>
-    <p class="slead rev rd2">Artigos para entender, na prática, por que o Bitcoin existe, por que a sua moeda perde valor com o tempo — e como usar isso a seu favor.</p>
+    <div class="lang-switch rev" role="group" aria-label="Language / Idioma">
+      <button type="button" id="lang-btn-pt" class="lang-btn active" onclick="setLang('pt')">PT</button>
+      <button type="button" id="lang-btn-en" class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
+    <div class="stag rev"><span class="i18n-pt">CONTEÚDO EDUCACIONAL</span><span class="i18n-en">EDUCATIONAL CONTENT</span></div>
+    <h2 class="stitle rev rd1"><span class="i18n-pt">Aprenda antes<br>de investir</span><span class="i18n-en">Learn before<br>you invest</span></h2>
+    <p class="slead rev rd2"><span class="i18n-pt">Artigos para entender, na prática, por que o Bitcoin existe, por que a sua moeda perde valor com o tempo — e como usar isso a seu favor.</span><span class="i18n-en">Articles to help you understand, in practice, why Bitcoin exists, why your currency loses value over time — and how to use that to your advantage.</span></p>
   </div>
 </section>
 
@@ -154,68 +167,68 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:48px 24p
 <section id="educacao">
   <div class="wrap" style="padding-top:64px">
     <div class="edu-grid">
-      <a href="dinheiro-infinito-vs-bitcoin.html" class="edu-card rev">
+      <a href="dinheiro-infinito-vs-bitcoin.html" data-href-pt="dinheiro-infinito-vs-bitcoin.html" data-href-en="dinheiro-infinito-vs-bitcoin-en.html" class="edu-card rev">
         <div class="edu-card-body">
-          <span class="edu-tag">EDUCAÇÃO BITCOIN</span>
-          <h3 class="edu-title">Dinheiro Infinito vs. Bitcoin</h3>
-          <p class="edu-desc">Por que a emissão infinita de moeda fiduciária garante a desvalorização frente ao Bitcoin — e por que cada queda de preço é, na prática, uma promoção.</p>
-          <div class="edu-meta"><span>⏱ 7 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
+          <span class="edu-tag"><span class="i18n-pt">EDUCAÇÃO BITCOIN</span><span class="i18n-en">BITCOIN EDUCATION</span></span>
+          <h3 class="edu-title"><span class="i18n-pt">Dinheiro Infinito vs. Bitcoin</span><span class="i18n-en">Infinite Money vs. Bitcoin</span></h3>
+          <p class="edu-desc"><span class="i18n-pt">Por que a emissão infinita de moeda fiduciária garante a desvalorização frente ao Bitcoin — e por que cada queda de preço é, na prática, uma promoção.</span><span class="i18n-en">Why the infinite issuance of fiat currency guarantees devaluation against Bitcoin — and why every price drop is, in practice, a sale.</span></p>
+          <div class="edu-meta"><span><span class="i18n-pt">⏱ 7 min de leitura</span><span class="i18n-en">⏱ 7 min read</span></span><span class="edu-arrow"><span class="i18n-pt">Ler artigo →</span><span class="i18n-en">Read article →</span></span></div>
         </div>
       </a>
-      <a href="nao-e-caro-e-seu-dinheiro-que-vale-menos.html" class="edu-card rev rd1">
+      <a href="nao-e-caro-e-seu-dinheiro-que-vale-menos.html" data-href-pt="nao-e-caro-e-seu-dinheiro-que-vale-menos.html" data-href-en="nao-e-caro-e-seu-dinheiro-que-vale-menos-en.html" class="edu-card rev rd1">
         <div class="edu-card-body">
-          <span class="edu-tag">EDUCAÇÃO FINANCEIRA</span>
-          <h3 class="edu-title">Não é caro. É o seu dinheiro que vale menos.</h3>
-          <p class="edu-desc">A maioria das pessoas olha para os preços subindo e pensa "tudo está mais caro". Existe uma forma mais precisa — e mais útil — de entender o que está acontecendo.</p>
-          <div class="edu-meta"><span>⏱ 6 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
+          <span class="edu-tag"><span class="i18n-pt">EDUCAÇÃO FINANCEIRA</span><span class="i18n-en">FINANCIAL EDUCATION</span></span>
+          <h3 class="edu-title"><span class="i18n-pt">Não é caro. É o seu dinheiro que vale menos.</span><span class="i18n-en">It's Not Expensive. It's Your Money That's Worth Less.</span></h3>
+          <p class="edu-desc"><span class="i18n-pt">A maioria das pessoas olha para os preços subindo e pensa "tudo está mais caro". Existe uma forma mais precisa — e mais útil — de entender o que está acontecendo.</span><span class="i18n-en">Most people look at rising prices and think "everything is more expensive." There's a more precise — and more useful — way to understand what's actually happening.</span></p>
+          <div class="edu-meta"><span><span class="i18n-pt">⏱ 6 min de leitura</span><span class="i18n-en">⏱ 6 min read</span></span><span class="edu-arrow"><span class="i18n-pt">Ler artigo →</span><span class="i18n-en">Read article →</span></span></div>
         </div>
       </a>
-      <a href="seu-proprio-banco-bitcoin-autocustodia.html" class="edu-card rev rd2">
+      <a href="seu-proprio-banco-bitcoin-autocustodia.html" data-href-pt="seu-proprio-banco-bitcoin-autocustodia.html" data-href-en="seu-proprio-banco-bitcoin-autocustodia-en.html" class="edu-card rev rd2">
         <div class="edu-card-body">
-          <span class="edu-tag">AUTOCUSTÓDIA</span>
-          <h3 class="edu-title">Ser seu próprio banco: poder e responsabilidade.</h3>
-          <p class="edu-desc">O que significa realmente ter Bitcoin em autocustódia — as vantagens que nenhum banco pode oferecer e as responsabilidades que nenhum banco vai assumir por você.</p>
-          <div class="edu-meta"><span>⏱ 8 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
+          <span class="edu-tag"><span class="i18n-pt">AUTOCUSTÓDIA</span><span class="i18n-en">SELF-CUSTODY</span></span>
+          <h3 class="edu-title"><span class="i18n-pt">Ser seu próprio banco: poder e responsabilidade.</span><span class="i18n-en">Being Your Own Bank: Power and Responsibility.</span></h3>
+          <p class="edu-desc"><span class="i18n-pt">O que significa realmente ter Bitcoin em autocustódia — as vantagens que nenhum banco pode oferecer e as responsabilidades que nenhum banco vai assumir por você.</span><span class="i18n-en">What it really means to hold Bitcoin in self-custody — the advantages no bank can offer and the responsibilities no bank will ever take on for you.</span></p>
+          <div class="edu-meta"><span><span class="i18n-pt">⏱ 8 min de leitura</span><span class="i18n-en">⏱ 8 min read</span></span><span class="edu-arrow"><span class="i18n-pt">Ler artigo →</span><span class="i18n-en">Read article →</span></span></div>
         </div>
       </a>
-      <a href="dca-bitcoin-previdencia-soberana.html" class="edu-card rev">
+      <a href="dca-bitcoin-previdencia-soberana.html" data-href-pt="dca-bitcoin-previdencia-soberana.html" data-href-en="dca-bitcoin-previdencia-soberana-en.html" class="edu-card rev">
         <div class="edu-card-body">
-          <span class="edu-tag">PREVIDÊNCIA &amp; BITCOIN</span>
-          <h3 class="edu-title">DCA em Bitcoin: sua previdência soberana além do INSS.</h3>
-          <p class="edu-desc">Como o aporte recorrente em um ativo de oferta fixa pode se tornar a base de uma previdência verdadeiramente sua — independente de fórmulas, reformas e do valor real do benefício no futuro.</p>
-          <div class="edu-meta"><span>⏱ 8 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
+          <span class="edu-tag"><span class="i18n-pt">PREVIDÊNCIA &amp; BITCOIN</span><span class="i18n-en">RETIREMENT &amp; BITCOIN</span></span>
+          <h3 class="edu-title"><span class="i18n-pt">DCA em Bitcoin: sua previdência soberana além do INSS.</span><span class="i18n-en">DCA in Bitcoin: Your Sovereign Retirement Plan Beyond Social Security.</span></h3>
+          <p class="edu-desc"><span class="i18n-pt">Como o aporte recorrente em um ativo de oferta fixa pode se tornar a base de uma previdência verdadeiramente sua — independente de fórmulas, reformas e do valor real do benefício no futuro.</span><span class="i18n-en">How recurring contributions into a fixed-supply asset can become the foundation of a retirement plan that's truly your own — independent of formulas, reforms, and the future real value of any government benefit.</span></p>
+          <div class="edu-meta"><span><span class="i18n-pt">⏱ 8 min de leitura</span><span class="i18n-en">⏱ 8 min read</span></span><span class="edu-arrow"><span class="i18n-pt">Ler artigo →</span><span class="i18n-en">Read article →</span></span></div>
         </div>
       </a>
-      <a href="bitcoin-heranca-sucessao-vs-fiduciario.html" class="edu-card rev rd1">
+      <a href="bitcoin-heranca-sucessao-vs-fiduciario.html" data-href-pt="bitcoin-heranca-sucessao-vs-fiduciario.html" data-href-en="bitcoin-heranca-sucessao-vs-fiduciario-en.html" class="edu-card rev rd1">
         <div class="edu-card-body">
-          <span class="edu-tag">SUCESSÕES &amp; BITCOIN</span>
-          <h3 class="edu-title">Quando você falta, seu patrimônio fica preso — ou herdado em minutos?</h3>
-          <p class="edu-desc">Como a autocustódia de Bitcoin transforma o processo de transmissão de patrimônio para os herdeiros, em comparação com contas bancárias, investimentos e bens no sistema fiduciário tradicional.</p>
-          <div class="edu-meta"><span>⏱ 9 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
+          <span class="edu-tag"><span class="i18n-pt">SUCESSÕES &amp; BITCOIN</span><span class="i18n-en">ESTATE PLANNING &amp; BITCOIN</span></span>
+          <h3 class="edu-title"><span class="i18n-pt">Quando você falta, seu patrimônio fica preso — ou herdado em minutos?</span><span class="i18n-en">When You're Gone, Is Your Wealth Trapped — or Inherited in Minutes?</span></h3>
+          <p class="edu-desc"><span class="i18n-pt">Como a autocustódia de Bitcoin transforma o processo de transmissão de patrimônio para os herdeiros, em comparação com contas bancárias, investimentos e bens no sistema fiduciário tradicional.</span><span class="i18n-en">How Bitcoin self-custody transforms the process of passing wealth to heirs, compared with bank accounts, investments, and assets in the traditional fiduciary system.</span></p>
+          <div class="edu-meta"><span><span class="i18n-pt">⏱ 9 min de leitura</span><span class="i18n-en">⏱ 9 min read</span></span><span class="edu-arrow"><span class="i18n-pt">Ler artigo →</span><span class="i18n-en">Read article →</span></span></div>
         </div>
       </a>
-      <a href="ganho-ilusorio-precificacao-fiat.html" class="edu-card rev rd2">
+      <a href="ganho-ilusorio-precificacao-fiat.html" data-href-pt="ganho-ilusorio-precificacao-fiat.html" data-href-en="ganho-ilusorio-precificacao-fiat-en.html" class="edu-card rev rd2">
         <div class="edu-card-body">
-          <span class="edu-tag">EDUCAÇÃO FINANCEIRA</span>
-          <h3 class="edu-title">Seu investimento rende 12%? Descubra o que sobra de verdade.</h3>
-          <p class="edu-desc">Quando o rendimento é medido na mesma moeda que perde valor, o lucro no extrato pode ser uma ilusão. Entenda como a régua torta da inflação real distorce qualquer análise de retorno.</p>
-          <div class="edu-meta"><span>⏱ 7 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
+          <span class="edu-tag"><span class="i18n-pt">EDUCAÇÃO FINANCEIRA</span><span class="i18n-en">FINANCIAL EDUCATION</span></span>
+          <h3 class="edu-title"><span class="i18n-pt">Seu investimento rende 12%? Descubra o que sobra de verdade.</span><span class="i18n-en">Your Investment Returns 12%? Find Out What's Really Left.</span></h3>
+          <p class="edu-desc"><span class="i18n-pt">Quando o rendimento é medido na mesma moeda que perde valor, o lucro no extrato pode ser uma ilusão. Entenda como a régua torta da inflação real distorce qualquer análise de retorno.</span><span class="i18n-en">When returns are measured in the same currency that's losing value, the profit on your statement can be an illusion. Understand how the crooked ruler of real inflation distorts any return analysis.</span></p>
+          <div class="edu-meta"><span><span class="i18n-pt">⏱ 7 min de leitura</span><span class="i18n-en">⏱ 7 min read</span></span><span class="edu-arrow"><span class="i18n-pt">Ler artigo →</span><span class="i18n-en">Read article →</span></span></div>
         </div>
       </a>
-      <a href="o-preco-da-liberdade-bitcoin.html" class="edu-card rev">
+      <a href="o-preco-da-liberdade-bitcoin.html" data-href-pt="o-preco-da-liberdade-bitcoin.html" data-href-en="o-preco-da-liberdade-bitcoin-en.html" class="edu-card rev">
         <div class="edu-card-body">
-          <span class="edu-tag">FILOSOFIA BITCOIN</span>
-          <h3 class="edu-title">Você comprou Bitcoin pra ficar rico em reais? Comprou a coisa errada.</h3>
-          <p class="edu-desc">Liberdade financeira tem um preço. Quem entra no Bitcoin esperando um atalho para enriquecer em reais paga essa conta em dobro quando o mercado vira — e é isso que estamos vendo agora.</p>
-          <div class="edu-meta"><span>⏱ 8 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
+          <span class="edu-tag"><span class="i18n-pt">FILOSOFIA BITCOIN</span><span class="i18n-en">BITCOIN PHILOSOPHY</span></span>
+          <h3 class="edu-title"><span class="i18n-pt">Você comprou Bitcoin pra ficar rico em reais? Comprou a coisa errada.</span><span class="i18n-en">Did You Buy Bitcoin to Get Rich in Dollars? You Bought the Wrong Thing.</span></h3>
+          <p class="edu-desc"><span class="i18n-pt">Liberdade financeira tem um preço. Quem entra no Bitcoin esperando um atalho para enriquecer em reais paga essa conta em dobro quando o mercado vira — e é isso que estamos vendo agora.</span><span class="i18n-en">Financial freedom has a price. Anyone who enters Bitcoin expecting a shortcut to get rich in fiat pays that bill twice over when the market turns — and that's exactly what we're seeing now.</span></p>
+          <div class="edu-meta"><span><span class="i18n-pt">⏱ 8 min de leitura</span><span class="i18n-en">⏱ 8 min read</span></span><span class="edu-arrow"><span class="i18n-pt">Ler artigo →</span><span class="i18n-en">Read article →</span></span></div>
         </div>
       </a>
-      <a href="bitcoin-nao-vale-nada-caracteristicas-unicas.html" class="edu-card rev rd1">
+      <a href="bitcoin-nao-vale-nada-caracteristicas-unicas.html" data-href-pt="bitcoin-nao-vale-nada-caracteristicas-unicas.html" data-href-en="bitcoin-nao-vale-nada-caracteristicas-unicas-en.html" class="edu-card rev rd1">
         <div class="edu-card-body">
-          <span class="edu-tag">FILOSOFIA BITCOIN · ESCOLA AUSTRÍACA</span>
-          <h3 class="edu-title">Bitcoin não tem valor "de verdade"? Nenhum ativo tem.</h3>
-          <p class="edu-desc">A teoria subjetiva do valor de Carl Menger explica por que "Bitcoin não vale nada" é uma frase vazia — e revela as sete características que nenhum outro ativo reúne ao mesmo tempo.</p>
-          <div class="edu-meta"><span>⏱ 11 min de leitura</span><span class="edu-arrow">Ler artigo →</span></div>
+          <span class="edu-tag"><span class="i18n-pt">FILOSOFIA BITCOIN · ESCOLA AUSTRÍACA</span><span class="i18n-en">BITCOIN PHILOSOPHY · AUSTRIAN ECONOMICS</span></span>
+          <h3 class="edu-title"><span class="i18n-pt">Bitcoin não tem valor "de verdade"? Nenhum ativo tem.</span><span class="i18n-en">Bitcoin Has No "Real" Value? Neither Does Anything Else.</span></h3>
+          <p class="edu-desc"><span class="i18n-pt">A teoria subjetiva do valor de Carl Menger explica por que "Bitcoin não vale nada" é uma frase vazia — e revela as sete características que nenhum outro ativo reúne ao mesmo tempo.</span><span class="i18n-en">Carl Menger's subjective theory of value explains why "Bitcoin is worthless" is an empty phrase — and reveals the seven characteristics no other asset combines at once.</span></p>
+          <div class="edu-meta"><span><span class="i18n-pt">⏱ 11 min de leitura</span><span class="i18n-en">⏱ 11 min read</span></span><span class="edu-arrow"><span class="i18n-pt">Ler artigo →</span><span class="i18n-en">Read article →</span></span></div>
         </div>
       </a>
     </div>
@@ -242,6 +255,18 @@ function cm(){mopen=false;document.getElementById('mob-menu').classList.remove('
 // REVEAL
 const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')}),{threshold:.07});
 document.querySelectorAll('.rev').forEach(el=>obs.observe(el));
+
+// LANGUAGE TOGGLE
+function setLang(lang){
+  document.body.classList.toggle('lang-en', lang==='en');
+  document.getElementById('lang-btn-pt').classList.toggle('active', lang==='pt');
+  document.getElementById('lang-btn-en').classList.toggle('active', lang==='en');
+  document.querySelectorAll('.edu-card[data-href-pt]').forEach(card=>{
+    const href = lang==='en' ? card.getAttribute('data-href-en') : card.getAttribute('data-href-pt');
+    card.setAttribute('href', href);
+  });
+  document.documentElement.setAttribute('lang', lang==='en' ? 'en' : 'pt-BR');
+}
 </script>
 </body>
 </html>
