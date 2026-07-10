@@ -2,9 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<script>
-(function(){if(localStorage.getItem('bsafe-theme')==='light')document.documentElement.setAttribute('data-theme','light');})();
-</script>
+<script>(function(){if(localStorage.getItem('bsafe-theme')==='light')document.documentElement.setAttribute('data-theme','light');})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BSafe Bitcoin — Soberania Financeira com Bitcoin</title>
 <meta name="description" content="Aprenda a proteger seu patrimônio com Bitcoin em custódia própria. Hardware wallet configurada, Bitcoin na carteira e consultoria especializada.">
@@ -367,18 +365,13 @@ footer{border-top:1px solid var(--border);padding:44px 24px;text-align:center}
   --btc-glow: rgba(247,147,26,0.28);
 }
 
-/* Transição suave ao trocar tema */
-body,nav,footer,section,.plano,.fact,.pilar,.dc,.hcard,.cred-item,.pilar-sobre,article {
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-}
-
-/* Remove textura de ruído no tema claro */
+/* Remove textura de ruído — mais visível em fundo claro */
 [data-theme="light"] body::after { display: none; }
 
-/* Scrollbar no tema claro */
+/* Scrollbar */
 [data-theme="light"] ::-webkit-scrollbar-track { background: var(--bg); }
 
-/* ── Nav e mob-menu: mantém escuros em ambos os temas ── */
+/* ── Nav: mantém escura ── */
 [data-theme="light"] nav {
   --white: #ffffff;
   --off: #e8e8e0;
@@ -387,6 +380,7 @@ body,nav,footer,section,.plano,.fact,.pilar,.dc,.hcard,.cred-item,.pilar-sobre,a
   --border: rgba(255,255,255,0.07);
 }
 
+/* ── Menu mobile: mantém escuro ── */
 [data-theme="light"] .mob-menu {
   --white: #ffffff;
   --off: #e8e8e0;
@@ -395,6 +389,7 @@ body,nav,footer,section,.plano,.fact,.pilar,.dc,.hcard,.cred-item,.pilar-sobre,a
   --border: rgba(255,255,255,0.07);
 }
 
+/* ── Footer: fundo escuro explícito (sem bg no CSS original) ── */
 [data-theme="light"] footer {
   background: #080808;
   border-top-color: rgba(255,255,255,0.07);
@@ -404,66 +399,72 @@ body,nav,footer,section,.plano,.fact,.pilar,.dc,.hcard,.cred-item,.pilar-sobre,a
   --muted2: #3a3a3a;
 }
 
+/* ── Disclaimer acima do footer ── */
 [data-theme="light"] .disc { color: #a8a5a0; }
 
+/* ── Grade do hero: levemente mais visível no fundo claro ── */
 [data-theme="light"] .h-grid {
   background-image:
     linear-gradient(rgba(247,147,26,.055) 1px, transparent 1px),
     linear-gradient(90deg, rgba(247,147,26,.055) 1px, transparent 1px);
 }
 
+/* ── Caixa de aviso na seção custódia ── */
 [data-theme="light"] .warn { background: rgba(220,38,38,.06); border-color: rgba(220,38,38,.22); }
 [data-theme="light"] .wt { color: #991b1b; }
 [data-theme="light"] .wt strong { color: #dc2626; }
 
+/* ── Barra de progresso nas halvings ── */
 [data-theme="light"] .bar { color: #fff; }
 
+/* ── Badge hero (ponto pulsante já é --btc) ── */
 [data-theme="light"] .badge { border-color: var(--border-btc); }
 
+/* ── Hover dos cards de plano ── */
 [data-theme="light"] .plano:hover { box-shadow: 0 20px 60px rgba(0,0,0,0.12); }
 [data-theme="light"] .plano-feat:hover { box-shadow: 0 20px 60px rgba(247,147,26,0.14); }
 
+/* ── Seção "Sobre Rafael" — faixa de stats ── */
 [data-theme="light"] .sobre-stats { border-top-color: rgba(0,0,0,0.09); border-bottom-color: rgba(0,0,0,0.09); }
 
+/* ── Missão card ── */
 [data-theme="light"] .missao-card { border-color: var(--border-btc); }
 [data-theme="light"] .missao-card::before { background: linear-gradient(90deg, transparent, var(--btc), transparent); }
 
 /* ── Seção #sobre-rafael usa --bg (já claro via :root) ── */
 /* ── Foto overlay preserva gradiente escuro hardcoded ── */
 
-/* ══ TOGGLE DARK / LIGHT ══ */
-.theme-toggle{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);cursor:pointer;color:#9a9a90;transition:.25s ease;flex-shrink:0;margin-left:8px;padding:0}
-.theme-toggle:hover{background:rgba(255,255,255,0.16);color:#e8e8e0;border-color:rgba(255,255,255,0.28)}
-.theme-toggle svg{width:15px;height:15px;pointer-events:none}
-.theme-toggle .icon-moon{display:none}
-.theme-toggle .icon-sun{display:block}
-[data-theme="light"] .theme-toggle .icon-sun{display:none}
-[data-theme="light"] .theme-toggle .icon-moon{display:block}
-.mob-theme-toggle{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid rgba(255,255,255,0.07);font-size:14px;font-weight:500;color:#9a9a90;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none;width:100%;text-align:left;font-family:inherit;transition:color .2s}
-.mob-theme-toggle:hover{color:#F7931A}
-.mob-theme-toggle svg{width:18px;height:18px;flex-shrink:0}
-.mob-theme-toggle .icon-moon{display:none}
-.mob-theme-toggle .icon-sun{display:block}
-[data-theme="light"] .mob-theme-toggle .icon-sun{display:none}
-[data-theme="light"] .mob-theme-toggle .icon-moon{display:block}
-.mob-theme-label-dark{display:inline}
-.mob-theme-label-light{display:none}
-[data-theme="light"] .mob-theme-label-dark{display:none}
-[data-theme="light"] .mob-theme-label-light{display:inline}
-
-/* ══ QR CODES ══ */
+/* ── Theme Toggle Button ──────────────────────────────── */
+.theme-toggle { display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); cursor:pointer; color:#9a9a90; transition:.25s ease; flex-shrink:0; margin-left:8px; padding:0; }
+.theme-toggle:hover { background:rgba(255,255,255,0.14); color:#fff; }
+.theme-toggle svg { width:16px; height:16px; }
+.theme-toggle .icon-moon { display:none; }
+.theme-toggle .icon-sun  { display:block; }
+[data-theme="light"] .theme-toggle .icon-sun  { display:none; }
+[data-theme="light"] .theme-toggle .icon-moon { display:block; }
+/* Mobile toggle */
+.mob-theme-toggle { display:flex; align-items:center; gap:10px; width:100%; background:none; border:none; color:var(--white); font-family:'DM Sans',sans-serif; font-size:15px; padding:12px 0; cursor:pointer; border-bottom:1px solid var(--border); margin-bottom:4px; }
+.mob-theme-toggle svg { width:18px; height:18px; flex-shrink:0; }
+.mob-theme-toggle .icon-moon { display:none; }
+.mob-theme-toggle .icon-sun  { display:block; }
+[data-theme="light"] .mob-theme-toggle .icon-sun  { display:none; }
+[data-theme="light"] .mob-theme-toggle .icon-moon { display:block; }
+.mob-theme-label-light { display:none; }
+[data-theme="light"] .mob-theme-label-dark  { display:none; }
+[data-theme="light"] .mob-theme-label-light { display:inline; }
+/* QR Section */
 .qr-section{margin-top:36px;text-align:center}
 .qr-section-title{font-size:12px;font-family:'DM Mono',monospace;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:20px}
 .qr-cards{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
 .qr-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;width:180px;transition:var(--ease)}
-.qr-card:hover{border-color:var(--border-btc);transform:translateY(-3px)}
+.qr-card:hover{border-color:var(--border-btc);transform:translateY(-2px)}
 .qr-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center}
-.qr-icon svg{width:28px;height:28px}
-.qr-icon-radar{color:#6b8f6b}
-.qr-img-wrap{width:130px;height:130px;background:#fff;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.qr-icon svg{width:100%;height:100%}
+.qr-icon-radar{color:var(--btc)}
+.qr-img-wrap{width:130px;height:130px;background:#fff;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:4px}
 .qr-img{width:100%;height:100%;object-fit:contain}
-.qr-label{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--white);letter-spacing:.05em}
-.qr-sublabel{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.06em}
+.qr-label{font-size:14px;font-weight:600;color:var(--white);font-family:'DM Sans',sans-serif}
+.qr-sublabel{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
 </style>
 </head>
 <body>
@@ -483,9 +484,11 @@ body,nav,footer,section,.plano,.fact,.pilar,.dc,.hcard,.cred-item,.pilar-sobre,a
     <li><a href="#sobre">Sobre</a></li>
     <li><a href="#planos" class="nav-cta">Começar agora</a></li>
   </ul>
-
-  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema"><svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
-  <button class="mob-btn" onclick="toggleMenu()" aria-label="Menu">
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="mob-btn" onclick="toggleMenu()" aria-label="Menu">
     <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
       <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
     </svg>
@@ -493,9 +496,12 @@ body,nav,footer,section,.plano,.fact,.pilar,.dc,.hcard,.cred-item,.pilar-sobre,a
 </nav>
 
 <div class="mob-menu" id="mob-menu">
-  <button class="mob-theme-toggle" onclick="toggleTheme();cm()"><svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span><span class="mob-theme-label-dark">Modo claro</span><span class="mob-theme-label-light">Modo escuro</span></span></button>
-
-  <a href="#bitcoin" onclick="cm()">O que é Bitcoin</a>
+  <button class="mob-theme-toggle" onclick="toggleTheme();cm()">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span><span class="mob-theme-label-dark">Modo claro</span><span class="mob-theme-label-light">Modo escuro</span></span>
+      </button>
+      <a href="#bitcoin" onclick="cm()">O que é Bitcoin</a>
   <a href="#tese" onclick="cm()">Por que Bitcoin</a>
   <a href="educacao.html" onclick="cm()">Educação</a>
   <a href="#custodia" onclick="cm()">Custódia Própria</a>
@@ -919,39 +925,35 @@ body,nav,footer,section,.plano,.fact,.pilar,.dc,.hcard,.cred-item,.pilar-sobre,a
         <a href="https://wa.me/5551999853576" class="btn-g" target="_blank">📱 Falar pelo WhatsApp</a>
       </div>
       <div class="social-strip">
+        <a href="https://wa.me/5551999853576" class="social-btn">📱 </a>
         <a href="mailto:bsafe@bsafebitcoin.org" class="social-btn">✉️ bsafe@bsafebitcoin.org</a>
-        <a href="https://bsafebitcoin.org" class="social-btn" target="_blank">🌐 bsafebitcoin.org</a>
+        <a href="https://bsafebitcoin.org" class="social-btn">🌐 bsafebitcoin.org</a>
       </div>
-
-      <!-- QR CODES -->
-      <div class="qr-section">
-        <p class="qr-section-title">Fale diretamente comigo</p>
-        <div class="qr-cards">
-
-          <div class="qr-card qr-whatsapp">
-            <div class="qr-icon">
-              <svg viewBox="0 0 24 24" fill="#25D366" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.86.5 3.6 1.43 5.1L2 22l5.16-1.5a9.84 9.84 0 0 0 4.87 1.28h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.13-2.9-7-1.88-1.88-4.36-2.87-7.01-2.87Zm0 18.06h-.01a8.18 8.18 0 0 1-4.17-1.14l-.3-.18-3.05.89.91-2.98-.2-.31a8.16 8.16 0 0 1-1.26-4.43c0-4.52 3.68-8.2 8.21-8.2 2.19 0 4.25.86 5.8 2.41a8.13 8.13 0 0 1 2.4 5.79c0 4.53-3.68 8.15-8.33 8.15Zm4.49-6.13c-.25-.12-1.45-.72-1.68-.8-.22-.08-.39-.12-.55.12-.16.25-.63.8-.78.96-.14.16-.29.18-.53.06-1.45-.72-2.4-1.29-3.36-2.92-.25-.43.25-.4.72-1.34.08-.16.04-.3-.03-.43-.08-.12-.55-1.33-.76-1.83-.2-.48-.4-.42-.55-.42-.14-.01-.3-.01-.46-.01-.16 0-.42.06-.64.3-.22.25-.85.83-.85 2.02 0 1.19.87 2.34 1 2.5.12.16 1.7 2.59 4.12 3.53 2.04.79 2.45.66 2.9.62.45-.04 1.45-.59 1.65-1.17.2-.57.2-1.06.14-1.17-.06-.1-.22-.17-.4-.27Z"/></svg>
+        <div class="qr-section">
+          <p class="qr-section-title">Fale diretamente comigo</p>
+          <div class="qr-cards">
+            <div class="qr-card">
+              <div class="qr-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor" style="color:#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              </div>
+              <div class="qr-img-wrap">
+                <img src="data:image/png;base64,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" alt="QR Code WhatsApp Rafael Bered" class="qr-img">
+              </div>
+              <p class="qr-label">WhatsApp</p>
+              <p class="qr-sublabel">Rafael B</p>
             </div>
-            <div class="qr-img-wrap">
-              <img src="data:image/png;base64,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" alt="QR Code WhatsApp Rafael Bered" class="qr-img">
+            <div class="qr-card">
+              <div class="qr-icon qr-icon-radar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
+              </div>
+              <div class="qr-img-wrap">
+                <img src="data:image/png;base64,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" alt="QR Code Radar RafaB007.50" class="qr-img">
+              </div>
+              <p class="qr-label">Radar</p>
+              <p class="qr-sublabel">RafaB007.50</p>
             </div>
-            <p class="qr-label">WhatsApp</p>
-            <p class="qr-sublabel">Rafael B</p>
           </div>
-
-          <div class="qr-card qr-radar">
-            <div class="qr-icon qr-icon-radar">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
-            </div>
-            <div class="qr-img-wrap">
-              <img src="data:image/png;base64,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" alt="QR Code Radar RafaB007.50" class="qr-img">
-            </div>
-            <p class="qr-label">Radar</p>
-            <p class="qr-sublabel">RafaB007.50</p>
-          </div>
-
         </div>
-      </div>
     </div>
   </div>
 </section>
