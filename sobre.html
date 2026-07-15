@@ -743,42 +743,13 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// Nav scroll
 const nav=document.querySelector('.nav');
 window.addEventListener('scroll',()=>{nav.classList.toggle('scrolled',window.scrollY>40);});
-
-// Mobile menu
-function toggleMenu(){
-  document.querySelector('.mob-menu').classList.toggle('open');
-  document.querySelector('.hamburger').classList.toggle('open');
-}
-
-// Theme
-function toggleTheme(){
-  const html=document.documentElement;
-  const isLight=html.getAttribute('data-theme')==='light';
-  html.setAttribute('data-theme',isLight?'dark':'light');
-  localStorage.setItem('bsafe-theme',isLight?'dark':'light');
-}
-
-// Reveal animation
-const observer=new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');}});
-},{threshold:0.1});
+function toggleMenu(){document.querySelector('.mob-menu').classList.toggle('open');document.querySelector('.hamburger').classList.toggle('open');}
+function toggleTheme(){const html=document.documentElement;const isLight=html.getAttribute('data-theme')==='light';html.setAttribute('data-theme',isLight?'dark':'light');localStorage.setItem('bsafe-theme',isLight?'dark':'light');}
+const observer=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');}});},{threshold:0.1});
 document.querySelectorAll('.rev').forEach(el=>observer.observe(el));
-
-// Clock animation
-function animateClock(){
-  const h=document.getElementById('clock-hour');
-  const m=document.getElementById('clock-min');
-  if(!h||!m)return;
-  let deg=0;
-  setInterval(()=>{
-    deg+=6;
-    m.style.transform='rotate('+deg+'deg)';
-    h.style.transform='rotate('+(deg/12)+'deg)';
-  },1000);
-}
+function animateClock(){const h=document.getElementById('clock-hour');const m=document.getElementById('clock-min');if(!h||!m)return;let deg=0;setInterval(()=>{deg+=6;m.style.transform='rotate('+deg+'deg)';h.style.transform='rotate('+(deg/12)+'deg)';},1000);}
 animateClock();
 </script>
 </body>
