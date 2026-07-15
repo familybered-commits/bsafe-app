@@ -709,7 +709,7 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
     <div class="stag">COMPRA DIRETA</div>
     <h2 class="stitle">Compre seu<br>primeiro Bitcoin</h2>
     <p class="slead" style="margin-bottom:48px">Compre Bitcoin com PIX direto para sua carteira de autocustódia. Sem intermediários — você recebe na sua própria wallet.</p>
-    <div class="btc-grid" style="gap:48px;margin-top:0;align-items:start">
+    <div class="btc-grid" style="gap:48px;margin-top:0;align-items:center">
       <div class="facts">
         <div class="fact">
           <div class="fn">01</div>
@@ -718,29 +718,35 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
         </div>
         <div class="fact">
           <div class="fn">02</div>
-          <div class="fl">INSIRA SEU ENDEREÇO BITCOIN</div>
-          <div class="fd">No widget ao lado, cole o endereço da sua carteira. O Bitcoin vai direto para você — sem passar pelo BSafe.</div>
+          <div class="fl">CLIQUE E INSIRA SEU ENDEREÇO</div>
+          <div class="fd">Você será direcionado para a plataforma de compra. Cole o endereço da sua carteira Bitcoin e escolha o valor em reais.</div>
         </div>
         <div class="fact">
           <div class="fn">03</div>
           <div class="fl">PAGUE COM PIX E RECEBA</div>
-          <div class="fd">Pague com PIX em reais e receba Bitcoin na sua carteira em minutos. KYC automático incluído.</div>
+          <div class="fd">Pague com PIX e receba Bitcoin direto na sua carteira em minutos. KYC automático incluído na primeira compra.</div>
         </div>
         <div class="warn" style="margin-top:0">
           <span class="wi">&#128273;</span>
           <div class="wt"><strong>Você é o único custodiante.</strong> O Bitcoin vai direto para sua carteira. O BSafe não tem acesso aos seus fundos em nenhum momento.</div>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:16px">
-        <iframe
-          src="https://buy.onramper.com?apiKey=pk_test_01KXKVKMHBHD83Y01D8DW9SATV&mode=buy&defaultCrypto=BTC&defaultFiat=BRL&supportedCryptos=BTC&supportedFiats=BRL"
-          title="Comprar Bitcoin com PIX"
-          height="630"
-          width="100%"
-          style="max-width:430px;border:none;border-radius:var(--r);overflow:hidden"
-          allow="accelerometer; autoplay; camera; gyroscope; payment; microphone; popups"
-        ></iframe>
-        <p style="font-size:12px;color:var(--muted);text-align:center;max-width:380px;line-height:1.5">Powered by Onramper · 20+ provedores · PIX disponível · KYC automático · Você recebe direto na sua wallet</p>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;text-align:center">
+        <div style="background:var(--bg2);border:1px solid var(--border-btc);border-radius:var(--r);padding:48px 40px;max-width:420px;width:100%">
+          <div style="font-size:56px;margin-bottom:20px">&#8383;</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--white);margin-bottom:10px;letter-spacing:.03em">Comprar Bitcoin</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6">Powered by Onramper · 20+ provedores · PIX disponível</div>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:32px">
+            <span style="background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--muted)">✅ PIX</span>
+            <span style="background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--muted)">✅ KYC automático</span>
+            <span style="background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--muted)">✅ Self-custody</span>
+          </div>
+          <a href="https://buy.onramper.com?apiKey=pk_test_01KXKVKMHBHD83Y01D8DW9SATV&mode=buy&defaultCrypto=BTC&defaultFiat=BRL&supportedCryptos=BTC&supportedFiats=BRL" target="_blank" rel="noopener" class="btn-p" style="width:100%;justify-content:center;font-size:16px;padding:18px 28px;display:flex;gap:10px;text-decoration:none">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Comprar com PIX agora
+          </a>
+          <p style="font-size:11px;color:var(--muted);margin-top:16px;line-height:1.5">Abre em nova aba · Processo seguro e regulamentado · Você define o endereço da sua wallet</p>
+        </div>
       </div>
     </div>
   </div>
