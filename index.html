@@ -706,10 +706,10 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
 <!-- COMPRAR BITCOIN -->
 <section id="comprar" style="background:var(--bg1);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
   <div class="wrap" style="padding-bottom:80px">
-    <div class="stag rev">COMPRA DIRETA</div>
-    <h2 class="stitle rev rd1">Compre seu<br>primeiro Bitcoin</h2>
-    <p class="slead rev rd2" style="margin-bottom:48px">Compre Bitcoin com PIX direto para sua carteira de autocustódia. Sem corretora, sem custódia de terceiros — você recebe o BTC diretamente no seu endereço.</p>
-    <div class="btc-grid rev" style="gap:48px;margin-top:0">
+    <div class="stag">COMPRA DIRETA</div>
+    <h2 class="stitle">Compre seu<br>primeiro Bitcoin</h2>
+    <p class="slead" style="margin-bottom:48px">Compre Bitcoin com PIX direto para sua carteira de autocustódia. Sem corretora, sem custódia de terceiros — você recebe o BTC diretamente no seu endereço.</p>
+    <div class="btc-grid" style="gap:48px;margin-top:0">
       <div class="facts">
         <div class="fact"><div class="fn">01</div><div class="fl">CONFIGURE SUA CARTEIRA</div><div class="fd">Antes de comprar, tenha uma carteira de autocustódia configurada. Copie o endereço Bitcoin (começa com bc1 ou 1 ou 3).</div></div>
         <div class="fact"><div class="fn">02</div><div class="fl">CLIQUE EM COMPRAR</div><div class="fd">Escolha o valor em reais, cole seu endereço Bitcoin e pague via PIX. Taxa de processamento: até 2,90%.</div></div>
@@ -1258,19 +1258,16 @@ function abrirRamp(btn){
       defaultFlow: 'ONRAMP',
       hostApiKey: 'wn25y7nx6cyb4oqutc5obnnywwwt4gz36yw5fypw',
     }).show();
-    if(btn){btn.textContent='Comprar com PIX';btn.disabled=false;}
+    if(btn){btn.innerHTML='<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg> Comprar com PIX';btn.disabled=false;}
   }
-  if(typeof RampInstantiator !== 'undefined'){
-    openWidget();
-    return;
-  }
+  if(typeof RampInstantiator !== 'undefined'){openWidget();return;}
   if(btn){btn.textContent='Carregando...';btn.disabled=true;}
   var s=document.createElement('script');
   s.src='https://cdn.prod.rampnetwork.com/assets/unbundled/ramp.js';
   s.onload=openWidget;
   s.onerror=function(){
     if(btn){btn.textContent='Comprar com PIX';btn.disabled=false;}
-    alert('Erro ao carregar o widget. Verifique sua conexão e tente novamente.');
+    alert('Erro ao carregar. Verifique sua conexão e tente novamente.');
   };
   document.head.appendChild(s);
 }
