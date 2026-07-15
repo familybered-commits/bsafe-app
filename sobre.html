@@ -733,65 +733,31 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
 
 <script>
 
-// NAV
 window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>40));
 let mopen=false;
 function toggleMenu(){mopen=!mopen;document.getElementById('mob-menu').classList.toggle('open',mopen);}
 function cm(){mopen=false;document.getElementById('mob-menu').classList.remove('open');}
-
-// REVEAL
 const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')}),{threshold:.07});
 document.querySelectorAll('.rev').forEach(el=>obs.observe(el));
-
-// THEME
 function toggleTheme(){var h=document.documentElement;var l=h.getAttribute('data-theme')==='light';if(l){h.removeAttribute('data-theme');localStorage.setItem('bsafe-theme','dark');}else{h.setAttribute('data-theme','light');localStorage.setItem('bsafe-theme','light');}}
-
-// CLOCK
 (function(){
-  var svg = document.getElementById('clkSvg');
-  if(!svg) return;
-  var ns = 'http://www.w3.org/2000/svg';
-  var C = 150, R = 150;
-  for(var i=0;i<60;i++){
-    var angle=(i*6-90)*Math.PI/180;
-    var isMaj=i%5===0;
-    var r1=R-12, r2=r1-(isMaj?18:10);
-    var x1=C+r1*Math.cos(angle), y1=C+r1*Math.sin(angle);
-    var x2=C+r2*Math.cos(angle), y2=C+r2*Math.sin(angle);
-    var ln=document.createElementNS(ns,'line');
-    ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);
-    ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);
-    ln.setAttribute('stroke',isMaj?'#FC6701':'rgba(252,103,1,0.4)');
-    ln.setAttribute('stroke-width',isMaj?'2.5':'1');
-    ln.setAttribute('stroke-linecap','round');
-    svg.appendChild(ln);
-  }
-  var labels=['XII','I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
-  labels.forEach(function(lbl,i){
-    var angle=(i*30-90)*Math.PI/180;
-    var r=R-44;
-    var x=C+r*Math.cos(angle), y=C+r*Math.sin(angle);
-    var t=document.createElementNS(ns,'text');
-    t.setAttribute('x',x);t.setAttribute('y',y);
+  var svg=document.getElementById('clkSvg');if(!svg)return;
+  var ns='http://www.w3.org/2000/svg',C=150,R=150;
+  for(var i=0;i<60;i++){var angle=(i*6-90)*Math.PI/180,isMaj=i%5===0,r1=R-12,r2=r1-(isMaj?18:10);
+    var x1=C+r1*Math.cos(angle),y1=C+r1*Math.sin(angle),x2=C+r2*Math.cos(angle),y2=C+r2*Math.sin(angle);
+    var ln=document.createElementNS(ns,'line');ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);
+    ln.setAttribute('stroke',isMaj?'#FC6701':'rgba(252,103,1,0.4)');ln.setAttribute('stroke-width',isMaj?'2.5':'1');ln.setAttribute('stroke-linecap','round');svg.appendChild(ln);}
+  ['XII','I','II','III','IV','V','VI','VII','VIII','IX','X','XI'].forEach(function(lbl,i){
+    var angle=(i*30-90)*Math.PI/180,r=R-44,x=C+r*Math.cos(angle),y=C+r*Math.sin(angle);
+    var t=document.createElementNS(ns,'text');t.setAttribute('x',x);t.setAttribute('y',y);
     t.setAttribute('text-anchor','middle');t.setAttribute('dominant-baseline','central');
-    t.setAttribute('font-family',"'DM Mono',monospace");
-    t.setAttribute('font-size','13');t.setAttribute('font-weight','700');
-    t.setAttribute('fill','#FC6701');
-    t.textContent=lbl;
-    svg.appendChild(t);
-  });
-  function tick(){
-    var now=new Date();
-    var h=now.getHours()%12, m=now.getMinutes(), s=now.getSeconds(), ms=now.getMilliseconds();
-    var sD=(s+ms/1000)*6, mD=(m+s/60)*6, hD=(h+m/60)*30;
+    t.setAttribute('font-family',"'DM Mono',monospace");t.setAttribute('font-size','13');t.setAttribute('font-weight','700');t.setAttribute('fill','#FC6701');
+    t.textContent=lbl;svg.appendChild(t);});
+  function tick(){var now=new Date(),h=now.getHours()%12,m=now.getMinutes(),s=now.getSeconds(),ms=now.getMilliseconds();
+    var sD=(s+ms/1000)*6,mD=(m+s/60)*6,hD=(h+m/60)*30;
     var sh=document.getElementById('clkH'),sm=document.getElementById('clkM'),ss=document.getElementById('clkS');
-    if(sh){sh.style.transform='rotate('+hD+'deg)';}
-    if(sm){sm.style.transform='rotate('+mD+'deg)';}
-    if(ss){ss.style.transform='rotate('+sD+'deg)';}
-    requestAnimationFrame(tick);
-  }
-  tick();
-})();
+    if(sh)sh.style.transform='rotate('+hD+'deg)';if(sm)sm.style.transform='rotate('+mD+'deg)';if(ss)ss.style.transform='rotate('+sD+'deg)';
+    requestAnimationFrame(tick);}tick();})();
 
 </script>
 </body>
