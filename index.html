@@ -119,6 +119,13 @@ section{position:relative;z-index:1}
 
 /* CUSTÓDIA */
 #custodia{background:var(--bg1);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.custodia-intro{display:grid;grid-template-columns:1fr 400px;gap:56px;align-items:center;margin-bottom:56px}
+.custodia-intro-text{display:flex;flex-direction:column}
+.custodia-intro-text .stag{margin-bottom:18px}
+.custodia-intro-text .stitle{margin-bottom:18px}
+.custodia-intro-img{position:relative}
+.custodia-intro-img img{width:100%;border-radius:var(--r);display:block;border:1px solid var(--border-btc);box-shadow:0 0 40px rgba(252,103,1,.15)}
+@media(max-width:768px){.custodia-intro{grid-template-columns:1fr;gap:32px}.custodia-intro-img{order:-1}}
 .steps{display:flex;flex-direction:column;margin-top:56px;position:relative}
 .steps::before{content:'';position:absolute;left:27px;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,var(--btc),transparent);z-index:0}
 .step{display:grid;grid-template-columns:54px 1fr;gap:28px;padding:28px 0;align-items:start;position:relative;z-index:1}
@@ -686,9 +693,16 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
 <!-- CUSTÓDIA -->
 <section id="custodia">
   <div class="wrap">
-    <div class="stag rev">CUSTÓDIA PRÓPRIA</div>
-    <h2 class="stitle rev rd1">Not your keys,<br>not your coins.</h2>
-    <p class="slead rev rd2">Deixar Bitcoin na exchange é como guardar ouro na casa do outro. A custódia própria é o passo que transforma você de usuário em soberano financeiro.</p>
+    <div class="custodia-intro">
+      <div class="custodia-intro-text">
+        <div class="stag rev">CUSTÓDIA PRÓPRIA</div>
+        <h2 class="stitle rev rd1">Not your keys,<br>not your coins.</h2>
+        <p class="slead rev rd2">Deixar Bitcoin na exchange é como guardar ouro na casa do outro. A custódia própria é o passo que transforma você de usuário em soberano financeiro.</p>
+      </div>
+      <div class="custodia-intro-img rev rd2">
+        <img src="not-your-keys.jpg" alt="Not Your Keys, Not Your Coins — BSafe Bitcoin" loading="lazy">
+      </div>
+    </div>
     <div class="steps">
       <div class="step rev"><div class="sn">01</div><div class="sc"><h3>Entenda as chaves privadas</h3><p>Seu Bitcoin não está "na carteira" — ele está na blockchain. O que você guarda é uma chave privada: 256 bits que provam que você é o dono. Quem tem a chave, tem o Bitcoin.</p><span class="stag2">CONCEITO FUNDAMENTAL</span></div></div>
       <div class="step rev rd1"><div class="sn">02</div><div class="sc"><h3>A Tapsigner — sua primeira chave</h3><p>Uma hardware wallet no formato de cartão de crédito. Toque no celular para assinar transações via NFC — sem cabos, sem drivers. A porta de entrada mais acessível para a autocustódia fria.</p><span class="stag2">INCLUÍDA EM TODOS OS PLANOS</span></div></div>
