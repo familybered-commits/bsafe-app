@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seu Portfólio Rende em Reais — Mas a Inflação Real Devora Tudo | BSafe Bitcoin</title>
+<style>
+  :root {
+    --bg: #0b0e11; --bg-card: #14181d; --accent: #f7931a; --accent-soft: #f7931a22;
+    --text: #e8eaed; --text-muted: #9aa3ad; --border: #232a31;
+    --green: #16c784; --red: #ea3943; --yellow: #f5c518;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  .container { max-width: 720px; margin: 0 auto; padding: 0 40px 96px; }
+  .topbar { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: rgba(8,8,8,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+  .topbar a.back { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; border-bottom: none; }
+  .topbar a.back:hover { color: var(--text); }
+  .share-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent); font-weight: 700; font-size: 13px; padding: 8px 18px; border-radius: 999px; cursor: pointer; transition: transform 0.15s ease, background 0.2s ease; font-family: inherit; }
+  .share-btn:hover { background: var(--accent); color: #1a1300; transform: translateY(-1px); }
+  .share-wrap { position: relative; }
+  .share-menu { position: absolute; top: calc(100% + 10px); right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 8px; min-width: 190px; box-shadow: 0 12px 32px rgba(0,0,0,0.4); opacity: 0; visibility: hidden; transform: translateY(-6px); transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s; z-index: 60; }
+  .share-menu.open { opacity: 1; visibility: visible; transform: translateY(0); }
+  .share-menu a, .share-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 8px; border: none; background: transparent; color: var(--text); font-size: 14px; font-weight: 600; font-family: inherit; text-decoration: none; cursor: pointer; text-align: left; transition: background 0.15s ease, color 0.15s ease; }
+  .share-menu a:hover, .share-menu button:hover { background: var(--accent-soft); color: var(--accent); }
+  .share-menu .share-icon { width: 18px; height: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .share-menu .share-icon svg { width: 100%; height: 100%; }
+  .share-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--accent); color: #1a1300; font-weight: 700; font-size: 14px; padding: 12px 24px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease; z-index: 100; }
+  .share-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .hero { padding: 64px 40px 52px; text-align: center; border-bottom: 1px solid var(--border); background: radial-gradient(ellipse at top, var(--accent-soft) 0%, transparent 60%); }
+  .hero .tag { display: inline-block; background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 6px 16px; border-radius: 999px; border: 1px solid var(--accent); margin-bottom: 24px; }
+  .hero h1 { font-size: 38px; font-weight: 800; line-height: 1.25; margin-bottom: 16px; letter-spacing: -0.5px; }
+  .hero h1 span { color: var(--accent); }
+  .hero .subtitle { font-size: 18px; color: var(--text-muted); max-width: 600px; margin: 0 auto 20px; }
+  .hero .meta { font-size: 13px; color: var(--text-muted); display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+  article { padding-top: 52px; }
+  article h2 { font-size: 26px; font-weight: 800; margin: 52px 0 20px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 10px; }
+  article h2::before { content: ""; display: inline-block; width: 6px; height: 26px; background: var(--accent); border-radius: 3px; flex-shrink: 0; }
+  article h3 { font-size: 20px; font-weight: 700; margin: 32px 0 14px; color: var(--accent); }
+  article p { font-size: 17px; color: #d4d8dc; margin-bottom: 22px; }
+  article strong { color: #fff; font-weight: 700; }
+  article a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+  article a:hover { border-bottom-color: var(--accent); }
+  .highlight-box { background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 12px; padding: 28px 32px; margin: 32px 0; }
+  .highlight-box .label { color: var(--accent); font-weight: 800; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; display: block; }
+  .highlight-box p { margin-bottom: 0; font-size: 17px; }
+  blockquote { border-left: 3px solid var(--accent); padding: 8px 0 8px 28px; margin: 32px 0; font-size: 19px; font-style: italic; color: var(--text); line-height: 1.65; }
+  .math-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 28px 32px; margin: 28px 0; font-family: 'Courier New', Courier, monospace; }
+  .math-card .math-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 20px; }
+  .math-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 16px; }
+  .math-row:last-child { border-bottom: none; }
+  .math-row .label-m { color: var(--text-muted); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; }
+  .math-row .value { font-weight: 700; font-size: 18px; }
+  .math-row .value.green { color: var(--green); }
+  .math-row .value.red { color: var(--red); }
+  .math-row .value.orange { color: var(--accent); }
+  .math-row .value.yellow { color: var(--yellow); }
+  .math-divider { border: none; border-top: 2px solid var(--accent); margin: 8px 0; }
+  .ruler-visual { display: flex; flex-direction: column; gap: 10px; margin: 28px 0; }
+  .ruler-row { display: flex; align-items: center; gap: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
+  .ruler-label { min-width: 200px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); flex-shrink: 0; }
+  .ruler-bar-wrap { flex: 1; background: rgba(255,255,255,0.05); border-radius: 999px; height: 14px; overflow: hidden; }
+  .ruler-bar { height: 100%; border-radius: 999px; transition: width 1s ease; }
+  .ruler-bar.ipca { background: linear-gradient(90deg, #9aa3ad, #5a6470); }
+  .ruler-bar.m2 { background: linear-gradient(90deg, #ea3943, #a02530); }
+  .ruler-bar.cdi { background: linear-gradient(90deg, #f7931a, #c9740a); }
+  .ruler-bar.real-neg { background: linear-gradient(90deg, #6b6b6b, #3a3a3a); }
+  .ruler-pct { min-width: 60px; text-align: right; font-weight: 800; font-size: 16px; }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0 32px; }
+  .compare-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
+  .compare-card.fiat { border-top: 3px solid var(--red); }
+  .compare-card.btc { border-top: 3px solid var(--accent); }
+  .compare-card h4 { font-size: 16px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 14px; }
+  .compare-card.fiat h4 { color: var(--red); }
+  .compare-card.btc h4 { color: var(--accent); }
+  .compare-card ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .compare-card li { font-size: 15px; color: var(--text-muted); padding-left: 22px; position: relative; }
+  .compare-card.fiat li::before { content: "↓"; position: absolute; left: 0; color: var(--red); font-weight: 800; }
+  .compare-card.btc li::before { content: "↑"; position: absolute; left: 0; color: var(--accent); font-weight: 800; }
+  .asset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0 8px; }
+  .asset-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .asset-card .asset-name { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
+  .asset-card .asset-yield-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+  .asset-card .asset-yield-bruto { font-size: 22px; font-weight: 800; }
+  .asset-card .asset-yield-liquido { font-size: 14px; font-weight: 700; color: var(--text-muted); }
+  .asset-card .asset-ir-note { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  .asset-card .asset-real { font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px; }
+  .asset-card .asset-real span { font-weight: 700; }
+  .asset-card.bad { border-left: 3px solid var(--red); }
+  .asset-card.bad .asset-yield-bruto { color: var(--red); }
+  .asset-card.neutral { border-left: 3px solid var(--yellow); }
+  .asset-card.neutral .asset-yield-bruto { color: var(--yellow); }
+  .asset-card.good { border-left: 3px solid var(--accent); }
+  .asset-card.good .asset-yield-bruto { color: var(--accent); }
+  .definition-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px 28px; margin: 28px 0; display: flex; gap: 18px; align-items: flex-start; }
+  .definition-icon { font-size: 28px; flex-shrink: 0; margin-top: 2px; }
+  .definition-content .def-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 6px; }
+  .definition-content p { margin-bottom: 0; font-size: 16px; color: var(--text-muted); }
+  .definition-content strong { color: var(--text); }
+  .cta { background: linear-gradient(135deg, var(--accent-soft), transparent); border: 1px solid var(--accent); border-radius: 16px; padding: 32px; text-align: center; margin: 48px 0 12px; }
+  .cta h3 { color: var(--text); font-size: 22px; margin-bottom: 10px; }
+  .cta p { color: var(--text-muted); margin-bottom: 22px; }
+  .cta-button { display: inline-block; background: var(--accent); color: #1a1300; font-weight: 800; font-size: 15px; padding: 14px 32px; border-radius: 999px; text-decoration: none; transition: transform 0.15s ease; border: none; }
+  .cta-button:hover { transform: translateY(-2px); }
+  .disclaimer { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-muted); }
+  .author-box { display: flex; align-items: center; gap: 14px; margin-top: 40px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; }
+  .author-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; color: #1a1300; flex-shrink: 0; }
+  .author-info p { margin: 0; font-size: 14px; }
+  .author-info .name { font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .author-info .role { color: var(--text-muted); font-size: 13px; }
+  @media (max-width: 640px) {
+    .container { padding: 0 20px 80px; } .hero { padding: 48px 20px 40px; } .hero h1 { font-size: 26px; }
+    .hero .subtitle { font-size: 16px; } article h2 { font-size: 22px; } .compare { grid-template-columns: 1fr; }
+    .math-card { padding: 20px; } .ruler-label { min-width: 140px; font-size: 11px; } .asset-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="educacao.html" class="back">← Voltar ao site</a>
+    <div class="share-wrap">
+      <button class="share-btn" onclick="toggleShareMenu(event)">↗ Compartilhar</button>
+      <div class="share-menu" id="share-menu">
+        <a href="#" onclick="shareTo('whatsapp');return false;"><span class="share-icon"><svg viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.86.5 3.6 1.43 5.1L2 22l5.16-1.5a9.84 9.84 0 0 0 4.87 1.28h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.13-2.9-7-1.88-1.88-4.36-2.87-7.01-2.87Zm0 18.06h-.01a8.18 8.18 0 0 1-4.17-1.14l-.3-.18-3.05.89.91-2.98-.2-.31a8.16 8.16 0 0 1-1.26-4.43c0-4.52 3.68-8.2 8.21-8.2 2.19 0 4.25.86 5.8 2.41a8.13 8.13 0 0 1 2.4 5.79c0 4.53-3.68 8.15-8.33 8.15Zm4.49-6.13c-.25-.12-1.45-.72-1.68-.8-.22-.08-.39-.12-.55.12-.16.25-.63.8-.78.96-.14.16-.29.18-.53.06-1.45-.72-2.4-1.29-3.36-2.92-.25-.43.25-.4.72-1.34.08-.16.04-.3-.03-.43-.08-.12-.55-1.33-.76-1.83-.2-.48-.4-.42-.55-.42-.14-.01-.3-.01-.46-.01-.16 0-.42.06-.64.3-.22.25-.85.83-.85 2.02 0 1.19.87 2.34 1 2.5.12.16 1.7 2.59 4.12 3.53 2.04.79 2.45.66 2.9.62.45-.04 1.45-.59 1.65-1.17.2-.57.2-1.06.14-1.17-.06-.1-.22-.17-.4-.27Z"/></svg></span>WhatsApp</a>
+        <a href="#" onclick="shareTo('x');return false;"><span class="share-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231ZM17.083 19.77h1.833L7.084 4.126H5.117Z"/></svg></span>X (Twitter)</a>
+        <a href="#" onclick="shareTo('instagram');return false;"><span class="share-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg></span>Instagram</a>
+        <button onclick="shareTo('copy')"><span class="share-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></span>Copiar link</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="share-toast" id="share-toast">Link copiado!</div>
+
+  <div class="hero">
+    <span class="tag">Economia Austríaca · BSafe</span>
+    <h1>Todo o mercado brasileiro é cotado em reais. <span>E isso é o problema.</span></h1>
+    <p class="subtitle">A inflação real no Brasil não é o IPCA. É a expansão da base monetária. Quando você entende isso — e desconta o IR —, percebe que praticamente todo investimento em BRL rende negativamente em termos reais.</p>
+    <div class="meta"><span>📚 Educação Financeira</span><span>⏱ 8 min de leitura</span><span>🟠 bsafebitcoin.org</span></div>
+  </div>
+
+  <div class="container">
+    <article>
+
+      <p>Existe um problema silencioso no coração de qualquer decisão de investimento no Brasil: <strong>todos os ativos — ações, FIIs, CDBs, LCIs, debêntures, Tesouro Direto — são denominados na mesma moeda que o governo brasileiro pode criar sem limite</strong>. Isso não é apenas um detalhe técnico. É a condição que determina se você está de fato acumulando riqueza ou apenas correndo numa esteira.</p>
+      <p>Para entender o tamanho do problema, precisamos começar por uma pergunta que raramente aparece nos relatórios das gestoras: o que é, afinal, inflação?</p>
+
+      <h2>A inflação que o governo não conta</h2>
+      <p>A definição convencional de inflação — a que aparece no IPCA, no INPC, nos noticiários — é a variação de preços de uma cesta de bens e serviços. Mas para a Escola Austríaca de Economia, essa é a consequência, não a causa. A <strong>definição austríaca de inflação é outra: inflação é o aumento da base monetária</strong>. É a criação de dinheiro novo.</p>
+
+      <div class="definition-box">
+        <div class="definition-icon">📖</div>
+        <div class="definition-content">
+          <div class="def-label">Escola Austríaca — Ludwig von Mises</div>
+          <p><strong>"Inflação é um aumento na quantidade de dinheiro e crédito bancário."</strong> A alta de preços que observamos no supermercado é o sintoma visível de um fenômeno anterior e menos óbvio: mais unidades monetárias perseguindo a mesma quantidade de bens. O preço sobe porque o dinheiro vale menos — não porque os produtos ficaram mais caros em si.</p>
+        </div>
+      </div>
+
+      <p>Essa distinção é crucial. O IPCA mede preços depois que a expansão monetária já ocorreu e se propagou pela economia. Ele é defasado, incompleto e — por razões que veremos — sistematicamente subestimado. A base monetária, por outro lado, é a fonte. E no Brasil, ela tem crescido de forma consistente muito acima do que o IPCA registra.</p>
+
+      <h2>Os números que o Banco Central não anuncia no horário nobre</h2>
+      <p>O agregado M2 brasileiro — que engloba papel-moeda em circulação, depósitos à vista, poupança e títulos privados de curto prazo — é a medida mais usada para acompanhar a expansão da base monetária relevante para o cidadão. Compare com o IPCA e o CDI no mesmo período:</p>
+
+      <div class="ruler-visual">
+        <div class="ruler-row"><div class="ruler-label">Crescimento M2 (média 5 anos)</div><div class="ruler-bar-wrap"><div class="ruler-bar m2" style="width:100%"></div></div><div class="ruler-pct" style="color:var(--red)">~18%/a</div></div>
+        <div class="ruler-row"><div class="ruler-label">IPCA oficial (média 5 anos)</div><div class="ruler-bar-wrap"><div class="ruler-bar ipca" style="width:36%"></div></div><div class="ruler-pct" style="color:var(--text-muted)">~6,5%/a</div></div>
+        <div class="ruler-row"><div class="ruler-label">CDI bruto (média 5 anos)</div><div class="ruler-bar-wrap"><div class="ruler-bar cdi" style="width:64%"></div></div><div class="ruler-pct" style="color:var(--accent)">~11,5%/a</div></div>
+        <div class="ruler-row"><div class="ruler-label">CDI líquido IR 15%</div><div class="ruler-bar-wrap"><div class="ruler-bar cdi" style="width:54%; opacity:0.6"></div></div><div class="ruler-pct" style="color:var(--yellow)">~9,8%/a</div></div>
+        <div class="ruler-row"><div class="ruler-label">Juro real (CDI liq. − M2)</div><div class="ruler-bar-wrap"><div class="ruler-bar real-neg" style="width:22%"></div></div><div class="ruler-pct" style="color:var(--text-muted)">−8,2%/a</div></div>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-top:-16px;margin-bottom:28px;text-align:center;">Representação baseada em dados do Banco Central do Brasil (M2) e IBGE (IPCA). Médias aproximadas 2019–2024. IR calculado pela alíquota mínima de 15% (prazo acima de 720 dias).</p>
+
+      <p>A conclusão é direta: mesmo antes de descontar qualquer imposto, o CDI não supera a expansão monetária. <strong>Após o IR, a distância aumenta ainda mais.</strong> O dinheiro novo emitido pelo Banco Central dilui o patrimônio de qualquer um que permaneça exposto apenas a ativos denominados em reais.</p>
+
+      <blockquote>Quem investe no CDI não está preservando poder de compra. Está perdendo menos rápido do que quem deixa o dinheiro na conta corrente. É uma corrida em que todos os participantes andam para trás.</blockquote>
+
+      <h2>Mas a inflação de quem? A cesta individual importa</h2>
+      <p>Há um segundo nível nessa análise que a Escola Austríaca torna explícito: a inflação não é um número único e universal. Ela é <strong>subjetiva e individual</strong>, porque depende da cesta de consumo de cada pessoa. O conceito vem diretamente da teoria do valor de Carl Menger — valor não existe no objeto, existe na percepção do agente econômico diante de suas preferências e necessidades específicas.</p>
+      <p>O IPCA calcula a média ponderada de preços para um consumidor hipotético, com renda entre 1 e 40 salários mínimos, em regiões metropolitanas específicas. Se você mora no interior, tem renda fora desse intervalo, ou consome itens com dinâmica de preço diferente da cesta oficial, <strong>o IPCA não mede sua inflação</strong>. Mede a de outra pessoa.</p>
+
+      <div class="highlight-box">
+        <span class="label">Exemplo prático</span>
+        <p>Uma família que gasta 40% da renda em aluguel em São Paulo, tem dois filhos em escola particular e usa plano de saúde premium experimentou inflação próxima de 20–25% ao ano em alguns períodos recentes — enquanto o IPCA oficial marcava 5–6%. Seu investimento precisa superar <em>a inflação dela</em>, não a média estatística do IBGE.</p>
+      </div>
+
+      <h2>O mercado de capitais inteiro está dentro desse problema</h2>
+      <p>Quando o investidor brasileiro olha para suas opções, toda a grade de ativos disponível tem o mesmo denominador comum: o real. Os rendimentos abaixo mostram os valores <strong>líquidos de IR</strong> (alíquota mínima de 15%, melhor cenário), comparados à expansão do M2 (~18% ao ano):</p>
+
+      <div class="asset-grid">
+        <div class="asset-card bad">
+          <div class="asset-name">Tesouro Selic</div>
+          <div class="asset-yield-row"><div class="asset-yield-bruto">~8,9%</div><div class="asset-yield-liquido">líq. IR</div></div>
+          <div class="asset-ir-note">Bruto ~10,5% → IR 15% → líq. ~8,9%</div>
+          <div class="asset-real">Juro real vs. M2: <span style="color:var(--red)">−9,1% a.a.</span></div>
+        </div>
+        <div class="asset-card bad">
+          <div class="asset-name">CDB 110% CDI</div>
+          <div class="asset-yield-row"><div class="asset-yield-bruto">~9,8%</div><div class="asset-yield-liquido">líq. IR</div></div>
+          <div class="asset-ir-note">Bruto ~11,5% → IR 15% → líq. ~9,8%</div>
+          <div class="asset-real">Juro real vs. M2: <span style="color:var(--red)">−8,2% a.a.</span></div>
+        </div>
+        <div class="asset-card bad">
+          <div class="asset-name">Ibovespa (média hist.)</div>
+          <div class="asset-yield-row"><div class="asset-yield-bruto">~11%</div><div class="asset-yield-liquido">líq. IR</div></div>
+          <div class="asset-ir-note">Bruto ~13% → IR 15% gan. capital → ~11%</div>
+          <div class="asset-real">Juro real vs. M2: <span style="color:var(--red)">−7% a.a.</span></div>
+        </div>
+        <div class="asset-card bad">
+          <div class="asset-name">FIIs (dividend yield)</div>
+          <div class="asset-yield-row"><div class="asset-yield-bruto">~8,5%</div><div class="asset-yield-liquido">líq. IR*</div></div>
+          <div class="asset-ir-note">*Dividendos isentos p/ PF; ganho de capital 20%</div>
+          <div class="asset-real">Juro real vs. M2: <span style="color:var(--red)">−9,5% a.a.</span></div>
+        </div>
+        <div class="asset-card neutral">
+          <div class="asset-name">Ouro (BRL)</div>
+          <div class="asset-yield-row"><div class="asset-yield-bruto">~13,6%</div><div class="asset-yield-liquido">líq. IR</div></div>
+          <div class="asset-ir-note">Bruto ~16% → IR 15% → líq. ~13,6%</div>
+          <div class="asset-real">Juro real vs. M2: <span style="color:var(--yellow)">~−4,4% a.a.</span></div>
+        </div>
+        <div class="asset-card good">
+          <div class="asset-name">Bitcoin (BRL)</div>
+          <div class="asset-yield-row"><div class="asset-yield-bruto">~68%+</div><div class="asset-yield-liquido">líq. IR</div></div>
+          <div class="asset-ir-note">Bruto ~80% → IR 15% → líq. ~68%+</div>
+          <div class="asset-real">Juro real vs. M2: <span style="color:var(--accent)">muito positivo</span></div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:28px;">Valores aproximados baseados em médias históricas. IR calculado pela alíquota mínima de 15% (renda fixa acima de 720 dias; ações e ouro, ganho de capital). Rentabilidades passadas não garantem resultados futuros. Bitcoin apresenta alta volatilidade; a comparação usa média de longo prazo.</p>
+
+      <p>O padrão é implacável: <strong>nenhum ativo denominado em reais, após IR, supera a expansão monetária brasileira</strong>. O saldo no extrato cresce. O poder de compra real — medido pela capacidade de adquirir bens e ativos escassos — diminui.</p>
+
+      <h2>A conta que os extratos não fazem por você</h2>
+      <p>Considere R$ 100.000 investidos por 10 anos. O extrato mostra crescimento em qualquer cenário. O poder de compra real conta outra história:</p>
+
+      <div class="math-card">
+        <div class="math-title">Simulação — R$ 100.000 investidos por 10 anos</div>
+        <div class="math-row"><span class="label-m">Capital inicial</span><span class="value">R$ 100.000</span></div>
+        <div class="math-row"><span class="label-m">CDI bruto acumulado (11,5% a.a.)</span><span class="value orange">R$ 297.000 nominal</span></div>
+        <div class="math-row"><span class="label-m">CDI líquido de IR 15%</span><span class="value yellow">R$ 255.000 nominal</span></div>
+        <hr class="math-divider">
+        <div class="math-row"><span class="label-m">Poder de compra real (deflator IPCA 6,5%)</span><span class="value yellow">R$ 141.000 aprox.</span></div>
+        <div class="math-row"><span class="label-m">Poder de compra real (deflator M2 18%)</span><span class="value red">R$ 42.000 aprox.</span></div>
+        <hr class="math-divider">
+        <div class="math-row"><span class="label-m">Diferença entre as duas leituras</span><span class="value yellow">R$ 99.000</span></div>
+      </div>
+
+      <p>No pior cenário — usando a expansão monetária como deflator e descontando o IR —, o investidor terminou a década com <strong>menos de metade do poder de compra original</strong>, apesar do número nominalmente maior no extrato.</p>
+
+      <h2>Por que os juros reais no Brasil são estruturalmente negativos</h2>
+      <p>Não se trata de uma anomalia passageira. É uma característica estrutural de qualquer economia onde o banco central pode emitir moeda sem restrição e onde o governo usa essa capacidade para financiar déficits.</p>
+
+      <h3>O imposto silencioso da emissão monetária</h3>
+      <p>Quando o Banco Central emite reais novos, ele não anuncia um imposto. Mas o efeito é idêntico: quem já possui reais tem sua fração do total de reais existentes diluída. É um imposto sobre a poupança, sobre o salário, sobre os investimentos — sem aprovação legislativa, sem nota fiscal, sem transparência.</p>
+
+      <h3>IR sobre ganho nominal: o imposto sobre perdas reais</h3>
+      <p>O Imposto de Renda incide sobre o <strong>ganho nominal</strong>, não sobre o ganho real. Se você ganhou 11,5% nominais e a expansão monetária foi 18%, você perdeu poder de compra — mas ainda assim pagará IR sobre os 11,5%. Em termos de justiça econômica, é absurdo: <strong>o governo cobra imposto sobre um ganho que, na prática, não existiu</strong>. Isso agrava ainda mais a equação do investidor brasileiro, tornando o juro real efetivo ainda mais negativo do que os números brutos sugerem.</p>
+
+      <div class="highlight-box">
+        <span class="label">O duplo confisco</span>
+        <p>Primeiro, a expansão monetária corrói o poder de compra de quem poupa em reais. Depois, o IR cobra sobre o ganho nominal — que mal compensou parte dessa corrosão. O investidor paga duas vezes: uma vez com a inflação monetária, uma segunda vez com o imposto sobre a ilusão de ter lucrado.</p>
+      </div>
+
+      <h2>Apenas ativos em moeda forte escapam do problema</h2>
+      <p>Existe uma saída — mas ela exige sair do denominador comum. A única forma de preservar poder de compra de longo prazo é possuir ativos cuja unidade de conta <strong>não pode ser expandida por decisão política</strong>. O ouro historicamente cumpriu esse papel, mas tem limitações práticas de custódia e divisibilidade.</p>
+      <p>O Bitcoin resolve esse problema com uma inovação sem precedentes: <strong>escassez verificável por qualquer pessoa, a qualquer momento, via código aberto e descentralizado</strong>. Não existe uma entidade capaz de decidir emitir o 22º milhão de bitcoins. A regra está escrita no protocolo, replicada em milhares de nós ao redor do mundo, e auditável publicamente.</p>
+
+      <div class="compare">
+        <div class="compare-card fiat">
+          <h4>Ativos em BRL</h4>
+          <ul>
+            <li>Denominados na moeda que dilui</li>
+            <li>Rendimento líquido não supera M2</li>
+            <li>IR incide sobre ganho nominal, não real</li>
+            <li>Juro real estruturalmente negativo</li>
+            <li>Sujeitos a repressão financeira</li>
+          </ul>
+        </div>
+        <div class="compare-card btc">
+          <h4>Bitcoin</h4>
+          <ul>
+            <li>Oferta máxima de 21 milhões — imutável</li>
+            <li>Não pode ser expandido por decreto</li>
+            <li>Auditável publicamente a qualquer momento</li>
+            <li>Portabilidade e divisibilidade perfeitas</li>
+            <li>Denominado em escassez absoluta</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>Como o Bitcoin corrige a distorção</h2>
+      <p>O Bitcoin não apenas oferece um ativo alternativo. Ele oferece uma <strong>unidade de medida diferente</strong>. Quando um investidor passa a avaliar seu patrimônio em satoshis, ele está medindo riqueza em algo que não pode ser diluído. A pergunta deixa de ser "meu patrimônio cresceu em reais?" e passa a ser "minha fração do estoque monetário global cresceu?"</p>
+      <p>Ativos que pareciam rentáveis em reais revelam-se destruidores de riqueza quando medidos em Bitcoin. Não porque os ativos perderam valor intrínseco — mas porque a régua mudou para uma que não encolhe.</p>
+
+      <div class="highlight-box">
+        <span class="label">O ponto central</span>
+        <p>Não é que o Bitcoin seja um "investimento especulativo" inserido numa carteira diversificada. É que o Bitcoin é a única forma conhecida de sair do sistema de precificação que dilui silenciosamente qualquer patrimônio denominado em moeda fiduciária. <strong>Todo o restante do mercado de capitais brasileiro — sem exceção — joga com a régua que encolhe.</strong></p>
+      </div>
+
+      <h2>O que fazer com essa compreensão</h2>
+      <p>A conclusão prática não é necessariamente "venda tudo e compre Bitcoin". É mais nuançada: <strong>entenda em qual unidade de medida você está realmente acumulando riqueza</strong>, e exija que seus rendimentos — líquidos de IR — superem a expansão monetária real.</p>
+
+      <div class="highlight-box">
+        <span class="label">As perguntas corretas</span>
+        <p>
+          → Meu rendimento <em>líquido de IR</em> supera o crescimento do M2 (~18% ao ano)?<br><br>
+          → Qual é a inflação da <em>minha</em> cesta de consumo — não a média do IBGE?<br><br>
+          → Estou pagando IR sobre ganhos que, em poder de compra real, não existiram?<br><br>
+          → Qual percentual do meu patrimônio está em ativos que nenhum banco central pode expandir?<br><br>
+          → Meu plano financeiro foi construído com a régua certa, ou com a régua que encolhe?
+        </p>
+      </div>
+
+      <p>Bitcoin não resolve todos os problemas financeiros de ninguém. Mas resolve especificamente esse: <strong>ele é o único ativo que existe fora do sistema que dilui</strong>. Enquanto todos os investimentos disponíveis forem cotados em reais, a expansão monetária sempre estará um passo à frente — e o IR garantirá que o Estado capture parte do que sobrar.</p>
+
+      <div class="cta">
+        <h3>Meça seu patrimônio com outra régua</h3>
+        <p>O dashboard da BSafe Bitcoin permite acompanhar seus aportes, seu preço médio em BRL e USD, e comparar a performance do Bitcoin com S&P 500, ouro, CDI e Ibovespa. Uma forma de enxergar se você está de fato acumulando riqueza — ou apenas mais números.</p>
+        <a href="https://bsafebitcoin.org" class="cta-button">Acessar BSafe Bitcoin →</a>
+      </div>
+
+      <div class="author-box">
+        <div class="author-avatar">RB</div>
+        <div class="author-info">
+          <p class="name">Rafael Bered</p>
+          <p class="role">Advogado previdenciarista, mestre em economia pela Escola Austríaca, educador de mercado de capitais e fundador da BSafe Bitcoin</p>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        Este conteúdo tem caráter exclusivamente educacional e não constitui recomendação de investimento. Os valores e percentuais apresentados são aproximados, baseados em dados públicos do Banco Central do Brasil e IBGE, e têm fins ilustrativos. As alíquotas de IR indicadas são as mínimas legais (ativos de renda fixa com prazo acima de 720 dias); alíquotas maiores se aplicam a prazos menores. Cada investidor deve avaliar sua situação específica. Investimentos envolvem riscos, incluindo perda de capital. Consulte profissionais qualificados antes de tomar decisões financeiras.
+      </div>
+
+    </article>
+  </div>
+
+  <script>
+    const shareData = { title: document.title, text: 'Todo o mercado brasileiro é cotado em reais. E isso é o problema. Entenda juros reais negativos e como o Bitcoin corrige essa distorção. BSafe Bitcoin.', url: window.location.href };
+    function showToast(message) { const t = document.getElementById('share-toast'); if (message) t.textContent = message; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); }
+    function toggleShareMenu(e) { e.stopPropagation(); document.getElementById('share-menu').classList.toggle('open'); }
+    document.addEventListener('click', (e) => { const m = document.getElementById('share-menu'); if (m.classList.contains('open') && !m.contains(e.target) && !e.target.closest('.share-btn')) m.classList.remove('open'); });
+    function shareTo(target) {
+      document.getElementById('share-menu').classList.remove('open');
+      const url = encodeURIComponent(shareData.url); const text = encodeURIComponent(shareData.text);
+      switch (target) {
+        case 'whatsapp': window.open(`https://wa.me/?text=${text}%20${url}`, '_blank', 'noopener'); break;
+        case 'x': window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener'); break;
+        case 'instagram': navigator.clipboard.writeText(shareData.url).then(() => { showToast('Link copiado! Cole no Instagram'); window.open('https://www.instagram.com/', '_blank', 'noopener'); }).catch(() => showToast('Não foi possível copiar o link')); break;
+        case 'copy': navigator.clipboard.writeText(shareData.url).then(() => showToast('Link copiado!')).catch(() => showToast('Não foi possível copiar o link')); break;
+      }
+    }
+    const bars = document.querySelectorAll('.ruler-bar');
+    const widths = [];
+    bars.forEach(bar => { widths.push(bar.style.width); bar.style.width = '0%'; });
+    const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { const idx = [...bars].indexOf(entry.target); entry.target.style.width = widths[idx]; observer.unobserve(entry.target); } }); }, { threshold: 0.4 });
+    bars.forEach(bar => observer.observe(bar));
+  </script>
+</body>
+</html>
