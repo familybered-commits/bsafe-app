@@ -722,6 +722,33 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
 @media(max-width:700px){.picnic{grid-template-columns:1fr;padding:24px 20px}.qr-box{justify-self:start}}
 
 @media (prefers-reduced-motion:reduce){.coins,.run-sheep,.run-sheep img,.run-dust,.btn-p::after,.key-chip .kc-ic{animation:none!important}}
+
+/* ═══ Rádio BSafe ═══ */
+.radio-btn{position:fixed;left:20px;bottom:20px;z-index:1200;display:flex;align-items:center;gap:10px;background:var(--bg1);color:var(--off);border:1px solid var(--border-btc);border-radius:100px;padding:9px 16px 9px 10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:var(--ease)}
+.radio-btn:hover{transform:translateY(-2px);border-color:var(--btc)}
+.radio-ic{width:30px;height:30px;border-radius:50%;background:var(--btc);display:grid;place-items:center;font-size:15px}
+.eq{display:flex;align-items:flex-end;gap:2px;height:14px}
+.eq i{width:3px;background:var(--btc);border-radius:1px;height:4px}
+.radio-btn.playing .eq i{animation:eq .9s ease-in-out infinite}
+.radio-btn.playing .eq i:nth-child(2){animation-delay:-.3s}.radio-btn.playing .eq i:nth-child(3){animation-delay:-.6s}.radio-btn.playing .eq i:nth-child(4){animation-delay:-.15s}
+@keyframes eq{0%,100%{height:4px}50%{height:14px}}
+.radio-panel{position:fixed;left:20px;bottom:78px;z-index:1200;width:min(360px,calc(100vw - 40px));background:var(--bg1);border:1px solid var(--border-btc);border-radius:16px;padding:14px;box-shadow:0 20px 60px rgba(0,0,0,.5);opacity:0;transform:translateY(12px) scale(.97);pointer-events:none;transition:opacity .25s ease,transform .25s ease}
+.radio-panel.open{opacity:1;transform:none;pointer-events:auto}
+.radio-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.radio-t{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--white);letter-spacing:.03em;line-height:1}
+.radio-s{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;margin-top:3px}
+.radio-x{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px}
+.radio-x:hover{color:var(--btc)}
+.radio-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.radio-tabs button{flex:1;min-width:0;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;padding:8px 6px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--off);cursor:pointer;transition:var(--ease);white-space:nowrap}
+.radio-tabs button:hover{border-color:var(--btc);color:var(--btc)}
+.radio-tabs button.act{background:var(--btc);border-color:var(--btc);color:#000}
+.radio-desc{font-size:12px;color:var(--text);margin-bottom:10px;line-height:1.45;min-height:34px}
+.radio-frame{border-radius:12px;overflow:hidden;background:#121212;min-height:152px}
+.radio-frame iframe{display:block;width:100%;height:352px;border:0}
+.radio-note{font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.45}
+@media(max-width:600px){.radio-btn .radio-lbl{display:none}.radio-btn{padding:8px 12px 8px 8px}.radio-frame iframe{height:232px}}
+@media (prefers-reduced-motion:reduce){.radio-btn.playing .eq i{animation:none;height:10px}}
 </style>
 </head>
 <body>
@@ -1833,6 +1860,55 @@ var PICNIC_URL='https://usepicnic.com/app/referral/claim?ref=3YHD7F';
       el.style.transition='transform .08s';el.style.transform='perspective(700px) rotateY('+(x*10)+'deg) rotateX('+(-y*10)+'deg) translateY(-4px)';});
     el.addEventListener('mouseleave',function(){el.style.transition='transform .5s ease';el.style.transform='';});
   });}
+})();
+</script>
+
+<!-- ═══ RÁDIO BSAFE ═══ -->
+<button class="radio-btn" id="radio-btn" aria-expanded="false" aria-controls="radio-panel">
+  <span class="radio-ic">🎷</span><span class="radio-lbl">Rádio Ovelha Negra</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+</button>
+<div class="radio-panel" id="radio-panel" role="dialog" aria-label="Rádio BSafe">
+  <div class="radio-head">
+    <div><div class="radio-t">Rádio Ovelha Negra 🐑</div><div class="radio-s">SOUL JAZZ · HARD BOP · BOSSA</div></div>
+    <button class="radio-x" id="radio-x" aria-label="Fechar">×</button>
+  </div>
+  <div class="radio-tabs" id="radio-tabs">
+    <button class="act" data-st="groove">🔥 Groove</button>
+    <button data-st="hardbop">🎺 Hard Bop</button>
+    <button data-st="bossa">🌅 Bossa</button>
+    <button data-st="estudo">📚 Estudo</button>
+  </div>
+  <div class="radio-desc" id="radio-desc"></div>
+  <div class="radio-frame" id="radio-frame"></div>
+  <div class="radio-note">Aperte o play no player. Sem conta no Spotify, o player toca só trechos de 30 segundos; com conta, as faixas completas.</div>
+</div>
+<script>
+// Estações da Rádio Ovelha Negra (playlists públicas no Spotify).
+// Para usar uma playlist própria da BSafe, troque o "id" da estação pelo código depois de /playlist/ no link.
+var RADIO={
+  groove:{id:'5jBndFJwNAKyLHVjwhDiql',d:'Soul jazz da Blue Note: groove, órgão Hammond e metais. A trilha oficial da ovelha negra.'},
+  hardbop:{id:'2CRiMisrl0oBZW3jzDRjKE',d:'Hard bop da Blue Note: Lee Morgan, Art Blakey, Horace Silver. Energia para sair do pasto.'},
+  bossa:{id:'37i9dQZF1DWWgccrbg3zbJ',d:'Clássicos da bossa nova: o lado brasileiro e o pôr do sol da BSafe.'},
+  estudo:{id:'37i9dQZF1DWVqfgj8NZEp1',d:'Jazz instrumental tranquilo, para assistir às aulas do curso sem distração.'}
+};
+(function(){
+  var b=document.getElementById('radio-btn'),p=document.getElementById('radio-panel'),f=document.getElementById('radio-frame'),x=document.getElementById('radio-x'),ds=document.getElementById('radio-desc'),tabs=document.querySelectorAll('#radio-tabs button'),cur=null;
+  function load(k){
+    if(cur===k)return;cur=k;var s=RADIO[k];
+    tabs.forEach(function(t){t.classList.toggle('act',t.getAttribute('data-st')===k);});
+    ds.textContent=s.d;
+    f.innerHTML='<iframe title="Rádio Ovelha Negra no Spotify" src="https://open.spotify.com/embed/playlist/'+s.id+'?utm_source=generator&theme=0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>';
+    try{localStorage.setItem('bsafe-radio',k);}catch(e){}
+  }
+  function toggle(o){
+    var open=typeof o==='boolean'?o:!p.classList.contains('open');
+    p.classList.toggle('open',open);b.setAttribute('aria-expanded',open);
+    if(open&&!cur){var k='groove';try{var m=localStorage.getItem('bsafe-radio');if(m&&RADIO[m])k=m;}catch(e){}load(k);b.classList.add('playing');}
+  }
+  tabs.forEach(function(t){t.addEventListener('click',function(){load(t.getAttribute('data-st'));});});
+  b.addEventListener('click',function(){toggle();});
+  x.addEventListener('click',function(){toggle(false);});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')toggle(false);});
 })();
 </script>
 </body>
