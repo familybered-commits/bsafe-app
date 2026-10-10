@@ -920,12 +920,12 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
 .hs-x{position:absolute;top:8px;right:10px;width:28px;height:28px;border:none;background:none;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;border-radius:50%}
 .hs-x:hover{color:var(--off);background:var(--bg3)}
 @media(max-width:900px){
-  .hs-wrap{position:relative;right:auto;bottom:auto;width:auto;margin-top:40px;display:flex;flex-direction:column;align-items:center;gap:12px;animation:fup .7s .5s ease both}
-  .hero-sheep{width:104px;height:104px}
-  .hs-lbl{margin-top:0}
-  .hero-sheep-bubble{position:static;font-size:17px;border-radius:14px 14px 14px 2px}
-  .hs-pop{right:auto;left:50%;transform:translateX(-50%);animation:none}
-  .hs-pop::after{right:calc(50% - 6px)}
+  .hs-wrap{position:relative;right:auto;bottom:auto;width:auto;margin-top:36px;display:grid;grid-template-columns:auto auto;grid-template-areas:"bub sheep" ". lbl";justify-content:center;align-items:start;column-gap:8px;row-gap:10px;animation:fup .7s .5s ease both}
+  .hero-sheep-bubble{grid-area:bub;position:static;margin-top:14px;font-size:17px;border-radius:14px 14px 2px 14px}
+  .hero-sheep{grid-area:sheep;width:96px;height:96px}
+  .hs-lbl{grid-area:lbl;justify-self:center;margin-top:0}
+  .hs-pop{right:0;left:auto;transform:none;animation:none}
+  .hs-pop::after{right:38px}
 }
 @media (prefers-reduced-motion:reduce){.hs-dot,.hs-pop,.hs-wrap{animation:none!important}}
 </style>
