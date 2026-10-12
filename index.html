@@ -863,7 +863,7 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
 
 @media(min-width:769px){.nav-links{gap:0}.nav-links a{padding:7px 9px;font-size:12.5px;white-space:nowrap}nav{padding:0 28px}}
 @media(max-width:1200px) and (min-width:769px){.nav-links a[href$="#tese"]{display:none}}
-@media(max-width:1080px) and (min-width:769px){.nav-links a[href*="university"],.nav-links a[href$="dashboard.html"]{display:none}.nav-logo img{height:110px}}
+@media(max-width:1080px) and (min-width:769px){.nav-links a[href*="university"],.nav-links a[href*="mybank."]{display:none}.nav-logo img{height:110px}}
 @media(max-width:920px) and (min-width:769px){.nav-links a[href$="#custodia"]{display:none}.nav-logo img{height:96px}}
 
 /* menu do topo mais legível */
@@ -978,7 +978,7 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
     <li><a href="educacao.html">Artigos</a></li>
     <li><a href="https://university.bsafebitcoin.org" target="_blank">University ↗</a></li>
     <li><a href="#custodia">Custódia</a></li>
-    <li><a href="dashboard.html">Dashboard ↗</a></li>
+    <li><a href="https://mybank.bsafebitcoin.org">My Bank ↗</a></li>
     <li><a href="#kit">O Kit</a></li>
     <li><a href="quem-somos.html">Quem Somos</a></li>
     <li><a href="#faq">FAQ</a></li>
@@ -999,7 +999,7 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
   <a href="educacao.html" onclick="cm()">Artigos</a>
   <a href="https://university.bsafebitcoin.org" target="_blank" onclick="cm()">University ↗</a>
   <a href="#custodia" onclick="cm()">Custódia Própria</a>
-  <a href="dashboard.html" onclick="cm()">Dashboard ↗</a>
+  <a href="https://mybank.bsafebitcoin.org" onclick="cm()">My Bank ↗</a>
   <a href="#kit" onclick="cm()">O Kit Multisig</a>
   <a href="#curso" onclick="cm()">Curso bônus</a>
   <a href="#camiseta" onclick="cm()">Camiseta</a>
@@ -1238,7 +1238,7 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
       <div class="step rev rd1"><div class="sn">02</div><div class="sc"><h3>Escolha o dispositivo certo para você</h3><p>Uma chave só é um ponto único de falha. Por isso o Kit BSafe usa três: uma Blockstream Jade, uma TAPSIGNER (cartão NFC) e uma chave de emergência em placa de aço. Duas delas bastam para assinar.</p><span class="stag2">MULTISIG 2-DE-3</span></div></div>
       <div class="step rev rd2"><div class="sn">03</div><div class="sc"><h3>Seed phrase: o segredo supremo</h3><p>Na inicialização, a carteira gera 24 palavras — a seed phrase. Essas palavras são seu Bitcoin. Grave em metal (nunca papel), guarde em local seguro, jamais fotografe ou digite online em hipótese alguma.</p><span class="stag2">SEGURANÇA CRÍTICA</span></div></div>
       <div class="step rev"><div class="sn">04</div><div class="sc"><h3>Receba e verifique</h3><p>Gere um endereço, envie um teste pequeno primeiro, confirme na blockchain. Só então mova o restante. No módulo 3 do curso você faz esse teste com a gente, passo a passo.</p><span class="stag2">ENSINADO NO CURSO</span></div></div>
-      <div class="step rev rd1"><div class="sn">05</div><div class="sc"><h3>Acompanhe com o BSafe Dashboard</h3><p>Após configurar, importe seu xpub no dashboard BSafe para monitorar saldo, aportes e performance em tempo real — sem expor suas chaves. Watch-only, 100% seguro.</p><span class="stag2">INCLUSO NO KIT</span></div></div>
+      <div class="step rev rd1"><div class="sn">05</div><div class="sc"><h3>Abra o seu banco no My Bank</h3><p>Depois de configurar, cadastre o descriptor da sua multisig no <a href="https://mybank.bsafebitcoin.org" style="color:var(--btc)">My Bank</a> e acompanhe reservas, extrato e evolução do patrimônio contra a inflação — sem cadastro e sem expor suas chaves. Somente leitura, 100% no seu navegador.</p><span class="stag2">GRATUITO</span></div></div>
     </div>
     <div class="warn rev">
       <div class="wi">⚠️</div>
@@ -1322,7 +1322,7 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
           <li>Curso de Bitcoin em 3 módulos: grátis</li>
           <li>Guia de DCA na Picnic com saque para a multisig</li>
           <li>Página de configuração da carteira (QR) para backup</li>
-          <li>BSafe Dashboard watch-only para acompanhar o saldo</li>
+          <li>Seu banco no My Bank: reservas, extrato e evolução do cofre em modo somente leitura</li>
         </ul>
         <a href="mailto:bsafe@bsafebitcoin.org?subject=Quero%20o%20Kit%20Multisig%20BSafe" class="btn-p">📦 Quero o kit →</a>
         <div class="svc-note">Você monta, você guarda, você controla. A BSafe nunca tem acesso às suas chaves.</div>
@@ -1429,7 +1429,7 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
         <div class="dca-step rev"><div class="dn">1</div><div><h4>Defina um valor que cabe no mês</h4><p>O valor é decisão sua. O método funciona com qualquer quantia, e a constância vale mais que o tamanho.</p></div></div>
         <div class="dca-step rev rd1"><div class="dn">2</div><div><h4>Programe a compra recorrente na Picnic</h4><p>Semanal ou mensal, no automático. Sem gráfico aberto, sem ansiedade.</p></div></div>
         <div class="dca-step rev rd2"><div class="dn">3</div><div><h4>Saque para a sua multisig</h4><p>Periodicamente, os sats vão para um endereço da sua carteira, conferido na tela da Jade antes de enviar.</p></div></div>
-        <div class="dca-step rev rd3"><div class="dn">4</div><div><h4>Acompanhe no BSafe Dashboard</h4><p>Importe o xpub em modo watch-only e veja a pilha crescer sem expor nenhuma chave.</p></div></div>
+        <div class="dca-step rev rd3"><div class="dn">4</div><div><h4>Acompanhe no My Bank</h4><p>Cadastre o xpub em modo somente leitura e veja a pilha crescer — e quanto ela rendeu acima da inflação — sem expor nenhuma chave.</p></div></div>
       </div>
     </div>
     <div class="picnic rev">
@@ -1597,7 +1597,7 @@ canvas.mp-canvas{display:block;width:148px;height:110px}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 const FAQS=[
-  {q:'O que vem no Kit Multisig BSafe?',a:'Uma Blockstream Jade, uma TAPSIGNER e uma placa de aço para a chave de emergência: as três chaves da sua multisig 2-de-3. Junto vêm o curso de Bitcoin em 3 módulos, o guia de DCA na Picnic e o acesso ao BSafe Dashboard em modo watch-only.'},
+  {q:'O que vem no Kit Multisig BSafe?',a:'Uma Blockstream Jade, uma TAPSIGNER e uma placa de aço para a chave de emergência: as três chaves da sua multisig 2-de-3. Junto vêm o curso de Bitcoin em 3 módulos, o guia de DCA na Picnic e o seu banco no My Bank, nossa ferramenta gratuita para acompanhar o cofre em modo somente leitura.'},
   {q:'Preciso de conhecimento técnico para montar a multisig?',a:'Não. O método é padronizado e o módulo 3 do curso mostra cada clique: inicializar a Jade e a TAPSIGNER, gravar a chave de emergência, criar a carteira no Nunchuk e testar a recuperação antes de colocar qualquer valor relevante.'},
   {q:'Por que 2-de-3 e não uma carteira simples (singlesig)?',a:'No singlesig, uma única chave controla tudo: se ela vazar ou se perder junto com o backup, acabou. Na multisig 2-de-3 são necessárias duas de três chaves para mover os fundos. Uma chave roubada não basta para o ladrão, e uma chave perdida não trava você.'},
   {q:'O que é a Blockstream Jade?',a:'A Jade é uma das poucas hardware wallets verdadeiramente open source do mercado. O firmware é auditável publicamente no GitHub, possui display integrado para verificar cada transação antes de assinar, e não usa chip seguro proprietário opaco. No Kit BSafe ela é a chave A da sua multisig: é na tela dela que você confere endereços e assinaturas.'},
