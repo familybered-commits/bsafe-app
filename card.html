@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Rafael Bered — BSafe Bitcoin</title>
-<meta name="description" content="Rafael Bered · Founder of BSafe Bitcoin. Lawyer, M.Sc. in Economics, Bitcoin self-custody educator.">
+<meta name="description" content="Rafael Bered · Founder · BSafe Bitcoin. Lawyer · M.Sc. Economics · Bitcoin self-custody educator.">
 <meta name="theme-color" content="#080808">
 <!-- Pré-visualização no WhatsApp / iMessage / Telegram -->
 <meta property="og:type" content="profile">
 <meta property="og:title" content="Rafael Bered — BSafe Bitcoin">
-<meta property="og:description" content="Founder of BSafe Bitcoin · Lawyer · M.Sc. Economics · Bitcoin self-custody educator. Tap to save my contact.">
+<meta property="og:description" content="Rafael Bered · Founder · BSafe Bitcoin. Lawyer · M.Sc. Economics · Bitcoin self-custody educator. Tap to save my contact.">
 <meta property="og:url" content="https://www.bsafebitcoin.org/card.html">
 <meta property="og:image" content="https://www.bsafebitcoin.org/card-og.png">
 <meta property="og:image:width" content="1200">
@@ -151,10 +151,11 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--btc);outline-offset
     <a class="lk" href="https://www.instagram.com/bsafe_bitcoin" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="6"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.6" cy="6.4" r="1" fill="currentColor"/></svg></span><span><b>Instagram</b><small>@bsafe_bitcoin</small></span><span class="ar">›</span></a>
     <a class="lk" href="https://www.youtube.com/@BSafeBitcoin7" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.5V8.5l6.3 3.5-6.3 3.5Z"/></svg></span><span><b>YouTube</b><small>@BSafeBitcoin7</small></span><span class="ar">›</span></a>
     
-    <div class="ln">
+        <div class="ln">
       <div class="q" id="qr-ln" role="button" tabindex="0" aria-label="Lightning QR — full screen"></div>
       <div><b>⚡ <span class="en">Zap me on Lightning</span><span class="pt">Me mande sats via Lightning</span></b><code>bered@walletofsatoshi.com</code><button type="button" id="copy-ln"><span class="en">Copy address</span><span class="pt">Copiar endereço</span></button></div>
     </div>
+
   </section>
 
   <div class="foot">
@@ -182,6 +183,7 @@ var CARD={url:'https://www.bsafebitcoin.org/card.html',wa:'5551999853576',lnurl:
   function t(en,pt){return L()==='pt'?pt:en}
   function paintLang(){document.querySelectorAll('.lang button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.l===L())});
     d.lang=L()==='pt'?'pt-BR':'en';
+    document.querySelectorAll('a[href^="https://mybank.bsafebitcoin.org"]').forEach(function(x){x.href='https://mybank.bsafebitcoin.org/?lang='+L();});
     if($('wa'))$('wa').href=CARD.wa?'https://wa.me/'+CARD.wa+'?text='+encodeURIComponent(t('Hi Rafael! We met at the Bitcoin conference.','Oi Rafael! Nos conhecemos no congresso de Bitcoin.')):'#';}
   document.querySelectorAll('.lang button').forEach(function(b){b.addEventListener('click',function(){d.setAttribute('data-lang',b.dataset.l);try{localStorage.setItem('bsafe-lang',b.dataset.l)}catch(e){}paintLang();});});
   if(!CARD.wa){$('wa').remove();$('actions').classList.add('two');}
@@ -190,7 +192,7 @@ var CARD={url:'https://www.bsafebitcoin.org/card.html',wa:'5551999853576',lnurl:
   function qrSvg(text,ecc){try{var q=qrcode(0,ecc||'M');q.addData(text);q.make();return q.createSvgTag({cellSize:4,margin:0,scalable:true});}catch(e){return ''}}
   var lnText='lightning:'+CARD.lnurl;
   $('qr-card').innerHTML=qrSvg(CARD.url,'Q');
-  $('qr-ln').innerHTML=qrSvg(lnText,'L');
+  if($('qr-ln'))$('qr-ln').innerHTML=qrSvg(lnText,'L');
   $('qr-url').textContent=CARD.url.replace(/^https?:\/\//,'');
 
   function toast(m){var e=$('toast');e.textContent=m;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(function(){e.classList.remove('show')},2200);}
@@ -198,14 +200,14 @@ var CARD={url:'https://www.bsafebitcoin.org/card.html',wa:'5551999853576',lnurl:
   function closeFull(){$('full').classList.remove('open');}
   function bind(el,fn){el.addEventListener('click',fn);el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}});}
   bind($('qr-card'),function(){full(CARD.url,'Rafael Bered',t('Scan to save my contact','Aponte a câmera para salvar meu contato'));});
-  bind($('qr-ln'),function(){full(lnText,'⚡ Lightning',CARD.ln);});
+  if($('qr-ln'))bind($('qr-ln'),function(){full(lnText,'⚡ Lightning',CARD.ln);});
   $('full-x').addEventListener('click',closeFull);
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closeFull();});
 
   function copy(txt,msg){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){toast(msg)},function(){prompt('',txt)});}else{prompt('',txt);}}
-  $('copy-ln').addEventListener('click',function(){copy(CARD.ln,t('Lightning address copied','Endereço Lightning copiado'));});
+  if($('copy-ln'))$('copy-ln').addEventListener('click',function(){copy(CARD.ln,t('Lightning address copied','Endereço Lightning copiado'));});
   $('share').addEventListener('click',function(){
-    var data={title:'Rafael Bered — BSafe Bitcoin',text:t('Rafael Bered · Founder of BSafe Bitcoin','Rafael Bered · Fundador da BSafe Bitcoin'),url:CARD.url};
+    var data={title:'Rafael Bered — BSafe Bitcoin',text:t('Rafael Bered · Founder · BSafe Bitcoin','Rafael Bered · Fundador · BSafe Bitcoin'),url:CARD.url};
     if(navigator.share){navigator.share(data).catch(function(){});}else{copy(CARD.url,t('Link copied','Link copiado'));}
   });
 })();

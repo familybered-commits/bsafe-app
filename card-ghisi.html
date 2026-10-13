@@ -179,6 +179,7 @@ var CARD={url:'https://www.bsafebitcoin.org/card-ghisi.html',wa:'5551983354556',
   function t(en,pt){return L()==='pt'?pt:en}
   function paintLang(){document.querySelectorAll('.lang button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.l===L())});
     d.lang=L()==='pt'?'pt-BR':'en';
+    document.querySelectorAll('a[href^="https://mybank.bsafebitcoin.org"]').forEach(function(x){x.href='https://mybank.bsafebitcoin.org/?lang='+L();});
     if($('wa'))$('wa').href=CARD.wa?'https://wa.me/'+CARD.wa+'?text='+encodeURIComponent(t('Hi Rafael! We met at the Bitcoin conference.','Oi Rafael! Nos conhecemos no congresso de Bitcoin.')):'#';}
   document.querySelectorAll('.lang button').forEach(function(b){b.addEventListener('click',function(){d.setAttribute('data-lang',b.dataset.l);try{localStorage.setItem('bsafe-lang',b.dataset.l)}catch(e){}paintLang();});});
   if(!CARD.wa){$('wa').remove();$('actions').classList.add('two');}

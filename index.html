@@ -2329,6 +2329,7 @@ var RADIO_TRACKS={
     window.BSLANG=l;d.lang=l==='en'?'en':'pt-BR';
     els.forEach(function(e){var v=l==='en'?I18N_EN[e.getAttribute('data-i18n')]:e.__pt;if(v!=null&&e.innerHTML!==v)e.innerHTML=v;});
     aEls.forEach(function(e){for(var a in e.__pta){e.setAttribute(a,l==='en'?ATTR_EN[e.__pta[a]]:e.__pta[a]);}});
+    document.querySelectorAll('a[href^="https://mybank.bsafebitcoin.org"]').forEach(function(a){try{var u=new URL(a.href);u.searchParams.set('lang',l);a.href=u.toString();}catch(e){}});
     document.title=META[l].title;if(md)md.setAttribute('content',META[l].desc);
     document.querySelectorAll('.lang-toggle button').forEach(function(b){var on=b.getAttribute('data-l')===l;b.classList.toggle('act',on);b.setAttribute('aria-pressed',on);});
     if(user){try{localStorage.setItem('bsafe-lang',l);}catch(e){}
