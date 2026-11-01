@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>O Agora e o Depois: Bitcoin, Saúde e Preferência Temporal | BSafe Bitcoin</title>
+<meta name="description" content="Toda escolha sobre o corpo e o dinheiro é uma troca entre o agora e o depois. Entenda como a moeda fiat incentiva a alta preferência temporal — e como o Bitcoin alinha os incentivos para uma vida saudável e um futuro que vale a pena viver.">
+<style>
+  :root {
+    --bg: #0b0e11;
+    --bg-card: #14181d;
+    --accent: #f7931a;
+    --accent-soft: #f7931a22;
+    --text: #e8eaed;
+    --text-muted: #9aa3ad;
+    --border: #232a31;
+    --green: #16c784;
+    --red: #ea3943;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar a.back {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .topbar a.back:hover { color: var(--text); }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    font-family: inherit;
+  }
+
+  .share-btn:hover {
+    background: var(--accent);
+    color: #1a1300;
+    transform: translateY(-1px);
+  }
+
+  .share-wrap { position: relative; }
+
+  .share-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 190px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    z-index: 60;
+  }
+
+  .share-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .share-menu a,
+  .share-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .share-menu a:hover,
+  .share-menu button:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .share-menu .share-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .share-menu .share-icon svg { width: 100%; height: 100%; }
+
+  .share-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 100;
+  }
+
+  .share-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* HERO */
+  .hero {
+    padding: 60px 24px 50px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft) 0%, transparent 60%);
+  }
+
+  .hero .tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero .subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 20px;
+  }
+
+  .hero .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* CONTENT */
+  article { padding-top: 48px; }
+
+  article h2 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 48px 0 18px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  article h2::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 26px;
+    background: var(--accent);
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  article h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    color: var(--accent);
+  }
+
+  article p {
+    font-size: 17px;
+    color: #d4d8dc;
+    margin-bottom: 18px;
+  }
+
+  article strong { color: #fff; font-weight: 700; }
+
+  article a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+  }
+
+  article a:hover { border-bottom-color: var(--accent); }
+
+  /* HIGHLIGHT BOX */
+  .highlight-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 28px 0;
+  }
+
+  .highlight-box .label {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .highlight-box p { margin-bottom: 0; font-size: 17px; }
+
+  /* PROPERTIES GRID */
+  .props-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 28px 0 32px;
+  }
+
+  @media (max-width: 600px) {
+    .props-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 28px; }
+    .compare { grid-template-columns: 1fr; }
+    .parallel-row { grid-template-columns: 1fr; }
+    .parallel-row .pr-mid { display: none; }
+  }
+
+  .prop-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s ease;
+  }
+
+  .prop-card:hover { border-color: var(--accent); }
+
+  .prop-card .prop-icon {
+    font-size: 22px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .prop-card h4 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .prop-card p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 0;
+    line-height: 1.6;
+  }
+
+  /* COMPARISON */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0 32px;
+  }
+
+  .compare-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .compare-card.trad { border-top: 3px solid var(--text-muted); }
+  .compare-card.btc  { border-top: 3px solid var(--accent); }
+
+  .compare-card h4 {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .compare-card.trad h4 { color: var(--text-muted); }
+  .compare-card.btc h4  { color: var(--accent); }
+
+  .compare-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .compare-card li {
+    font-size: 14px;
+    color: var(--text-muted);
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .compare-card.trad li::before {
+    content: "–";
+    position: absolute;
+    left: 0;
+    color: var(--text-muted);
+    font-weight: 800;
+  }
+
+  .compare-card.btc li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  /* PARALLEL TABLE (corpo x dinheiro) */
+  .parallel {
+    margin: 28px 0 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .parallel-head,
+  .parallel-row {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .parallel-head span {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 0 4px;
+  }
+
+  .parallel-head span:last-child { text-align: left; }
+
+  .parallel-row .pr-cell {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.55;
+  }
+
+  .parallel-row .pr-cell strong {
+    display: block;
+    color: var(--text);
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+
+  .parallel-row .pr-mid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    font-weight: 900;
+    font-size: 18px;
+  }
+
+  /* STEPS */
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 24px 0 32px;
+  }
+
+  .step-item {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .step-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 900;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step-content h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .step-content p {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin-bottom: 0;
+    line-height: 1.6;
+  }
+
+  /* QUOTE */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 6px 0 6px 24px;
+    margin: 28px 0;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--text);
+  }
+
+  /* SOURCE NOTE */
+  .source-note {
+    font-size: 14px;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 0 0 28px;
+  }
+
+  /* CTA */
+  .cta {
+    background: linear-gradient(135deg, var(--accent-soft), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin: 48px 0 12px;
+  }
+
+  .cta h3 {
+    color: var(--text);
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+
+  .cta p {
+    color: var(--text-muted);
+    margin-bottom: 22px;
+  }
+
+  .cta-button {
+    display: inline-block;
+    background: var(--accent);
+    color: #1a1300;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 999px;
+    text-decoration: none;
+    border: none;
+    transition: transform 0.15s ease;
+  }
+
+  .cta-button:hover { transform: translateY(-2px); }
+
+  /* FOOTER NOTE */
+  .disclaimer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .author-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 40px;
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    color: #1a1300;
+    flex-shrink: 0;
+  }
+
+  .author-info p { margin: 0; font-size: 14px; }
+  .author-info .name { font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .author-info .role { color: var(--text-muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="educacao.html" class="back">← Voltar ao site</a>
+    <div class="share-wrap">
+      <button class="share-btn" onclick="toggleShareMenu(event)">↗ Compartilhar</button>
+      <div class="share-menu" id="share-menu">
+        <a href="#" onclick="shareTo('whatsapp');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2C6.58 2 2.130 6.45 2.13 11.91c0 1.86.5 3.6 1.43 5.1L2 22l5.16-1.5a9.84 9.84 0 0 0 4.87 1.28h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.650-1.03-5.13-2.9-7-1.88-1.88-4.36-2.870-7.01-2.87Zm0 18.06h-.01a8.18 8.18 0 0 1-4.17-1.14l-.3-.18-3.05.89.91-2.98-.2-.31a8.16 8.16 0 0 1-1.26-4.43c0-4.52 3.68-8.2 8.21-8.2 2.19 0 4.25.86 5.8 2.41a8.13 8.13 0 0 1 2.4 5.79c0 4.53-3.68 8.15-8.33 8.15Zm4.49-6.13c-.25-.12-1.45-.72-1.68-.8-.22-.08-.39-.12-.55.12-.16.25-.63.8-.78.96-.14.16-.29.18-.53.06-1.45-.72-2.4-1.29-3.36-2.92-.25-.43.25-.4.72-1.34.08-.16.04-.3-.03-.43-.08-.12-.55-1.33-.76-1.83-.2-.48-.4-.42-.55-.42-.14-.01-.3-.01-.46-.01-.16 0-.42.06-.64.3-.22.25-.85.83-.85 2.02 0 1.19.87 2.34 1 2.5.12.16 1.7 2.59 4.12 3.53 2.04.79 2.45.66 2.9.62.45-.04 1.45-.59 1.65-1.17.2-.57.2-1.06.14-1.17-.06-.1-.22-.17-.4-.27Z"/></svg>
+          </span>
+          WhatsApp
+        </a>
+        <a href="#" onclick="shareTo('x');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231ZM17.083 19.77h1.833L7.084 4.126H5.117Z"/></svg>
+          </span>
+          X (Twitter)
+        </a>
+        <a href="#" onclick="shareTo('instagram');return false;">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg>
+          </span>
+          Instagram
+        </a>
+        <button onclick="shareTo('copy')">
+          <span class="share-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </span>
+          Copiar link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="share-toast" id="share-toast">Link copiado!</div>
+
+  <div class="hero">
+    <span class="tag">Saúde &amp; Bitcoin · BSafe</span>
+    <h1>O agora e o depois:<br><span>Bitcoin, saúde</span> e preferência temporal.</h1>
+    <p class="subtitle">
+      Toda escolha sobre o corpo e sobre o dinheiro é uma troca entre o agora e o depois. Um dinheiro que
+      derrete ensina a viver no agora. Um dinheiro que preserva valor ensina a cuidar do depois — e a estar
+      inteiro para desfrutá-lo.
+    </p>
+    <div class="meta">
+      <span>🧬 Longevidade &amp; Patrimônio</span>
+      <span>⏱ 13 min de leitura</span>
+      <span>🟠 bsafebitcoin.org</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <article>
+
+      <p class="source-note">
+        💡 Artigo inspirado na palestra <em>Bitcoin and Longevity</em>, apresentada por Ioni Appelberg —
+        médico sueco, autor e filósofo do Bitcoin — na BTC Prague 2025. As reflexões e a aplicação ao
+        contexto brasileiro são da BSafe.
+      </p>
+
+      <p>
+        O doce depois do almoço ou a caminhada no fim da tarde. Gastar o salário inteiro ou guardar uma
+        parte. Dormir mais cedo ou ficar mais uma hora no celular. Parecem decisões sem relação entre si,
+        mas todas respondem à mesma pergunta: <strong>quanto vale o seu futuro em comparação com o seu
+        presente?</strong>
+      </p>
+
+      <p>
+        Economistas chamam isso de <strong>preferência temporal</strong>. Quem tem preferência temporal
+        alta privilegia o prazer imediato e empurra a conta para depois. Quem tem preferência temporal
+        baixa aceita abrir mão de algo hoje para colher mais adiante. E a mesma disposição que define
+        como você trata o seu dinheiro tende a definir como você trata o seu corpo.
+      </p>
+
+      <p>
+        O ponto que quase ninguém percebe é que essa disposição não é só traço de caráter — ela é
+        moldada pelo ambiente, e o dinheiro que usamos é parte central desse ambiente. Uma moeda que
+        perde valor todo ano recompensa quem vive no agora e pune quem pensa no depois. Uma moeda de
+        oferta fixa faz o contrário. <strong>E as consequências vão muito além da conta bancária:
+        chegam ao prato, ao sono e à saúde de décadas.</strong>
+      </p>
+
+      <h2>O teste do marshmallow e a confiança no amanhã</h2>
+
+      <p>
+        Entre o fim dos anos 1960 e o início dos 70, o psicólogo Walter Mischel, da Universidade
+        Stanford, conduziu um experimento que ficou famoso: crianças recebiam um doce e uma proposta.
+        Podiam comê-lo na hora ou, se esperassem alguns minutos sozinhas, ganhariam dois. Por décadas, o
+        resultado foi lido como um teste de autocontrole — quem esperava teria mais disciplina e, mais
+        tarde, uma vida mais bem-sucedida.
+      </p>
+
+      <p>
+        Em 2012, pesquisadores da Universidade de Rochester refizeram o experimento com uma mudança
+        decisiva. Antes do teste, parte das crianças lidou com um adulto que cumpria o que prometia; a
+        outra parte, com um adulto que prometia e não cumpria. As crianças do ambiente confiável
+        esperaram muito mais. As do ambiente não confiável, em geral, comeram o doce logo.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">A lição que muda tudo</span>
+        <p>
+          Esperar não depende só de força de vontade. Depende de confiar que o amanhã vai cumprir o que
+          promete. Quando a promessa falha, pegar o doce agora deixa de ser fraqueza — vira a escolha racional.
+        </p>
+      </div>
+
+      <p>
+        Agora pense no adulto que vive numa moeda fiduciária. Todo ano, o sistema promete que o dinheiro
+        guardado vai preservar seu valor — e todo ano descumpre a promessa. A poupança perde para a
+        inflação, as regras da aposentadoria mudam, o plano de longo prazo precisa ser refeito. O cidadão
+        comum é a criança diante do adulto que não cumpre o combinado. <strong>Não é de admirar que ele
+        coma o marshmallow — no bolso e no prato.</strong>
+      </p>
+
+      <p>
+        O Bitcoin, nesse sentido, é o adulto que cumpre o que promete. Suas regras não mudam por decreto,
+        e o limite de 21 milhões está escrito no protocolo, verificável por qualquer pessoa. Um ambiente
+        monetário confiável é o primeiro passo para que esperar volte a fazer sentido.
+      </p>
+
+      <h2>Como o dinheiro molda as nossas escolhas</h2>
+
+      <p>
+        A Escola Austríaca descreve esse mecanismo há mais de um século: um dinheiro que perde valor
+        empurra todo mundo para a preferência temporal alta. Se o que você
+        poupa vai valer menos no ano que vem, a decisão racional é gastar agora, se endividar agora,
+        consumir agora. O sistema fiduciário, por desenho, pune quem pensa no longo prazo.
+      </p>
+
+      <p>
+        E aqui está o paralelo que torna a comparação tão interessante: <strong>a mesma mentalidade
+        imediatista que nos faz gastar tudo também nos faz descuidar do corpo</strong>. A comida
+        ultraprocessada, o sono sacrificado, o sedentarismo — tudo isso é preferência temporal alta
+        aplicada à saúde. O prazer agora, a conta depois.
+      </p>
+
+      <h2>Os incentivos perversos de um dinheiro que derrete</h2>
+
+      <p>
+        Vale aprofundar esse ponto, porque ele é o coração da tese. Ninguém acorda e decide ter
+        preferência temporal alta. Ela é <strong>ensinada pelo ambiente</strong>. E o ambiente
+        econômico de quem vive em moeda fiduciária ensina, todos os dias, a mesma lição: o futuro vale
+        menos do que o presente.
+      </p>
+
+      <p>
+        Pense na mensagem que o sistema transmite. Se você guarda dinheiro, ele perde valor. Se você
+        se endivida, a inflação corrói a dívida a seu favor. Se você consome agora, paga o preço de
+        hoje, que é menor que o de amanhã. A conclusão racional é clara: <strong>gaste, financie,
+        aproveite já</strong>. Quem poupa é punido; quem antecipa é premiado. O economista Hans-Hermann
+        Hoppe e, mais recentemente, Saifedean Ammous em <em>O Padrão Fiat</em> descrevem esse mecanismo
+        como uma “elevação forçada” da preferência temporal de toda a sociedade.
+      </p>
+
+      <p>
+        O problema é que esse incentivo não fica restrito à conta bancária. Ele vaza para todas as
+        decisões da vida — inclusive as que moldam o seu corpo.
+      </p>
+
+      <h3>Da impressora ao prato: a cadeia de incentivos</h3>
+
+      <div class="steps-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>A moeda perde valor continuamente</h4>
+            <p>Os custos de produção sobem ano após ano. Fabricantes, varejistas e famílias passam a viver numa corrida para não ficar para trás.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>A indústria otimiza para preço e prazo de validade</h4>
+            <p>Para manter o preço na prateleira, a saída é trocar ingredientes caros por baratos, reduzir a embalagem (a famosa <em>reduflação</em>) e alongar a validade. O alimento passa a ser desenhado para durar no estoque, não para nutrir.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>A família tem menos tempo e menos poder de compra</h4>
+            <p>Com o salário rendendo menos, trabalha-se mais: duas rendas, jornadas longas, deslocamentos extensos. Sobra pouco tempo para cozinhar, dormir bem ou se exercitar.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>A escolha “racional” vira a menos saudável</h4>
+            <p>O ultraprocessado é barato, rápido e prático. Faz sentido no curto prazo — exatamente o horizonte que o dinheiro fiat ensina a privilegiar.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h4>A conta chega décadas depois</h4>
+            <p>Doenças crônicas não aparecem no mês seguinte. Aparecem 20 ou 30 anos depois — quando o sistema oferece, de novo, um remédio para cada sintoma.</p>
+          </div>
+        </div>
+      </div>
+
+      <p>
+        O próprio Ministério da Saúde reconhece o tamanho do problema: o <strong>Guia Alimentar para a
+        População Brasileira</strong> recomenda evitar alimentos ultraprocessados e priorizar comida
+        de verdade. É uma orientação correta — mas que nada contra a corrente de um sistema econômico
+        que torna o ultraprocessado a opção mais barata e mais conveniente para quem está sempre
+        correndo atrás do próprio salário.
+      </p>
+
+      <h3>A economia da dopamina</h3>
+
+      <p>
+        A preferência temporal alta não se manifesta só no prato. Ela alimenta toda uma economia
+        construída para entregar recompensa imediata: o crédito fácil para o consumo por impulso, o
+        celular desenhado para prender a atenção, as apostas online que explodiram no Brasil nos
+        últimos anos, a especulação com “a próxima moeda que vai multiplicar por cem”.
+      </p>
+
+      <p>
+        Todas compartilham a mesma lógica: <strong>prazer agora, custo depois</strong>. E todas
+        prosperam num ambiente em que poupar parece inútil. Se o dinheiro guardado não protege o seu
+        futuro, a tentação de buscar o atalho — a aposta, a alavancagem, o golpe da renda fácil — fica
+        muito maior. Não por acaso, o próprio universo cripto está cheio de cassinos travestidos de
+        inovação. O Bitcoin é o oposto disso: ele recompensa quem espera, não quem aposta.
+      </p>
+
+      <h3>Estresse crônico: o custo invisível de correr para ficar parado</h3>
+
+      <p>
+        Há ainda um efeito mais silencioso. Viver numa moeda que perde valor é viver numa esteira
+        ergométrica: você precisa correr cada vez mais só para permanecer no mesmo lugar. A sensação
+        constante de que o dinheiro não fecha, de que a reserva não protege, de que a aposentadoria
+        talvez não venha, é uma fonte permanente de ansiedade — e <strong>o estresse crônico cobra seu
+        preço no corpo</strong>: no sono, na pressão arterial, no metabolismo, na saúde mental.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">Uma ressalva honesta</span>
+        <p>
+          A saúde de uma população depende de muitos fatores — genética, renda, educação, cultura,
+          urbanização, políticas públicas. Seria simplista atribuir tudo à moeda. O argumento aqui não é
+          que o dinheiro fiat é a única causa das doenças modernas, mas que ele cria um <strong>pano de
+          fundo de incentivos</strong> que empurra, de forma persistente, para escolhas de curto prazo.
+          Mudar o dinheiro não substitui cuidar da saúde. Mas um dinheiro que recompensa a paciência
+          torna muito mais natural pensar — e viver — no longo prazo.
+        </p>
+      </div>
+
+      <h2>O círculo virtuoso da baixa preferência temporal</h2>
+
+      <p>
+        Agora inverta o sinal. O que acontece quando o dinheiro passa a recompensar quem espera? A
+        mesma lógica que antes empurrava para o imediatismo começa a empurrar no sentido oposto — e o
+        corpo entra na mesma conta.
+      </p>
+
+      <p>
+        O raciocínio é econômico, não moral. Se cada satoshi guardado hoje tende a comprar mais amanhã,
+        o seu “eu do futuro” fica mais rico a cada mês de poupança. E um futuro mais rico vale mais a
+        pena ser vivido — com energia, disposição e saúde para usufruí-lo. Cuidar do corpo deixa de ser
+        sacrifício e passa a ser a proteção do ativo que vai desfrutar de todo o resto.
+      </p>
+
+      <div class="highlight-box">
+        <span class="label">O alinhamento de incentivos</span>
+        <p>
+          Quando o seu dinheiro do futuro vale mais, o seu corpo do futuro também passa a valer mais.
+          A mesma decisão — adiar um prazer hoje para colher mais adiante — passa a fazer sentido no
+          bolso e na saúde ao mesmo tempo.
+        </p>
+      </div>
+
+      <h3>Não é só sobre chegar aos 90</h3>
+
+      <p>
+        E “futuro” aqui não quer dizer apenas velhice. Boa parte dos benefícios de dormir bem, comer
+        comida de verdade e se movimentar aparece em meses ou poucos anos: mais energia, mais clareza
+        mental, mais produtividade, menos dias perdidos. É o mesmo horizonte que o Bitcoin ensina — quem
+        acumula com paciência raramente vê resultado na semana, mas costuma ver ao atravessar um ciclo
+        de alguns anos. As duas disciplinas operam na mesma escala de tempo, e uma reforça a outra.
+      </p>
+
+      <h3>Os mesmos hábitos, em dois territórios</h3>
+
+      <div class="parallel">
+        <div class="parallel-head">
+          <span>₿ No Bitcoin</span>
+          <span></span>
+          <span>🧬 Na saúde</span>
+        </div>
+        <div class="parallel-row">
+          <div class="pr-cell"><strong>DCA</strong>Um pouco todo mês, sem tentar adivinhar o preço. O efeito composto faz o resto.</div>
+          <div class="pr-mid">⇄</div>
+          <div class="pr-cell"><strong>Constância</strong>Treino e boa alimentação toda semana, sem esperar a motivação perfeita.</div>
+        </div>
+        <div class="parallel-row">
+          <div class="pr-cell"><strong>Não vender na queda</strong>A volatilidade de curto prazo não muda a tese de longo prazo.</div>
+          <div class="pr-mid">⇄</div>
+          <div class="pr-cell"><strong>Não desistir no deslize</strong>Um fim de semana ruim não anula meses de bons hábitos.</div>
+        </div>
+        <div class="parallel-row">
+          <div class="pr-cell"><strong>Autocustódia</strong>Ninguém guarda suas chaves melhor do que você.</div>
+          <div class="pr-mid">⇄</div>
+          <div class="pr-cell"><strong>Autocuidado</strong>O médico orienta, mas quem executa no dia a dia é você.</div>
+        </div>
+        <div class="parallel-row">
+          <div class="pr-cell"><strong>Verifique, não confie</strong>Confira os backups e teste a recuperação periodicamente.</div>
+          <div class="pr-mid">⇄</div>
+          <div class="pr-cell"><strong>Exames periódicos</strong>Medir em vez de presumir que está tudo bem.</div>
+        </div>
+        <div class="parallel-row">
+          <div class="pr-cell"><strong>Segurança patrimonial</strong>Uma reserva que não derrete reduz a ansiedade sobre o futuro.</div>
+          <div class="pr-mid">⇄</div>
+          <div class="pr-cell"><strong>Menos estresse</strong>Sono melhor e mente mais tranquila — o oposto da esteira fiat.</div>
+        </div>
+      </div>
+
+      <blockquote>
+        O dinheiro fiat diz: aproveite agora, porque amanhã vale menos. O Bitcoin diz: cuide de hoje,
+        porque amanhã vale mais. E ninguém aproveita um amanhã melhor sem estar inteiro para vivê-lo.
+      </blockquote>
+
+      <h2>O risco que ninguém calcula: viver demais</h2>
+
+      <p>
+        Existe um conceito usado por atuários e planejadores financeiros chamado <strong>risco de
+        longevidade</strong>: a possibilidade de você viver mais do que o seu dinheiro. Durante muito
+        tempo, ele foi tratado como um problema distante. Não é mais.
+      </p>
+
+      <p>
+        A expectativa de vida vem subindo há décadas, e a medicina da longevidade promete empurrar esse
+        limite ainda mais. É uma ótima notícia para o corpo — e um problema sério para quem depende de
+        um patrimônio que encolhe todo ano. Viver até os 95 com um dinheiro que perde valor significa
+        passar 30 anos de aposentadoria vendo a reserva derreter.
+      </p>
+
+      <p>
+        Como advogado previdenciarista, vejo isso de perto. O sistema público de previdência foi
+        desenhado para uma população mais jovem e para aposentadorias mais curtas. A Reforma da
+        Previdência de 2019 elevou idades mínimas e endureceu as regras de cálculo justamente porque a
+        conta deixou de fechar — e a tendência demográfica indica que novos ajustes virão. Contar
+        apenas com o INSS para uma vida longa é apostar que o sistema vai continuar entregando aquilo
+        que a matemática já mostra que ele não consegue.
+      </p>
+
+      <div class="compare">
+        <div class="compare-card trad">
+          <h4>Vida longa com dinheiro fiduciário</h4>
+          <ul>
+            <li>A reserva perde poder de compra a cada ano vivido</li>
+            <li>Quanto mais você vive, maior o estrago acumulado da inflação</li>
+            <li>Dependência de regras previdenciárias que mudam por decisão política</li>
+            <li>Necessidade de buscar rendimento com risco crescente só para empatar</li>
+            <li>Planejamento sucessório sujeito a bloqueios, inventário e custos</li>
+          </ul>
+        </div>
+        <div class="compare-card btc">
+          <h4>Vida longa com reserva em Bitcoin</h4>
+          <ul>
+            <li>Oferta fixa: nenhuma emissão dilui a sua fração do total</li>
+            <li>O tempo trabalha a favor da escassez, não contra ela</li>
+            <li>Regras do protocolo não mudam por decreto</li>
+            <li>Autocustódia: o patrimônio está sob seu controle, não de terceiros</li>
+            <li>Multisig com timelock permite planejar a herança por décadas</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <span class="label">O paradoxo da longevidade</span>
+        <p>
+          Quanto mais a medicina avança, mais importante se torna o seu dinheiro. Uma vida de 100 anos
+          sobre uma moeda que perde valor todo ano é uma vida que termina mais pobre do que começou.
+          Longevidade biológica sem longevidade financeira é só mais tempo de aperto.
+        </p>
+      </div>
+
+      <h2>A herança também precisa durar</h2>
+
+      <p>
+        Há um último paralelo, talvez o mais profundo. A medicina da longevidade fala em estender o
+        tempo de vida saudável de uma pessoa. O Bitcoin permite estender o tempo de vida do
+        <strong>patrimônio</strong> de uma família.
+      </p>
+
+      <p>
+        Um imóvel se deprecia, exige manutenção, paga imposto e passa por inventário. Uma conta bancária
+        é congelada no dia do falecimento. Já um Bitcoin bem estruturado em autocustódia — com
+        multisig, chaves distribuídas entre pessoas de confiança e uma chave de emergência com timelock
+        — pode atravessar gerações sem depender de nenhum banco ou intermediário, preservando a fração
+        de uma oferta que nunca vai aumentar.
+      </p>
+
+      <p>
+        Pensar em longevidade, portanto, não é só pensar em quanto tempo você vai viver. É pensar em
+        quanto tempo aquilo que você construiu vai sobreviver a você.
+      </p>
+
+      <h2>Na prática: um protocolo de longevidade para o seu patrimônio</h2>
+
+      <p>
+        Assim como a medicina da longevidade trabalha com protocolos — sono, exercício, alimentação,
+        exames periódicos —, dá para pensar o patrimônio com a mesma disciplina:
+      </p>
+
+      <div class="steps-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Faça o diagnóstico</h4>
+            <p>Assim como um check-up, entenda quanto do seu patrimônio está exposto à perda de poder de compra e quanto da sua aposentadoria depende de regras que podem mudar.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Pense em sats, não em reais</h4>
+            <p>Acumule com regularidade (DCA), sem tentar adivinhar o preço. A métrica de saúde é a quantidade de Bitcoin que você tem, não a cotação do dia.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Assuma a custódia</h4>
+            <p>Guardar o próprio Bitcoin é como cuidar da própria saúde: dá trabalho, exige aprendizado, mas ninguém tem mais interesse no resultado do que você.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Planeje para depois de você</h4>
+            <p>Estruture a sucessão desde já — multisig, pessoas de confiança, documentação clara e chave de emergência. Longevidade patrimonial se planeja em vida.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h4>Faça revisões periódicas</h4>
+            <p>Check-ups regulares valem para o corpo e para as chaves: confira os backups, teste a recuperação e atualize timelocks e herdeiros quando a vida mudar.</p>
+          </div>
+        </div>
+      </div>
+
+      <blockquote>
+        Cuidar do corpo é garantir que você esteja aqui no futuro. Cuidar do dinheiro é garantir que o
+        futuro valha a pena quando você chegar lá. As duas coisas exigem a mesma virtude: pensar além do agora.
+      </blockquote>
+
+      <div class="cta">
+        <h3>Dê ao seu patrimônio a mesma longevidade que você busca para si</h3>
+        <p>
+          A BSafe ajuda você a sair do modo “gerenciar sintomas”: autocustódia segura, multisig com
+          planejamento sucessório e educação para pensar o seu Bitcoin em décadas, não em dias.
+        </p>
+        <a href="https://bsafebitcoin.org" class="cta-button">Conhecer a BSafe Bitcoin →</a>
+      </div>
+
+      <div class="author-box">
+        <div class="author-avatar">RB</div>
+        <div class="author-info">
+          <p class="name">Rafael Bered</p>
+          <p class="role">Advogado previdenciarista, educador de mercado de capitais e fundador da BSafe Bitcoin</p>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        Este conteúdo tem caráter exclusivamente educacional e não constitui recomendação de investimento,
+        orientação jurídica ou aconselhamento médico. Bitcoin é um ativo volátil e envolve riscos, inclusive
+        o de perda de acesso em caso de má gestão das chaves privadas. Decisões sobre saúde devem ser tomadas
+        com profissionais habilitados; decisões patrimoniais e previdenciárias, com advogado e assessor
+        financeiro de sua confiança. As referências à palestra de Ioni Appelberg são uma inspiração temática
+        e não representam a opinião do palestrante sobre os pontos aqui desenvolvidos.
+      </div>
+
+    </article>
+  </div>
+
+  <script>
+    const shareData = {
+      title: document.title,
+      text: 'O agora e o depois: Bitcoin, saúde e preferência temporal. Confira este artigo da BSafe Bitcoin.',
+      url: window.location.href
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById('share-toast');
+      if (message) toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(shareData.url).then(() => {
+        showToast('Link copiado!');
+      }).catch(() => {
+        showToast('Não foi possível copiar o link');
+      });
+    }
+
+    function toggleShareMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('share-menu');
+      menu.classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('share-menu');
+      if (menu.classList.contains('open') && !menu.contains(e.target) && !e.target.closest('.share-btn')) {
+        menu.classList.remove('open');
+      }
+    });
+
+    function shareTo(target) {
+      const menu = document.getElementById('share-menu');
+      menu.classList.remove('open');
+
+      const url = encodeURIComponent(shareData.url);
+      const text = encodeURIComponent(shareData.text);
+
+      switch (target) {
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${text}%20${url}`, '_blank', 'noopener');
+          break;
+        case 'x':
+          window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
+          break;
+        case 'instagram':
+          navigator.clipboard.writeText(shareData.url).then(() => {
+            showToast('Link copiado! Cole no Instagram (Stories, bio ou DM)');
+            window.open('https://www.instagram.com/', '_blank', 'noopener');
+          }).catch(() => {
+            showToast('Não foi possível copiar o link');
+          });
+          break;
+        case 'copy':
+          copyLink();
+          break;
+      }
+    }
+  </script>
+
+</body>
+</html>
